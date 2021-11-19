@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+extern crate gl;
+
 pub fn render(name:String) {
    println!("Render {}", name);
 }
@@ -18,6 +20,9 @@ impl Play {
   }
 
   pub fn render(&self) {
-    println!("{}", self.name);
+    unsafe {
+      gl::ClearColor(0.2, 0.3, 0.3, 1.0);
+      gl::Clear(gl::COLOR_BUFFER_BIT);
+    }
   }
 }

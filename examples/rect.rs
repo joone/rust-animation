@@ -17,6 +17,8 @@ fn main() {
   window.set_key_polling(true);
   window.make_current();
 
+  gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
+
   let play = Play::new(1920, 1080);
 
   while !window.should_close() {
@@ -25,6 +27,9 @@ fn main() {
       handle_window_event(&mut window, event);
     }
     play.render();
+
+    // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+    window.swap_buffers();
   }
 }
 
