@@ -2,15 +2,16 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-pub mod play;
-pub mod stage;
-pub mod actor;
+pub struct Actor {
+  pub width: u32,
+  pub height: u32,
+}
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
+impl Actor {
+  pub fn new(w: u32, h: u32) -> Self {
+    Actor {
+        width: w,
+        height: h,
     }
+  }
 }

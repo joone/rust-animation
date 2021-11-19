@@ -2,15 +2,15 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-pub mod play;
-pub mod stage;
-pub mod actor;
+use rust_animation::play::render;
+use rust_animation::play::Play;
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
+fn main() {
+   render("rectangle".to_string());
+
+   let play = Play::new(1920, 1080);
+
+   play.render();
 }
+
+
