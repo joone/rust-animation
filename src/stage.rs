@@ -2,6 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+extern crate gl;
+
+use self::gl::types::*;
 use crate::actor::Actor;
 
 pub struct Stage {
@@ -17,5 +20,19 @@ impl Stage {
       height: h,
       stage_actor: Actor::new(w, h),
     }
+  }
+
+  pub fn initialize(&mut self) {
+
+  }
+
+  pub fn render(&mut self, shader_program: GLuint) {
+    println!("Stage::render");
+    self.stage_actor.render(shader_program);
+  }
+
+  pub fn add_actor(&mut self, mut actor: Actor) {
+    actor.init_gl();
+    self.stage_actor.sub_actor_list.push(actor);
   }
 }
