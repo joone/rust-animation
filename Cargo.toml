@@ -7,3 +7,6 @@ edition = "2021"
 
 [dependencies]
 gl = "0.10.0"
+
+[dev-dependencies]
+glfw = "0.42.0"
