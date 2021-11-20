@@ -28,7 +28,7 @@ fn main() {
 
   gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-  let mut play = Play::new(1920, 1080);
+  let mut play = Play::new("Animation test");
   play.initialize();
   let mut stage = Stage::new(1920, 1080);
 

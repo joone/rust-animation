@@ -42,9 +42,9 @@ pub struct Play {
 }
 
 impl Play {
-  pub fn new(w: u32, h: u32) -> Self {
+  pub fn new(name: String) -> Self {
     Play {
-      name : "Test".to_string(),
+      name : name,
       stage_list: Vec::new(),
       shader_program: 0,
     }
