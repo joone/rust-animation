@@ -28,14 +28,14 @@ impl Actor {
     }
   }
 
-   pub fn init_gl(&mut self) {
+   pub fn init_gl(&mut self, viewport_width: u32, viewport_height: u32) {
       unsafe {
       let (mut vertex_array_buffer, mut elem_array_buffer) = (0, 0);
       let vertices: [f32; 12] = [
-         0.5,  0.5, 0.0,  // top right
-             0.5, -0.5, 0.0,  // bottom right
-            -0.5, -0.5, 0.0,  // bottom left
-            -0.5,  0.5, 0.0   // top left
+         self.width as f32 / viewport_width as f32,  self.height as f32 / viewport_height as f32, 0.0,  // top right
+         self.width as f32 / viewport_width as f32, -(self.height as f32 / viewport_height as f32), 0.0,  // bottom right
+       -(self.width as f32 / viewport_width as f32), -(self.height as f32 / viewport_height as f32), 0.0,  // bottom left
+       -(self.width as f32 / viewport_width as f32), self.height as f32 / viewport_height as f32, 0.0   // top left
       ];
       let indices = [
           0, 1, 3,  // first Triangle

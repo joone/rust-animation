@@ -10,15 +10,19 @@ use crate::actor::Actor;
 pub struct Stage {
   width: u32,
   height: u32,
+  viewport_width: u32,
+  viewport_height: u32,
   stage_actor: Actor,
 }
 
 impl Stage {
-  pub fn new(w: u32, h: u32) -> Self {
+  pub fn new(vw: u32, vh: u32) -> Self {
     Stage {
-      width: w,
-      height: h,
-      stage_actor: Actor::new(w, h),
+      width: 0,
+      height: 0,
+      viewport_width: vw,
+      viewport_height: vh,
+      stage_actor: Actor::new(vw, vh),
     }
   }
 
@@ -32,7 +36,7 @@ impl Stage {
   }
 
   pub fn add_actor(&mut self, mut actor: Actor) {
-    actor.init_gl();
+    actor.init_gl(self.viewport_width, self.viewport_height);
     self.stage_actor.sub_actor_list.push(actor);
   }
 }
