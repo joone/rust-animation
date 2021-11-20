@@ -35,12 +35,14 @@ fn main() {
   actor.x = 700;
   actor.y = 100;
   actor.rotation = 45.0;
+  actor.set_color(1.0, 0.0, 0.0);
 
   let mut actor_2 = Actor::new(100, 100);
   actor_2.x = 0;
   actor_2.y = 0;
   actor_2.scale_x = 1.5;
   actor_2.scale_y = 1.5;
+  actor_2.set_color(0.0, 0.0, 1.0);
 
   stage.add_actor(actor);
   stage.add_actor(actor_2);

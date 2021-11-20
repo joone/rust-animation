@@ -23,8 +23,10 @@ const VERTEX_SHADER_SOURCE: &str = r#"
 const FRAGMENT_SHADER_SOURCE: &str = r#"
     #version 330 core
     out vec4 outColor;
+    uniform vec4 color;
+
     void main() {
-       outColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+       outColor = color;
     }
 "#;
 

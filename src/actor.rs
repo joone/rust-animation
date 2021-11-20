@@ -27,6 +27,7 @@ pub struct Actor {
   pub scale_x: f32,
   pub scale_y: f32,
   pub rotation: f32,
+  color: [f32; 3],
   viewport_width: u32,
   viewport_height: u32,
   pub sub_actor_list: Vec<Actor>,
@@ -45,6 +46,7 @@ impl Actor {
       scale_x: 1.0,
       scale_y: 1.0,
       rotation: 0.0,
+      color: [1.0, 1.0, 1.0],
       viewport_width: 0,
       viewport_height: 0,
       sub_actor_list: Vec::new(),
@@ -93,6 +95,12 @@ impl Actor {
     }
   }
 
+  pub fn set_color(&mut self, r: f32, g: f32, b: f32) {
+    self.color[0] = r;
+    self.color[1] = g;
+    self.color[2] = b;
+  }
+
   pub fn render(&self, shader_program: GLuint, actor: Option<&Actor>) {
     let mut x : f32 = self.x as f32;
     let mut y : f32 = self.y as f32;
@@ -136,7 +144,10 @@ impl Actor {
 
     unsafe {
       gl::UseProgram(shader_program);
+      let loc_color = gl::GetUniformLocation(shader_program, c_str!("color").as_ptr());
       let loc_transform = gl::GetUniformLocation(shader_program, c_str!("transform").as_ptr());
+
+      gl::Uniform4f(loc_color, self.color[0], self.color[1], self.color[2], 1.0);
       gl::UniformMatrix4fv(loc_transform, 1, gl::FALSE, transform.as_ptr());
 
       gl::BindVertexArray(self.vertex_array_obj);
