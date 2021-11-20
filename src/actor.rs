@@ -48,10 +48,10 @@ impl Actor {
     unsafe {
       let (mut vertex_array_buffer, mut elem_array_buffer) = (0, 0);
       let vertices: [f32; 12] = [
-          self.width as f32 / viewport_width as f32,  self.height as f32 / viewport_height as f32, 0.0,  // top right
-          self.width as f32 / viewport_width as f32, -(self.height as f32 / viewport_height as f32), 0.0,  // bottom right
-        -(self.width as f32 / viewport_width as f32), -(self.height as f32 / viewport_height as f32), 0.0,  // bottom left
-        -(self.width as f32 / viewport_width as f32), self.height as f32 / viewport_height as f32, 0.0   // top left
+          self.width as f32, self.height as f32, 0.0,  // top right
+          self.width as f32, 0.0,                0.0,  // bottom right
+          0.0,               0.0,                0.0,  // bottom left
+          0.0,               self.height as f32, 0.0   // top left
       ];
       let indices = [
           0, 1, 3,  // first Triangle
@@ -98,9 +98,14 @@ impl Actor {
 
     let mut transform: Matrix4<f32> = Matrix4::identity();
 
+    // Apply orthographic projection matrix: left, right, bottom, top, near, far
+    transform = transform * cgmath::ortho(0.0, self.viewport_width as f32,
+        self.viewport_height as f32, 0.0, 0.5, -0.5);
+
     transform = transform *
         Matrix4::<f32>::from_translation(Vector3::new(
-        x as f32 / self.viewport_width as f32, y as f32 / self.viewport_height as f32, 0.0));
+        x as f32, y as f32, 0.0));
+
 
     unsafe {
       gl::UseProgram(shader_program);
