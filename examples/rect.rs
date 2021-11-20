@@ -31,7 +31,9 @@ fn main() {
   let mut play = Play::new(1920, 1080);
   play.initialize();
   let mut stage = Stage::new(1920, 1080);
-  let actor = Actor::new(100, 100);
+  let mut actor = Actor::new(100, 100);
+  actor.x = 500;
+  actor.y = 100;
   stage.add_actor(actor);
   play.add_stage(stage);
 

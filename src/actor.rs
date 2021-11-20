@@ -5,15 +5,25 @@
 extern crate gl;
 
 use self::gl::types::*;
+use cgmath::{Matrix, Matrix4, Deg, SquareMatrix, Vector3};
 use std::ffi::CStr;
 use std::mem;
 use std::os::raw::c_void;
-use std::path::Path;
 use std::ptr;
 
+macro_rules! c_str {
+  ($literal:expr) => {
+      CStr::from_bytes_with_nul_unchecked(concat!($literal, "\0").as_bytes())
+  }
+}
+
 pub struct Actor {
+  pub x: u32,
+  pub y: u32,
   pub width: u32,
   pub height: u32,
+  viewport_width: u32,
+  viewport_height: u32,
   pub sub_actor_list: Vec<Actor>,
   vertex_array_obj: gl::types::GLuint,
 }
@@ -21,21 +31,27 @@ pub struct Actor {
 impl Actor {
   pub fn new(w: u32, h: u32) -> Self {
     Actor {
+      x: 0,
+      y: 0,
       width: w,
       height: h,
+      viewport_width: 0,
+      viewport_height: 0,
       sub_actor_list: Vec::new(),
       vertex_array_obj: gl::types::GLuint::default(),
     }
   }
 
-   pub fn init_gl(&mut self, viewport_width: u32, viewport_height: u32) {
-      unsafe {
+  pub fn init_gl(&mut self, viewport_width: u32, viewport_height: u32) {
+    self.viewport_width = viewport_width;
+    self.viewport_height = viewport_height;
+    unsafe {
       let (mut vertex_array_buffer, mut elem_array_buffer) = (0, 0);
       let vertices: [f32; 12] = [
-         self.width as f32 / viewport_width as f32,  self.height as f32 / viewport_height as f32, 0.0,  // top right
-         self.width as f32 / viewport_width as f32, -(self.height as f32 / viewport_height as f32), 0.0,  // bottom right
-       -(self.width as f32 / viewport_width as f32), -(self.height as f32 / viewport_height as f32), 0.0,  // bottom left
-       -(self.width as f32 / viewport_width as f32), self.height as f32 / viewport_height as f32, 0.0   // top left
+          self.width as f32 / viewport_width as f32,  self.height as f32 / viewport_height as f32, 0.0,  // top right
+          self.width as f32 / viewport_width as f32, -(self.height as f32 / viewport_height as f32), 0.0,  // bottom right
+        -(self.width as f32 / viewport_width as f32), -(self.height as f32 / viewport_height as f32), 0.0,  // bottom left
+        -(self.width as f32 / viewport_width as f32), self.height as f32 / viewport_height as f32, 0.0   // top left
       ];
       let indices = [
           0, 1, 3,  // first Triangle
@@ -67,14 +83,30 @@ impl Actor {
     }
   }
 
-  pub fn render(&mut self, shader_program: GLuint) {
-    println!("actor::render");
-    for actor in self.sub_actor_list.iter_mut() {
-      actor.render(shader_program);
+  pub fn render(&self, shader_program: GLuint, actor: Option<&Actor>) {
+    let mut x : f32 = self.x as f32;
+    let mut y : f32 = self.y as f32;
+
+    if let Some(main_actor) = actor {
+      x += main_actor.x as f32;
+      y += main_actor.y as f32;
     }
+
+    for sub_actor in self.sub_actor_list.iter() {
+      sub_actor.render(shader_program, Some(&self));
+    }
+
+    let mut transform: Matrix4<f32> = Matrix4::identity();
+
+    transform = transform *
+        Matrix4::<f32>::from_translation(Vector3::new(
+        x as f32 / self.viewport_width as f32, y as f32 / self.viewport_height as f32, 0.0));
 
     unsafe {
       gl::UseProgram(shader_program);
+      let loc_transform = gl::GetUniformLocation(shader_program, c_str!("transform").as_ptr());
+      gl::UniformMatrix4fv(loc_transform, 1, gl::FALSE, transform.as_ptr());
+
       gl::BindVertexArray(self.vertex_array_obj);
       gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
     }

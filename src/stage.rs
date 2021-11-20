@@ -32,7 +32,7 @@ impl Stage {
 
   pub fn render(&mut self, shader_program: GLuint) {
     println!("Stage::render");
-    self.stage_actor.render(shader_program);
+    self.stage_actor.render(shader_program, None);
   }
 
   pub fn add_actor(&mut self, mut actor: Actor) {

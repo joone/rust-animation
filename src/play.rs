@@ -13,9 +13,10 @@ use crate::stage::Stage;
 
 const VERTEX_SHADER_SOURCE: &str = r#"
     #version 330 core
-    layout (location = 0) in vec3 a_pos;
+    layout (location = 0) in vec4 a_position;
+    uniform mat4 transform;
     void main() {
-       gl_Position = vec4(a_pos.x, a_pos.y, a_pos.z, 1.0);
+      gl_Position = transform * a_position;
     }
 "#;
 
