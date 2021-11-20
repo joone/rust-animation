@@ -22,6 +22,11 @@ pub struct Actor {
   pub y: i32,
   pub width: u32,
   pub height: u32,
+  pub anchor_x: f32,
+  pub anchor_y: f32,
+  pub scale_x: f32,
+  pub scale_y: f32,
+  pub rotation: f32,
   viewport_width: u32,
   viewport_height: u32,
   pub sub_actor_list: Vec<Actor>,
@@ -35,6 +40,11 @@ impl Actor {
       y: 0,
       width: w,
       height: h,
+      anchor_x: 0.5,
+      anchor_y: 0.5,
+      scale_x: 1.0,
+      scale_y: 1.0,
+      rotation: 0.0,
       viewport_width: 0,
       viewport_height: 0,
       sub_actor_list: Vec::new(),
@@ -106,6 +116,23 @@ impl Actor {
         Matrix4::<f32>::from_translation(Vector3::new(
         x as f32, y as f32, 0.0));
 
+    // Handle rotation and scale.
+    // Move back to the original position.
+    transform = transform *
+        Matrix4::<f32>::from_translation(Vector3::new(self.width as f32 * self.anchor_x,
+        self.height as f32 * self.anchor_y, 0.0));
+
+    if self.rotation != 0.0 {
+      transform = transform * Matrix4::<f32>::from_angle_z(Deg(self.rotation));
+    }
+
+    transform = transform * Matrix4::from_nonuniform_scale(self.scale_x,
+        self.scale_y, 0.0);
+
+    // Move to the origin of coordinate.
+    transform = transform *
+        Matrix4::<f32>::from_translation(Vector3::new(-(self.width as f32 * self.anchor_x),
+          -(self.height as f32 * self.anchor_y), 0.0));
 
     unsafe {
       gl::UseProgram(shader_program);
