@@ -27,12 +27,29 @@ pub struct Actor {
   pub anchor_y: f32,
   pub scale_x: f32,
   pub scale_y: f32,
-  pub rotation: f32,
+  pub rotation: i32,
   color: [f32; 3],
   viewport_width: u32,
   viewport_height: u32,
   pub sub_actor_list: Vec<Actor>,
   vertex_array_obj: gl::types::GLuint,
+  pub animated: bool,
+  translation_x_animation_running: bool,
+  translation_x_animation_from_value: i32,
+  translation_x_animation_to_value: i32,
+  translation_x_animation_by_value: i32,
+  translation_y_animation_running: bool,
+  translation_y_animation_from_value: i32,
+  translation_y_animation_to_value: i32,
+  translation_y_animation_by_value: i32,
+  scale_animation_running: bool,
+  scale_animation_from_value: f32,
+  scale_animation_to_value: f32,
+  scale_animation_by_value: f32,
+  rotation_animation_running: bool,
+  rotation_animation_from_value: i32,
+  rotation_animation_to_value: i32,
+  rotation_animation_by_value: i32
 }
 
 impl Actor {
@@ -47,12 +64,29 @@ impl Actor {
       anchor_y: 0.5,
       scale_x: 1.0,
       scale_y: 1.0,
-      rotation: 0.0,
+      rotation: 0,
       color: [1.0, 1.0, 1.0],
       viewport_width: 0,
       viewport_height: 0,
       sub_actor_list: Vec::new(),
       vertex_array_obj: gl::types::GLuint::default(),
+      animated: false,
+      translation_x_animation_running: false,
+      translation_x_animation_from_value: 0,
+      translation_x_animation_to_value: 0,
+      translation_x_animation_by_value: 0,
+      translation_y_animation_running: false,
+      translation_y_animation_from_value: 0,
+      translation_y_animation_to_value: 0,
+      translation_y_animation_by_value: 0,
+      scale_animation_running: false,
+      scale_animation_from_value: 0.0,
+      scale_animation_to_value: 0.0,
+      scale_animation_by_value: 0.0,
+      rotation_animation_running: false,
+      rotation_animation_from_value: 0,
+      rotation_animation_to_value: 0,
+      rotation_animation_by_value: 0
     }
   }
 
@@ -103,6 +137,111 @@ impl Actor {
     self.color[2] = b;
   }
 
+  pub fn animate(&mut self) {
+    if self.translation_x_animation_running == true {
+      if self.translation_x_animation_to_value >
+          self.translation_x_animation_from_value {
+        if self.x < self.translation_x_animation_to_value {
+          self.x += self.translation_x_animation_by_value;
+        } else {
+          self.translation_x_animation_running = false;
+          self.x = self.translation_x_animation_to_value;
+        }
+      } else {
+        if self.x > self.translation_x_animation_to_value {
+          self.x -= self.translation_x_animation_by_value;
+        } else {
+          self.translation_x_animation_running = false;
+          self.x = self.translation_x_animation_to_value;
+        }
+      }
+    }
+
+    if self.translation_y_animation_running == true {
+      if self.translation_y_animation_to_value >
+          self.translation_y_animation_from_value {
+        if self.y < self.translation_y_animation_to_value {
+          self.y += self.translation_y_animation_by_value;
+        } else {
+          self.translation_y_animation_running = false;
+          self.y = self.translation_y_animation_to_value;
+        }
+      } else {
+        if self.y > self.translation_y_animation_to_value {
+          self.y -= self.translation_y_animation_by_value;
+        } else {
+          self.translation_y_animation_running = false;
+          self.y = self.translation_y_animation_to_value;
+        }
+      }
+    }
+
+    if self.rotation_animation_running == true {
+      if self.rotation < self.rotation_animation_to_value {
+        self.rotation += self.rotation_animation_by_value;
+      } else {
+        self.rotation_animation_running = false;
+        self.rotation = self.rotation_animation_to_value;
+      }
+    }
+
+    if self.scale_animation_running == true {
+      if self.scale_x < self.scale_animation_to_value {
+        self.scale_x += self.scale_animation_by_value;
+        self.scale_y += self.scale_animation_by_value;
+      } else {
+        self.scale_animation_running = false;
+        self.scale_x = self.scale_animation_to_value;
+        self.scale_y = self.scale_animation_to_value;
+      }
+    }
+
+    if self.translation_x_animation_running == true || self.translation_y_animation_running == true
+        || self.rotation_animation_running == true ||
+        self.scale_animation_running == true {
+      self.animated = true;
+    } else {
+      self.animated = false;
+    }
+
+    for sub_actor in self.sub_actor_list.iter_mut() {
+      sub_actor.animate();
+    }
+  }
+
+  pub fn apply_translation_x_animation(&mut self, from_value: i32, to_value: i32, by_value: i32) {
+    self.translation_x_animation_running = true;
+    self.translation_x_animation_from_value = from_value;
+    self.translation_x_animation_to_value = to_value;
+    self.translation_x_animation_by_value = by_value;
+    self.x = self.translation_x_animation_from_value;
+  }
+ 
+  pub fn apply_translation_y_animation(&mut self, from_value: i32, to_value: i32, by_value: i32) {
+    self.translation_y_animation_running = true;
+    self.translation_y_animation_from_value = from_value;
+    self.translation_y_animation_to_value = to_value;
+    self.translation_y_animation_by_value = by_value;
+    self.y = self.translation_y_animation_from_value;
+  }
+
+  pub fn apply_rotation_animation(&mut self, from_value: i32, to_value: i32, by_value: i32) {
+    self.rotation_animation_running = true;
+    self.rotation_animation_from_value = from_value;
+    self.rotation_animation_to_value = to_value;
+    self.rotation_animation_by_value = by_value;
+    self.rotation = self.rotation_animation_from_value;
+  }
+
+  pub fn apply_scale_animation(&mut self, from_value: f32, to_value: f32, by_value: f32) {
+    self.scale_animation_running = true;
+    self.scale_animation_from_value = from_value;
+    self.scale_animation_to_value = to_value;
+    self.scale_animation_by_value = by_value;
+    self.scale_x = self.scale_animation_from_value;
+    self.scale_y = self.scale_animation_from_value;
+  }
+
   pub fn render(&self, shader_program: GLuint, actor: Option<&Actor>) {
     let mut x : f32 = self.x as f32;
     let mut y : f32 = self.y as f32;
@@ -132,8 +271,8 @@ impl Actor {
         Matrix4::<f32>::from_translation(Vector3::new(self.width as f32 * self.anchor_x,
         self.height as f32 * self.anchor_y, 0.0));
 
-    if self.rotation != 0.0 {
-      transform = transform * Matrix4::<f32>::from_angle_z(Deg(self.rotation));
+    if self.rotation != 0 {
+      transform = transform * Matrix4::<f32>::from_angle_z(Deg(self.rotation as f32));
     }
 
     transform = transform * Matrix4::from_nonuniform_scale(self.scale_x,
