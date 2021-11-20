@@ -32,9 +32,15 @@ fn main() {
   play.initialize();
   let mut stage = Stage::new(1920, 1080);
   let mut actor = Actor::new(100, 100);
-  actor.x = 500;
+  actor.x = 700;
   actor.y = 100;
+
+  let mut actor_2 = Actor::new(300, 300);
+  actor_2.x = 0;
+  actor_2.y = 0;
+
   stage.add_actor(actor);
+  stage.add_actor(actor_2);
   play.add_stage(stage);
 
   while !window.should_close() {
