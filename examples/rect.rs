@@ -31,13 +31,14 @@ fn main() {
   let mut play = Play::new(1920, 1080);
   play.initialize();
   let mut stage = Stage::new(1920, 1080);
-  let mut actor = Actor::new(100, 100);
+
+  let mut actor = Actor::new("actor_1".to_string(), 100, 100);
   actor.x = 700;
   actor.y = 100;
   actor.rotation = 45.0;
   actor.set_color(1.0, 0.0, 0.0);
 
-  let mut actor_2 = Actor::new(100, 100);
+  let mut actor_2 = play.new_actor("actor_2".to_string(), 100, 100);
   actor_2.x = 0;
   actor_2.y = 0;
   actor_2.scale_x = 1.5;

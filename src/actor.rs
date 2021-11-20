@@ -18,6 +18,7 @@ macro_rules! c_str {
 }
 
 pub struct Actor {
+  pub name: String,
   pub x: i32,
   pub y: i32,
   pub width: u32,
@@ -35,8 +36,9 @@ pub struct Actor {
 }
 
 impl Actor {
-  pub fn new(w: u32, h: u32) -> Self {
+  pub fn new(name: String, w: u32, h: u32) -> Self {
     Actor {
+      name: name,
       x: 0,
       y: 0,
       width: w,

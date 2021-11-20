@@ -22,7 +22,7 @@ impl Stage {
       height: 0,
       viewport_width: vw,
       viewport_height: vh,
-      stage_actor: Actor::new(vw, vh),
+      stage_actor: Actor::new("stage_actor".to_string(), vw, vh),
     }
   }
 

@@ -10,6 +10,7 @@ use std::ptr;
 use std::str;
 
 use crate::stage::Stage;
+use crate::actor::Actor;
 
 const VERTEX_SHADER_SOURCE: &str = r#"
     #version 330 core
@@ -52,6 +53,10 @@ impl Play {
 pub fn initialize(&mut self) {
   self.compile_shader();
 }
+
+  pub fn new_actor(&self, name: String, w: u32, h: u32) -> Actor {
+    Actor::new(name, w, h)
+  }
 
  // https://github.com/bwasty/learn-opengl-rs/blob/master/src/_1_getting_started/_2_1_hello_triangle.rs
  fn compile_shader(&mut self) {
