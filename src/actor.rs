@@ -155,7 +155,7 @@ impl Actor {
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
 
         match image::open(&Path::new(&self.image_path)) {
-          Ok(mut img) => {
+          Ok(img) => {
             let data = img.raw_pixels();
             gl::TexImage2D(gl::TEXTURE_2D,
                       0,
