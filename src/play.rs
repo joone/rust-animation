@@ -14,10 +14,15 @@ use crate::actor::Actor;
 
 const VERTEX_SHADER_SOURCE: &str = r#"
     #version 330 core
-    layout (location = 0) in vec4 a_position;
+    layout(location = 0) in vec4 a_position;
+    layout(location = 1) in vec2 a_texCoord;
+
     uniform mat4 transform;
+    out vec2 v_texCoord;
+
     void main() {
       gl_Position = transform * a_position;
+      v_texCoord = a_texCoord;
     }
 "#;
 
@@ -26,8 +31,15 @@ const FRAGMENT_SHADER_SOURCE: &str = r#"
     out vec4 outColor;
     uniform vec4 color;
 
+    in vec2 v_texCoord;
+    uniform sampler2D s_texture;
+
     void main() {
-       outColor = color;
+      if (v_texCoord[0] == 0.0f)
+        outColor = color;
+      else {
+        outColor = texture(s_texture, v_texCoord);
+      }
     }
 "#;
 

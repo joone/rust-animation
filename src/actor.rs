@@ -3,13 +3,17 @@
 // found in the LICENSE file.
 
 extern crate gl;
+extern crate image;
 
 use self::gl::types::*;
 use cgmath::{Matrix, Matrix4, Deg, SquareMatrix, Vector3};
 use std::ffi::CStr;
 use std::mem;
 use std::os::raw::c_void;
+use std::path::Path;
 use std::ptr;
+
+use crate::actor::image::GenericImage;
 
 macro_rules! c_str {
   ($literal:expr) => {
@@ -31,8 +35,10 @@ pub struct Actor {
   color: [f32; 3],
   viewport_width: u32,
   viewport_height: u32,
+  pub image_path: String,
   pub sub_actor_list: Vec<Actor>,
   vertex_array_obj: gl::types::GLuint,
+  texture: gl::types::GLuint,
   pub animated: bool,
   translation_x_animation_running: bool,
   translation_x_animation_from_value: i32,
@@ -68,8 +74,10 @@ impl Actor {
       color: [1.0, 1.0, 1.0],
       viewport_width: 0,
       viewport_height: 0,
+      image_path: "".to_string(),
       sub_actor_list: Vec::new(),
       vertex_array_obj: gl::types::GLuint::default(),
+      texture: gl::types::GLuint::default(),
       animated: false,
       translation_x_animation_running: false,
       translation_x_animation_from_value: 0,
@@ -93,13 +101,15 @@ impl Actor {
   pub fn init_gl(&mut self, viewport_width: u32, viewport_height: u32) {
     self.viewport_width = viewport_width;
     self.viewport_height = viewport_height;
+
     unsafe {
       let (mut vertex_array_buffer, mut elem_array_buffer) = (0, 0);
-      let vertices: [f32; 12] = [
-          self.width as f32, self.height as f32, 0.0,  // top right
-          self.width as f32, 0.0,                0.0,  // bottom right
-          0.0,               0.0,                0.0,  // bottom left
-          0.0,               self.height as f32, 0.0   // top left
+      let vertices: [f32; 20] = [
+          // positions                   texture coords
+          self.width as f32, self.height as f32, 0.0,  1.0, 1.0, // top right
+          self.width as f32, 0.0,                0.0,  1.0, 0.0, // bottom right
+          0.0,               0.0,                0.0,  0.0, 0.0, // bottom left
+          0.0,               self.height as f32, 0.0,  0.0, 1.0  // top left
       ];
       let indices = [
           0, 1, 3,  // first Triangle
@@ -124,10 +134,40 @@ impl Actor {
                     &indices[0] as *const i32 as *const c_void,
                     gl::STATIC_DRAW);
 
-      let stride = 3 * mem::size_of::<GLfloat>() as GLsizei;
+      let stride = 5 * mem::size_of::<GLfloat>() as GLsizei;
       // position attribute
       gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
       gl::EnableVertexAttribArray(0);
+
+      if self.image_path.len() > 0 {
+        // texture coord attribute
+        gl::VertexAttribPointer(1, 2, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
+        gl::EnableVertexAttribArray(1);
+
+        // Create a texture
+        gl::GenTextures(1, &mut self.texture);
+        gl::BindTexture(gl::TEXTURE_2D, self.texture);
+        // set the texture wrapping parameters
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
+        // set texture filtering parameters
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+
+        let img = image::open(&Path::new(&self.image_path)).expect("Failed to load texture");
+        let data = img.raw_pixels();
+
+        gl::TexImage2D(gl::TEXTURE_2D,
+                      0,
+                      gl::RGB as i32,
+                      img.width() as i32,
+                      img.height() as i32,
+                      0,
+                      gl::RGB,
+                      gl::UNSIGNED_BYTE,
+                      &data[0] as *const u8 as *const c_void);
+        gl::GenerateMipmap(gl::TEXTURE_2D);
+      }
     }
   }
 
@@ -135,6 +175,10 @@ impl Actor {
     self.color[0] = r;
     self.color[1] = g;
     self.color[2] = b;
+  }
+
+  pub fn set_image(&mut self, path: String) {
+    self.image_path = path;
   }
 
   pub fn animate(&mut self) {
@@ -290,6 +334,10 @@ impl Actor {
 
       gl::Uniform4f(loc_color, self.color[0], self.color[1], self.color[2], 1.0);
       gl::UniformMatrix4fv(loc_transform, 1, gl::FALSE, transform.as_ptr());
+
+      if self.image_path.len() > 0 {
+        gl::BindTexture(gl::TEXTURE_2D, self.texture);
+      }
 
       gl::BindVertexArray(self.vertex_array_obj);
       gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
