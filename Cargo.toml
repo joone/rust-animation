@@ -1,7 +1,13 @@
 [package]
 name = "rust-animation"
+description = "OpenGL based Animation Toolkit written in Rust"
 version = "0.1.0"
 edition = "2021"
+repository = "https://github.com/joone/rust-animation"
+keywords = ["bsd", "opengl", "animation", "api"]
+license = "BSD-3-Clause"
+authors= ["Joone Hur <joone.hur@gmail.com>"]
+exclude = [".gitignore", ".github"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
