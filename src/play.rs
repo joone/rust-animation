@@ -49,7 +49,7 @@ pub fn render(name:String) {
 
 pub struct Play {
   name : String,
-  stage_list: Vec<Stage>,
+  pub stage_list: Vec<Stage>,
   shader_program: GLuint,
 }
 
