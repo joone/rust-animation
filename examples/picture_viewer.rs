@@ -63,6 +63,7 @@ pub struct PictureBrowser {
   image_loaded: bool,
   file_list: Vec<String>,
   cur_file_index: usize,
+  main_stage: usize,
 }
 
 impl PictureBrowser {
@@ -71,13 +72,14 @@ impl PictureBrowser {
       image_loaded: false,
       play: Play::new("Picture Browser".to_string()),
       file_list: Vec::new(),
-      cur_file_index: 0
+      cur_file_index: 0,
+      main_stage: 0
     }
   }
   pub fn initialize(&mut self) {
     self.play.initialize();
     let stage = Stage::new(1920, 1080);
-    self.play.add_stage(stage);
+    self.main_stage = self.play.add_stage(stage);
   }
 
   pub fn load_image_list(&mut self) {
@@ -101,7 +103,7 @@ impl PictureBrowser {
         let col = self.cur_file_index as i32 / 5;
         actor.y =  col * 320;
         actor.set_image(self.file_list[self.cur_file_index].to_string());
-        self.play.stage_list[0].add_actor(actor);
+        self.play.stage_list[self.main_stage].add_actor(actor);
         println!("load a texture {}", &self.file_list[self.cur_file_index].to_string());
         self.cur_file_index += 1;
     } else {

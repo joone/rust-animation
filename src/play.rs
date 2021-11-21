@@ -123,9 +123,11 @@ pub fn initialize(&mut self) {
     }
   }
 
-  pub fn add_stage(&mut self,  mut stage: Stage) {
+  pub fn add_stage(&mut self,  mut stage: Stage) -> usize {
     stage.initialize();
     self.stage_list.push(stage);
+
+    return self.stage_list.len() - 1
   }
 
   pub fn render(&mut self) {

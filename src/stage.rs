@@ -35,8 +35,10 @@ impl Stage {
     self.stage_actor.render(shader_program, None);
   }
 
-  pub fn add_actor(&mut self, mut actor: Actor) {
+  pub fn add_actor(&mut self, mut actor: Actor) -> usize {
     actor.init_gl(self.viewport_width, self.viewport_height);
     self.stage_actor.sub_actor_list.push(actor);
+
+    self.stage_actor.sub_actor_list.len() - 1
   }
 }
