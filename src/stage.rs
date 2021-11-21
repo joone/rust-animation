@@ -12,7 +12,7 @@ pub struct Stage {
   height: u32,
   viewport_width: u32,
   viewport_height: u32,
-  stage_actor: Actor,
+  pub stage_actor: Actor,
 }
 
 impl Stage {
