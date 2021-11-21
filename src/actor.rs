@@ -154,10 +154,10 @@ impl Actor {
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
 
-        let img = image::open(&Path::new(&self.image_path)).expect("Failed to load texture");
-        let data = img.raw_pixels();
-
-        gl::TexImage2D(gl::TEXTURE_2D,
+        match image::open(&Path::new(&self.image_path)) {
+          Ok(mut img) => {
+            let data = img.raw_pixels();
+            gl::TexImage2D(gl::TEXTURE_2D,
                       0,
                       gl::RGB as i32,
                       img.width() as i32,
@@ -166,7 +166,11 @@ impl Actor {
                       gl::RGB,
                       gl::UNSIGNED_BYTE,
                       &data[0] as *const u8 as *const c_void);
-        gl::GenerateMipmap(gl::TEXTURE_2D);
+            gl::GenerateMipmap(gl::TEXTURE_2D);
+          }
+          Err(err) => println!("Fail to load a image")
+        }
+
       }
     }
   }
