@@ -66,6 +66,7 @@ pub struct PictureBrowser {
   file_list: Vec<String>,
   cur_file_index: usize,
   main_stage: usize,
+  splash_stage: usize,
   cur_col: u32,
   cur_row: u32,
   num_of_col: u32,
@@ -81,6 +82,7 @@ impl PictureBrowser {
       file_list: Vec::new(),
       cur_file_index: 0,
       main_stage: 0,
+      splash_stage: 0,
       cur_col: 0,
       cur_row: 0,
       num_of_col: 0,
@@ -90,6 +92,11 @@ impl PictureBrowser {
   }
   pub fn initialize(&mut self) {
     self.play.initialize();
+    let mut splash_stage = Stage::new(1920, 1080);
+    splash_stage.set_visible(true);
+    splash_stage.stage_actor.set_image("examples/splash.png".to_string());
+    self.splash_stage =self.play.add_stage(splash_stage);
+
     let stage = Stage::new(1920, 1080);
     self.main_stage = self.play.add_stage(stage);
   }
@@ -140,9 +147,9 @@ impl PictureBrowser {
   }
 
   pub fn render(&mut self) {
-    if self.image_loaded == false {
+    /*if self.image_loaded == false {
       return;
-    }
+    }*/
 
     self.play.render();
   }
@@ -226,9 +233,10 @@ impl PictureBrowser {
 
   pub fn render_splash_screen(&mut self) {
     if self.image_loaded == true {
+      self.play.stage_list[self.splash_stage].set_visible(false);
+      self.play.stage_list[self.main_stage].set_visible(true);
       return;
     }
-
     self.load_images();
   }
 }

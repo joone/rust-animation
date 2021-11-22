@@ -300,10 +300,6 @@ impl Actor {
       y += main_actor.y as f32;
     }
 
-    for sub_actor in self.sub_actor_list.iter() {
-      sub_actor.render(shader_program, Some(&self));
-    }
-
     let mut transform: Matrix4<f32> = Matrix4::identity();
 
     // Apply orthographic projection matrix: left, right, bottom, top, near, far
@@ -346,6 +342,10 @@ impl Actor {
 
       gl::BindVertexArray(self.vertex_array_obj);
       gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
+    }
+
+    for sub_actor in self.sub_actor_list.iter() {
+      sub_actor.render(shader_program, Some(&self));
     }
   }
 

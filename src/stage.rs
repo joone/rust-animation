@@ -12,6 +12,7 @@ pub struct Stage {
   height: u32,
   viewport_width: u32,
   viewport_height: u32,
+  visible: bool,
   pub stage_actor: Actor,
 }
 
@@ -22,15 +23,23 @@ impl Stage {
       height: 0,
       viewport_width: vw,
       viewport_height: vh,
+      visible: false,
       stage_actor: Actor::new("stage_actor".to_string(), vw, vh),
     }
   }
 
   pub fn initialize(&mut self) {
+    self.stage_actor.init_gl(self.viewport_width, self.viewport_height);
+  }
 
+  pub fn set_visible(&mut self, visible: bool) {
+    self.visible = visible;
   }
 
   pub fn render(&mut self, shader_program: GLuint) {
+    if !self.visible {
+      return
+    }
     self.stage_actor.animate();
     self.stage_actor.render(shader_program, None);
   }
