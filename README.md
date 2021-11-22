@@ -1,7 +1,29 @@
-# rust-animation
-OpenGL based Animation Toolkit written in Rust
+# Introduction
+rust-animation is an OpenGL based graphics library for creating hardware-accelerated user interfaces written in Rust.
+It allows us to implement a simple animated UI for embedded devices.
 
-# examples
+# Installation
+rust-animation is written in Rust so you need to install Rust:
+* https://www.rust-lang.org/tools/install
+
+If you build rust-animation in Windows, you have to install cmake first.
+
+Note: rust-animation is tested in Ubuntu 20.04, Windows10, and Mac OSX.
+
+There are several examples so you can build them as follows:
+
+```
+$ cargo build --example ani
+$ cargo build --example picuture_viewer
+```
+
+# Run
+```
+$ target/debug/examples/ariel
+$ target/debug/examples/picture_viewer
+```
+
+# Code examples
 ```
   let mut play = Play::new("Animation test".to_string());
   play.initialize();
@@ -15,7 +37,7 @@ OpenGL based Animation Toolkit written in Rust
   actor.apply_scale_animation(1.0, 2.0, 0.01);
   actor.apply_translation_x_animation(700, 1000, 5);
 
-  // Another way to create a Actor
+  // Another way to create an Actor
   let mut actor_2 = play.new_actor("actor_2".to_string(), 100, 100);
   actor_2.x = 0;
   actor_2.y = 0;
