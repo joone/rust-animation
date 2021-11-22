@@ -156,14 +156,15 @@ impl Actor {
 
         match image::open(&Path::new(&self.image_path)) {
           Ok(img) => {
-            let data = img.raw_pixels();
+            let to_rgba = img.to_rgba();
+            let data = to_rgba.into_vec();
             gl::TexImage2D(gl::TEXTURE_2D,
                       0,
                       gl::RGB as i32,
                       img.width() as i32,
                       img.height() as i32,
                       0,
-                      gl::RGB,
+                      gl::RGBA,
                       gl::UNSIGNED_BYTE,
                       &data[0] as *const u8 as *const c_void);
             gl::GenerateMipmap(gl::TEXTURE_2D);
