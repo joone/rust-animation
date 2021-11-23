@@ -19,7 +19,7 @@ $ cargo build --example picture_viewer
 
 # Run
 ```
-$ target/debug/examples/ariel
+$ target/debug/examples/ani
 $ target/debug/examples/picture_viewer
 ```
 
