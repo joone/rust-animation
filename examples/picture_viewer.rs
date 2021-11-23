@@ -13,10 +13,12 @@ use std::fs;
 use std::io::Cursor;
 use std::path::Path;
 use std::sync::mpsc;
+use std::boxed::Box;
 
 use rust_animation::play::Play;
 use rust_animation::stage::Stage;
 use rust_animation::actor::Actor;
+use rust_animation::actor::EventHandler;
 
 type ResultUrl<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
@@ -60,21 +62,41 @@ fn download_images() -> Result<(), Error> {
 const IMAGE_WIDTH: u32 = 400;
 const IMAGE_HEIGHT: u32 = 225;
 
-pub struct PictureBrowser {
-  play: Play,
+pub struct ActorEvent {
+  name: String,
+}
+
+impl ActorEvent {
+ pub fn new() -> Self {
+    ActorEvent {
+      name: "actor_event".to_string()
+    }
+ }
+}
+
+impl EventHandler for ActorEvent {
+  fn key_focus_in(&mut self, val: u32, actor: &mut Actor) {
+     println!("key_focus_in: {}  {}  {}", self.name, val, actor.name);
+     actor.apply_scale_animation(1.0, 1.15, 0.01);
+  }
+
+  fn key_focus_out(&mut self, val: u32, actor: &mut Actor) {
+    println!("key_focus_out: {}  {}  {}", self.name, val, actor.name);
+    actor.scale_x = 1.0;
+    actor.scale_y = 1.0;
+  }
+}
+
+pub struct PictureBrowser<'a> {
+  play: Play<'a>,
   image_loaded: bool,
   file_list: Vec<String>,
   cur_file_index: usize,
   main_stage: usize,
   splash_stage: usize,
-  cur_col: u32,
-  cur_row: u32,
-  num_of_col: u32,
-  num_of_row: u32,
-  sel_actor_index: usize
 }
 
-impl PictureBrowser {
+impl<'a> PictureBrowser<'a> {
   pub fn new(w: u32, h: u32) -> Self {
     PictureBrowser {
       image_loaded: false,
@@ -82,22 +104,17 @@ impl PictureBrowser {
       file_list: Vec::new(),
       cur_file_index: 0,
       main_stage: 0,
-      splash_stage: 0,
-      cur_col: 0,
-      cur_row: 0,
-      num_of_col: 0,
-      num_of_row: 0,
-      sel_actor_index: 0,
+      splash_stage: 0
     }
   }
   pub fn initialize(&mut self) {
     self.play.initialize();
-    let mut splash_stage = Stage::new(1920, 1080);
+    let mut splash_stage = Stage::new(1920, 1080, Box::new(ActorEvent::new()));
     splash_stage.set_visible(true);
     splash_stage.stage_actor.set_image("examples/splash.png".to_string());
     self.splash_stage =self.play.add_stage(splash_stage);
 
-    let stage = Stage::new(1920, 1080);
+    let stage = Stage::new(1920, 1080, Box::new(ActorEvent::new()));
     self.main_stage = self.play.add_stage(stage);
   }
 
@@ -111,24 +128,15 @@ impl PictureBrowser {
     }
   }
 
-  pub fn scale_up_first_selected_actor(&mut self, col :u32, row: u32) {
-    // Set the initial selected actor.
-    self.cur_col = col;
-    self.cur_row = row;
-
-    // Count the number of rows and columns using the number of video images.
-    self.num_of_col = (self.play.stage_list[self.main_stage].stage_actor.width as f32  / IMAGE_WIDTH as f32) as u32 + 1;
-    // Scale up the first selected actor.
-    self.apply_selection_animation();
-  }
-
   pub fn load_images(&mut self) {
     if self.file_list.len() == 0 {
       return;
     }
 
     if self.cur_file_index < self.file_list.len() {
-        let mut actor = Actor::new("image".to_string(), IMAGE_WIDTH, IMAGE_HEIGHT);
+        let name = format!("image_{}", self.cur_file_index);
+        let mut actor = Actor::new(name.to_string(), IMAGE_WIDTH, IMAGE_HEIGHT,
+            Box::new(ActorEvent::new()));
         actor.x = self.cur_file_index as i32 % 5 * IMAGE_WIDTH as i32;
         let col = self.cur_file_index as i32 / 5;
         actor.y =  col * IMAGE_HEIGHT as i32;
@@ -139,96 +147,14 @@ impl PictureBrowser {
     } else {
       self.image_loaded = true;
     }
-
-    if self.cur_file_index == self.file_list.len() {
-      // Select the movie in column 2 and row 1.
-       self.scale_up_first_selected_actor(2, 1);
-    }
   }
 
   pub fn render(&mut self) {
-    /*if self.image_loaded == false {
-      return;
-    }*/
-
     self.play.render();
   }
 
   pub fn handle_input(&mut self, key: glfw::Key) {
-    // Do not handle events during the animation.
-    if  self.play.stage_list[self.main_stage].stage_actor.animated == true {
-       return;
-    }
-
-    let image_length = self.play.stage_list[self.main_stage].stage_actor.sub_actor_list.len();
- 
-      // Count the number of rows and columns using the number of video images.
-    self.num_of_col = (self.play.stage_list[self.main_stage].stage_actor.width as f32 / IMAGE_WIDTH as f32) as u32 + 1;
-    self.num_of_row = image_length as u32 / self.num_of_col;
-
-    let cur_row = self.cur_row;
-    let cur_col = self.cur_col;
-    let pre_sel_actor = self.sel_actor_index;
-
-    if key == Key::Up {
-      if self.cur_row < self.num_of_row {
-        self.cur_row += 1;
-        self.apply_selection_animation();
-      }
-    } else if key == Key::Down {
-      if self.cur_row > 0 {
-        self.cur_row -= 1;
-        self.apply_selection_animation();
-      }
-    } else if key == Key::Left {
-      if self.cur_col > 0 {
-        self.cur_col -= 1;
-        self.apply_selection_animation();
-      }
-    } else if key == Key::Right {
-      if self.cur_col < self.num_of_col - 1 {
-        self.cur_col += 1;
-        self.apply_selection_animation();
-      }
-    } /*else if key == Key::Enter || key == Key::Space {
-      self.apply_genie_effect_to_view_actor();
-    }*/
-
-    if cur_row != self.cur_row || cur_col != self.cur_col {
-    
-      // Scroll the main_stage
-      let stage_y = self.play.stage_list[self.main_stage].stage_actor.y;
-      if key == Key::Down {
-         self.play.stage_list[self.main_stage].stage_actor.apply_translation_y_animation(stage_y, 
-             stage_y + IMAGE_HEIGHT as i32, 9);
-      } else if key == Key::Up {
-        self.play.stage_list[self.main_stage].stage_actor.apply_translation_y_animation(stage_y,
-            stage_y - IMAGE_HEIGHT as i32, 9);
-      }
-      println!("scroll y={}", stage_y);
-    }
-
-    if pre_sel_actor != self.sel_actor_index {
-      self.play.stage_list[self.main_stage].stage_actor.sub_actor_list[pre_sel_actor].scale_x = 1.0;
-         self.play.stage_list[self.main_stage].stage_actor.sub_actor_list[pre_sel_actor].scale_y = 1.0;
-    }
-  }
-
-  fn apply_selection_animation(&mut self) {
-     let mut i = (self.num_of_col * self.cur_row + self.cur_col) as usize;
-     self.sel_actor_index = i;
-     // if the i is bigger than the number of actor_list, select the last index and
-     // update self.cur_col and self.cur_row
-     let image_length = self.play.stage_list[self.main_stage].stage_actor.sub_actor_list.len();
-     if i >= image_length {
-        i = image_length - 1;
-        let row = image_length as u32 / self.num_of_col;
-        let col = image_length as u32 % self.num_of_col;
-        self.cur_row = row ;
-        self.cur_col = col - 1;
-      }
-      self.play.stage_list[self.main_stage].stage_actor.sub_actor_list[i].apply_scale_animation(1.0, 1.15, 0.01);
-      //println!("sel actor =  {} {}", self.actor_list[i].x, self.actor_list[i].y);
+    self.play.handle_input(key as usize);
   }
 
   pub fn render_splash_screen(&mut self) {

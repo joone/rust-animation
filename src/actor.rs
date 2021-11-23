@@ -21,10 +21,11 @@ macro_rules! c_str {
   }
 }
 
-pub struct Actor {
+pub struct Actor<'a> {
   pub name: String,
   pub x: i32,
   pub y: i32,
+  pub z: f32,
   pub width: u32,
   pub height: u32,
   pub anchor_x: f32,
@@ -36,7 +37,7 @@ pub struct Actor {
   viewport_width: u32,
   viewport_height: u32,
   pub image_path: String,
-  pub sub_actor_list: Vec<Actor>,
+  pub sub_actor_list: Vec<Actor<'a>>,
   vertex_array_obj: gl::types::GLuint,
   texture: gl::types::GLuint,
   pub animated: bool,
@@ -55,15 +56,24 @@ pub struct Actor {
   rotation_animation_running: bool,
   rotation_animation_from_value: i32,
   rotation_animation_to_value: i32,
-  rotation_animation_by_value: i32
+  rotation_animation_by_value: i32,
+  event_handelr: Box<dyn EventHandler + 'a>,
+  focused_sub_actor: usize,
+  focused: bool
 }
 
-impl Actor {
-  pub fn new(name: String, w: u32, h: u32) -> Self {
+pub trait EventHandler {
+  fn key_focus_in(&mut self, val: u32, actor: &mut Actor);
+  fn key_focus_out(&mut self, val: u32, actor: &mut Actor);
+}
+
+impl<'a> Actor<'a> {
+  pub fn new(name: String, w: u32, h: u32, event_handler: Box<dyn EventHandler + 'a>) -> Self {
     Actor {
       name: name,
       x: 0,
       y: 0,
+      z: 0.0,
       width: w,
       height: h,
       anchor_x: 0.5,
@@ -94,7 +104,10 @@ impl Actor {
       rotation_animation_running: false,
       rotation_animation_from_value: 0,
       rotation_animation_to_value: 0,
-      rotation_animation_by_value: 0
+      rotation_animation_by_value: 0,
+      event_handelr: event_handler,
+      focused_sub_actor: 0,
+      focused: false
     }
   }
 
@@ -185,6 +198,11 @@ impl Actor {
   pub fn set_image(&mut self, path: String) {
     self.image_path = path;
   }
+
+  /*pub fn update(&mut self) {
+    // Sort sub actors by z-axis
+    self.sub_actor_list.sort_by(|a, b| a.z.partial_cmp(&b.z).unwrap());
+  }*/
 
   pub fn animate(&mut self) {
     if self.translation_x_animation_running == true {
@@ -291,6 +309,40 @@ impl Actor {
     self.scale_y = self.scale_animation_from_value;
   }
 
+  pub fn handle_input(&mut self, key: usize) {
+    if self.sub_actor_list.len() <= 0 {
+        return;
+    }
+
+    if key == 262 {     // right cursor
+      if self.focused_sub_actor < self.sub_actor_list.len() - 1 {
+        let prev_focused_sub_actor = self.focused_sub_actor;  
+        self.focused_sub_actor += 1;
+
+        self.sub_actor_list[self.focused_sub_actor].focused = true;
+        self.event_handelr.key_focus_in(key as u32, 
+           &mut self.sub_actor_list[self.focused_sub_actor]);
+
+        self.sub_actor_list[prev_focused_sub_actor].focused = false;
+        self.event_handelr.key_focus_out(key as u32, 
+           &mut self.sub_actor_list[prev_focused_sub_actor]);
+      }
+    } else if key == 263 { // left cursor 
+      if self.focused_sub_actor > 0 {
+        let prev_focused_sub_actor = self.focused_sub_actor;
+        self.focused_sub_actor -= 1;
+
+        self.sub_actor_list[self.focused_sub_actor].focused = true;
+        self.event_handelr.key_focus_in(key as u32, 
+           &mut self.sub_actor_list[self.focused_sub_actor]);
+
+        self.sub_actor_list[prev_focused_sub_actor].focused = false;
+        self.event_handelr.key_focus_out(key as u32, 
+           &mut self.sub_actor_list[prev_focused_sub_actor]);
+      }
+    }
+  }
+
   pub fn render(&self, shader_program: GLuint, actor: Option<&Actor>) {
     let mut x : f32 = self.x as f32;
     let mut y : f32 = self.y as f32;
@@ -304,11 +356,12 @@ impl Actor {
 
     // Apply orthographic projection matrix: left, right, bottom, top, near, far
     transform = transform * cgmath::ortho(0.0, self.viewport_width as f32,
-        self.viewport_height as f32, 0.0, 0.5, -0.5);
+        self.viewport_height as f32, 0.0, 1.0, -1.0);
 
+    //println!("{} {}", self.name, self.z);
     transform = transform *
         Matrix4::<f32>::from_translation(Vector3::new(
-        x as f32, y as f32, 0.0));
+        x as f32, y as f32, self.z));
 
     // Handle rotation and scale.
     // Move back to the original position.
@@ -345,11 +398,18 @@ impl Actor {
     }
 
     for sub_actor in self.sub_actor_list.iter() {
-      sub_actor.render(shader_program, Some(&self));
+      if sub_actor.focused == false {
+        sub_actor.render(shader_program, Some(&self));
+      }
+    }
+
+    // render the focused sub_actor at the end.
+    if self.sub_actor_list.len() > 0 {
+      self.sub_actor_list[self.focused_sub_actor].render(shader_program, Some(&self));
     }
   }
 
-  pub fn add_sub_actor(&mut self, actor: Actor) {
+  pub fn add_sub_actor(&mut self, actor: Actor<'a>) {
     self.sub_actor_list.push(actor);
   }
 }

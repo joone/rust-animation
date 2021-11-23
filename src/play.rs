@@ -11,6 +11,7 @@ use std::str;
 
 use crate::stage::Stage;
 use crate::actor::Actor;
+use crate::actor::EventHandler;
 
 const VERTEX_SHADER_SOURCE: &str = r#"
     #version 330 core
@@ -47,13 +48,13 @@ pub fn render(name:String) {
    println!("Render {}", name);
 }
 
-pub struct Play {
+pub struct Play<'a>  {
   name : String,
-  pub stage_list: Vec<Stage>,
+  pub stage_list: Vec<Stage<'a>>,
   shader_program: GLuint,
 }
 
-impl Play {
+impl<'a> Play<'a>  {
   pub fn new(name: String) -> Self {
     Play {
       name : name,
@@ -66,9 +67,9 @@ pub fn initialize(&mut self) {
   self.compile_shader();
 }
 
-  pub fn new_actor(&self, name: String, w: u32, h: u32) -> Actor {
-    Actor::new(name, w, h)
-  }
+/*pub fn new_actor(&self, name: String, w: u32, h: u32, evet_handler: Box<&'a mut (dyn EventHandler + 'a)>) -> Actor {
+  Actor::new(name, w, h, evet_handler)
+}*/
 
  // https://github.com/bwasty/learn-opengl-rs/blob/master/src/_1_getting_started/_2_1_hello_triangle.rs
  fn compile_shader(&mut self) {
@@ -123,11 +124,18 @@ pub fn initialize(&mut self) {
     }
   }
 
-  pub fn add_stage(&mut self,  mut stage: Stage) -> usize {
+  pub fn add_stage(&mut self,  mut stage: Stage<'a>) -> usize {
     stage.initialize();
     self.stage_list.push(stage);
 
     return self.stage_list.len() - 1
+  }
+
+  pub fn handle_input(&mut self, key: usize) {
+    // println!("key: {}", key);
+    for stage in self.stage_list.iter_mut() {
+        stage.handle_input(key);
+    }
   }
 
   pub fn render(&mut self) {
