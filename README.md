@@ -14,7 +14,7 @@ There are several examples so you can build them as follows:
 
 ```
 $ cargo build --example ani
-$ cargo build --example picuture_viewer
+$ cargo build --example picture_viewer
 ```
 
 # Run
