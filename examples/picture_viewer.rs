@@ -109,12 +109,12 @@ impl<'a> PictureBrowser<'a> {
   }
   pub fn initialize(&mut self) {
     self.play.initialize();
-    let mut splash_stage = Stage::new(1920, 1080, Box::new(ActorEvent::new()));
+    let mut splash_stage = Stage::new(1920, 1080, Some(Box::new(ActorEvent::new())));
     splash_stage.set_visible(true);
     splash_stage.stage_actor.set_image("examples/splash.png".to_string());
     self.splash_stage =self.play.add_stage(splash_stage);
 
-    let stage = Stage::new(1920, 1080, Box::new(ActorEvent::new()));
+    let stage = Stage::new(1920, 1080, Some(Box::new(ActorEvent::new())));
     self.main_stage = self.play.add_stage(stage);
   }
 
@@ -136,7 +136,7 @@ impl<'a> PictureBrowser<'a> {
     if self.cur_file_index < self.file_list.len() {
         let name = format!("image_{}", self.cur_file_index);
         let mut actor = Actor::new(name.to_string(), IMAGE_WIDTH, IMAGE_HEIGHT,
-            Box::new(ActorEvent::new()));
+            Some(Box::new(ActorEvent::new())));
         actor.x = self.cur_file_index as i32 % 5 * IMAGE_WIDTH as i32;
         let col = self.cur_file_index as i32 / 5;
         actor.y =  col * IMAGE_HEIGHT as i32;

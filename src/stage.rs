@@ -18,7 +18,7 @@ pub struct Stage<'a> {
 }
 
 impl<'a>  Stage<'a> {
-  pub fn new(vw: u32, vh: u32, event_handler:  Box<dyn EventHandler + 'a>) -> Self {
+  pub fn new(vw: u32, vh: u32, event_handler:  Option<Box<dyn EventHandler + 'a>>) -> Self {
     Stage {
       width: 0,
       height: 0,

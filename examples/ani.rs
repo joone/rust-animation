@@ -30,19 +30,20 @@ fn main() {
 
   let mut play = Play::new("Animation test".to_string());
   play.initialize();
-  let mut stage = Stage::new(1920, 1080);
+  let mut stage = Stage::new(1920, 1080, None);
+  stage.set_visible(true);
 
-  let mut actor = Actor::new("actor_1".to_string(), 400, 225);
+  let mut actor = Actor::new("actor_1".to_string(), 400, 225, None);
   actor.x = 100;
   actor.y = 100;
   actor.rotation = 5;
-  actor.set_image("examples/images/movie.jpg".to_string());
+  actor.set_image("examples/splash.png".to_string());
 
   actor.apply_scale_animation(1.0, 2.0, 0.01);
   actor.apply_translation_x_animation(100, 600, 5);
   actor.apply_translation_y_animation(100, 200, 5);
 
-  let mut actor_2 = play.new_actor("actor_2".to_string(), 120, 120);
+  let mut actor_2 = Play::new_actor("actor_2".to_string(), 120, 120, None);
   actor_2.x = 100;
   actor_2.y = 100;
   actor_2.scale_x = 1.5;

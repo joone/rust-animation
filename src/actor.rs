@@ -57,7 +57,7 @@ pub struct Actor<'a> {
   rotation_animation_from_value: i32,
   rotation_animation_to_value: i32,
   rotation_animation_by_value: i32,
-  event_handelr: Box<dyn EventHandler + 'a>,
+  event_handelr: Option<Box<dyn EventHandler + 'a>>,
   focused_sub_actor: usize,
   focused: bool
 }
@@ -68,7 +68,7 @@ pub trait EventHandler {
 }
 
 impl<'a> Actor<'a> {
-  pub fn new(name: String, w: u32, h: u32, event_handler: Box<dyn EventHandler + 'a>) -> Self {
+  pub fn new(name: String, w: u32, h: u32, event_handler: Option<Box<dyn EventHandler + 'a>>) -> Self {
     Actor {
       name: name,
       x: 0,
@@ -314,31 +314,35 @@ impl<'a> Actor<'a> {
         return;
     }
 
-    if key == 262 {     // right cursor
-      if self.focused_sub_actor < self.sub_actor_list.len() - 1 {
-        let prev_focused_sub_actor = self.focused_sub_actor;  
-        self.focused_sub_actor += 1;
+    if let Some(ref mut event_handler) = self.event_handelr {
+      if key == 262 {     // right cursor
+        if self.focused_sub_actor < self.sub_actor_list.len() - 1 {
+          let prev_focused_sub_actor = self.focused_sub_actor;  
+          self.focused_sub_actor += 1;
 
-        self.sub_actor_list[self.focused_sub_actor].focused = true;
-        self.event_handelr.key_focus_in(key as u32, 
-           &mut self.sub_actor_list[self.focused_sub_actor]);
+          self.sub_actor_list[self.focused_sub_actor].focused = true;
+          event_handler.key_focus_in(key as u32, 
+              &mut self.sub_actor_list[self.focused_sub_actor]);
 
-        self.sub_actor_list[prev_focused_sub_actor].focused = false;
-        self.event_handelr.key_focus_out(key as u32, 
-           &mut self.sub_actor_list[prev_focused_sub_actor]);
-      }
-    } else if key == 263 { // left cursor 
-      if self.focused_sub_actor > 0 {
-        let prev_focused_sub_actor = self.focused_sub_actor;
-        self.focused_sub_actor -= 1;
+          self.sub_actor_list[prev_focused_sub_actor].focused = false;
+            event_handler.key_focus_out(key as u32, 
+              &mut self.sub_actor_list[prev_focused_sub_actor]);
+        }
+      } else if key == 263 { // left cursor 
+        if self.focused_sub_actor > 0 {
+          let prev_focused_sub_actor = self.focused_sub_actor;
+          self.focused_sub_actor -= 1;
 
-        self.sub_actor_list[self.focused_sub_actor].focused = true;
-        self.event_handelr.key_focus_in(key as u32, 
-           &mut self.sub_actor_list[self.focused_sub_actor]);
+          self.sub_actor_list[self.focused_sub_actor].focused = true;
 
-        self.sub_actor_list[prev_focused_sub_actor].focused = false;
-        self.event_handelr.key_focus_out(key as u32, 
-           &mut self.sub_actor_list[prev_focused_sub_actor]);
+          event_handler.key_focus_in(key as u32, 
+            &mut self.sub_actor_list[self.focused_sub_actor]);
+      
+          self.sub_actor_list[prev_focused_sub_actor].focused = false;
+
+          event_handler.key_focus_out(key as u32, 
+              &mut self.sub_actor_list[prev_focused_sub_actor]);
+        }
       }
     }
   }
