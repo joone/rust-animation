@@ -2,6 +2,8 @@
 rust-animation is an OpenGL based graphics library for creating hardware-accelerated user interfaces written in Rust.
 It allows us to implement a simple animated UI for embedded devices.
 
+Note: this project is in early development stage so there would be a lot of changes without any notice.
+
 # Installation
 rust-animation is written in Rust so you need to install Rust:
 * https://www.rust-lang.org/tools/install
