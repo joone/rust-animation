@@ -18,14 +18,14 @@ pub struct Stage<'a> {
 }
 
 impl<'a>  Stage<'a> {
-  pub fn new(vw: u32, vh: u32, evet_handler:  Box<dyn EventHandler + 'a>) -> Self {
+  pub fn new(vw: u32, vh: u32, event_handler:  Box<dyn EventHandler + 'a>) -> Self {
     Stage {
       width: 0,
       height: 0,
       viewport_width: vw,
       viewport_height: vh,
       visible: false,
-      stage_actor: Actor::new("stage_actor".to_string(), vw, vh, evet_handler)
+      stage_actor: Actor::new("stage_actor".to_string(), vw, vh, event_handler)
     }
   }
 
