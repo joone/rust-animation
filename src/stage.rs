@@ -7,6 +7,7 @@ extern crate gl;
 use self::gl::types::*;
 use crate::actor::Actor;
 use crate::actor::EventHandler;
+use crate::actor::Layout;
 
 pub struct Stage<'a> {
   width: u32,
@@ -35,6 +36,14 @@ impl<'a>  Stage<'a> {
 
   pub fn set_visible(&mut self, visible: bool) {
     self.visible = visible;
+  }
+
+  pub fn set_needs_layout(&mut self) {
+     self.stage_actor.set_needs_layout();
+  }
+
+  pub fn set_layout(&mut self, layout: Option<Box<dyn Layout + 'a>>) {
+    self.stage_actor.set_layout(layout);
   }
 
   pub fn handle_input(&mut self, key: usize) {

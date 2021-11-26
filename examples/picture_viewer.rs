@@ -19,6 +19,7 @@ use rust_animation::play::Play;
 use rust_animation::stage::Stage;
 use rust_animation::actor::Actor;
 use rust_animation::actor::EventHandler;
+use rust_animation::actor::Layout;
 
 type ResultUrl<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
@@ -87,6 +88,34 @@ impl EventHandler for ActorEvent {
   }
 }
 
+pub struct ActorLayout {
+  name: String,
+  cur_x: i32,
+}
+
+impl ActorLayout {
+ pub fn new() -> Self {
+    ActorLayout {
+      name: "actor_layout".to_string(),
+      cur_x: 0
+    }
+ }
+}
+
+impl Layout for ActorLayout {
+  fn layout_sub_actors(&mut self, sub_actor_list: &mut Vec<Actor>) {
+    println!("layout_sub_layer {}", self.name);
+    let mut index : i32 = 0;
+    for sub_actor in sub_actor_list.iter_mut() {
+      self.cur_x += sub_actor.width as i32;
+      sub_actor.x = index % 5 * IMAGE_WIDTH as i32;
+      let col = index  / 5;
+      sub_actor.y =  col * IMAGE_HEIGHT as i32;
+      index +=1;
+    }
+  }
+}
+
 pub struct PictureBrowser<'a> {
   play: Play<'a>,
   image_loaded: bool,
@@ -114,8 +143,10 @@ impl<'a> PictureBrowser<'a> {
     splash_stage.stage_actor.set_image("examples/splash.png".to_string());
     self.splash_stage =self.play.add_stage(splash_stage);
 
-    let stage = Stage::new(1920, 1080, Some(Box::new(ActorEvent::new())));
+    let mut stage = Stage::new(1920, 1080, Some(Box::new(ActorEvent::new())));
+    stage.set_layout(Some(Box::new(ActorLayout::new())));
     self.main_stage = self.play.add_stage(stage);
+
   }
 
   pub fn load_image_list(&mut self) {
@@ -137,15 +168,13 @@ impl<'a> PictureBrowser<'a> {
         let name = format!("image_{}", self.cur_file_index);
         let mut actor = Actor::new(name.to_string(), IMAGE_WIDTH, IMAGE_HEIGHT,
             Some(Box::new(ActorEvent::new())));
-        actor.x = self.cur_file_index as i32 % 5 * IMAGE_WIDTH as i32;
-        let col = self.cur_file_index as i32 / 5;
-        actor.y =  col * IMAGE_HEIGHT as i32;
         actor.set_image(self.file_list[self.cur_file_index].to_string());
         self.play.stage_list[self.main_stage].add_actor(actor);
         println!("load a texture {}", &self.file_list[self.cur_file_index].to_string());
         self.cur_file_index += 1;
     } else {
       self.image_loaded = true;
+      self.play.stage_list[self.main_stage].set_needs_layout();
     }
   }
 

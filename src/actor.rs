@@ -58,13 +58,19 @@ pub struct Actor<'a> {
   rotation_animation_to_value: i32,
   rotation_animation_by_value: i32,
   event_handelr: Option<Box<dyn EventHandler + 'a>>,
+  layout: Option<Box<dyn Layout + 'a>>,
   focused_sub_actor: usize,
-  focused: bool
+  focused: bool,
+  needsUpdate: bool
 }
 
 pub trait EventHandler {
   fn key_focus_in(&mut self, val: u32, actor: &mut Actor);
   fn key_focus_out(&mut self, val: u32, actor: &mut Actor);
+}
+
+pub trait Layout {
+  fn layout_sub_actors(&mut self, actor: &mut Vec<Actor>);
 }
 
 impl<'a> Actor<'a> {
@@ -106,8 +112,10 @@ impl<'a> Actor<'a> {
       rotation_animation_to_value: 0,
       rotation_animation_by_value: 0,
       event_handelr: event_handler,
+      layout: None,
       focused_sub_actor: 0,
-      focused: false
+      focused: false,
+      needsUpdate: false
     }
   }
 
@@ -199,12 +207,21 @@ impl<'a> Actor<'a> {
     self.image_path = path;
   }
 
+  pub fn set_layout(&mut self, layout: Option<Box<dyn Layout + 'a>>) {
+    self.layout = layout;
+  }
+
   /*pub fn update(&mut self) {
     // Sort sub actors by z-axis
     self.sub_actor_list.sort_by(|a, b| a.z.partial_cmp(&b.z).unwrap());
   }*/
 
   pub fn animate(&mut self) {
+    if self.needsUpdate {
+        self.layout_sub_actors();
+      self.needsUpdate = false;
+    }
+
     if self.translation_x_animation_running == true {
       if self.translation_x_animation_to_value >
           self.translation_x_animation_from_value {
@@ -344,6 +361,18 @@ impl<'a> Actor<'a> {
               &mut self.sub_actor_list[prev_focused_sub_actor]);
         }
       }
+    }
+  }
+
+  // Marks the layer’s contents as needing to be updated.
+  pub fn set_needs_layout(&mut self) {
+     self.needsUpdate = true;
+  }
+
+  // layout sub-actors.
+  pub fn layout_sub_actors(&mut self) {
+     if let Some(ref mut layout) = self.layout {
+        layout.layout_sub_actors(&mut self.sub_actor_list);
     }
   }
 
