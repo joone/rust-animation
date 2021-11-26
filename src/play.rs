@@ -51,7 +51,7 @@ pub fn render(name:String) {
 
 pub struct Play<'a>  {
   name : String,
-  pub stage_list: Vec<Stage<'a>>,
+  stage_list: Vec<Stage<'a>>,
   shader_program: GLuint,
   stage_map: HashMap<String, usize>
 }
