@@ -1,7 +1,7 @@
 [package]
 name = "rust-animation"
 description = "OpenGL based Animation Toolkit written in Rust"
-version = "0.1.6"
+version = "0.1.7"
 edition = "2021"
 repository = "https://github.com/joone/rust-animation"
 keywords = ["bsd", "opengl", "animation", "api"]
