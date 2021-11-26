@@ -121,8 +121,8 @@ pub struct PictureBrowser<'a> {
   image_loaded: bool,
   file_list: Vec<String>,
   cur_file_index: usize,
-  main_stage: usize,
-  splash_stage: usize,
+  main_stage_name: String,
+  splash_stage_name: String,
 }
 
 impl<'a> PictureBrowser<'a> {
@@ -132,21 +132,22 @@ impl<'a> PictureBrowser<'a> {
       play: Play::new("Picture Browser".to_string()),
       file_list: Vec::new(),
       cur_file_index: 0,
-      main_stage: 0,
-      splash_stage: 0
+      main_stage_name: "".to_string(),
+      splash_stage_name: "".to_string()
     }
   }
   pub fn initialize(&mut self) {
     self.play.initialize();
-    let mut splash_stage = Stage::new(1920, 1080, Some(Box::new(ActorEvent::new())));
+    let mut splash_stage = Stage::new("splash_stage".to_string(), 1920, 1080,
+        Some(Box::new(ActorEvent::new())));
     splash_stage.set_visible(true);
     splash_stage.stage_actor.set_image("examples/splash.png".to_string());
-    self.splash_stage =self.play.add_stage(splash_stage);
+    self.splash_stage_name = self.play.add_stage(splash_stage);
 
-    let mut stage = Stage::new(1920, 1080, Some(Box::new(ActorEvent::new())));
+    let mut stage = Stage::new("main_stage".to_string(), 1920, 1080,
+        Some(Box::new(ActorEvent::new())));
     stage.set_layout(Some(Box::new(ActorLayout::new())));
-    self.main_stage = self.play.add_stage(stage);
-
+    self.main_stage_name = self.play.add_stage(stage);
   }
 
   pub fn load_image_list(&mut self) {
@@ -169,12 +170,12 @@ impl<'a> PictureBrowser<'a> {
         let mut actor = Actor::new(name.to_string(), IMAGE_WIDTH, IMAGE_HEIGHT,
             Some(Box::new(ActorEvent::new())));
         actor.set_image(self.file_list[self.cur_file_index].to_string());
-        self.play.stage_list[self.main_stage].add_actor(actor);
+        self.play.add_new_actor_to_stage(&self.main_stage_name, actor);
         println!("load a texture {}", &self.file_list[self.cur_file_index].to_string());
         self.cur_file_index += 1;
     } else {
       self.image_loaded = true;
-      self.play.stage_list[self.main_stage].set_needs_layout();
+      self.play.set_stage_needs_layout(&self.main_stage_name);
     }
   }
 
@@ -188,8 +189,8 @@ impl<'a> PictureBrowser<'a> {
 
   pub fn render_splash_screen(&mut self) {
     if self.image_loaded == true {
-      self.play.stage_list[self.splash_stage].set_visible(false);
-      self.play.stage_list[self.main_stage].set_visible(true);
+      self.play.set_visible_stage(&self.splash_stage_name, false);
+      self.play.set_visible_stage(&self.main_stage_name, true);
       return;
     }
     self.load_images();

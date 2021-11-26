@@ -5,6 +5,7 @@
 extern crate gl;
 
 use self::gl::types::*;
+use std::collections::HashMap;
 use std::ffi::CString;
 use std::ptr;
 use std::str;
@@ -52,6 +53,7 @@ pub struct Play<'a>  {
   name : String,
   pub stage_list: Vec<Stage<'a>>,
   shader_program: GLuint,
+  stage_map: HashMap<String, usize>
 }
 
 impl<'a> Play<'a>  {
@@ -60,6 +62,7 @@ impl<'a> Play<'a>  {
       name : name,
       stage_list: Vec::new(),
       shader_program: 0,
+      stage_map: HashMap::new()
     }
   }
 
@@ -70,6 +73,33 @@ pub fn initialize(&mut self) {
 pub fn new_actor(name: String, w: u32, h: u32,
     event_handler: Option<Box<dyn EventHandler + 'a>>) -> Actor {
   Actor::new(name, w, h, event_handler)
+}
+
+pub fn add_new_actor_to_stage(&mut self, stage_name: &String, actor: Actor<'a>) {
+  match self.stage_map.get(stage_name) {
+      Some(&index) => {
+        self.stage_list[index].add_actor(actor);
+      },
+      _ => println!("Can't find the stage with the given name: {}", stage_name)
+  }
+}
+
+pub fn set_stage_needs_layout(&mut self, stage_name: &String) {
+  match self.stage_map.get(stage_name) {
+      Some(&index) => {
+        self.stage_list[index].set_needs_layout();
+      },
+      _ => println!("Can't find the stage with the given name: {}", stage_name)
+  }
+}
+
+pub fn set_visible_stage(&mut self, name: &String, visible: bool) {
+    match self.stage_map.get(name) {
+      Some(&index) => {
+        self.stage_list[index].set_visible(visible);
+      },
+      _ => println!("Can't find the stage with the given name: {}", name)
+     }
 }
 
  // https://github.com/bwasty/learn-opengl-rs/blob/master/src/_1_getting_started/_2_1_hello_triangle.rs
@@ -125,11 +155,13 @@ pub fn new_actor(name: String, w: u32, h: u32,
     }
   }
 
-  pub fn add_stage(&mut self,  mut stage: Stage<'a>) -> usize {
+  pub fn add_stage(&mut self, mut stage: Stage<'a>) -> String {
     stage.initialize();
+    let stage_name = stage.name.to_string();
     self.stage_list.push(stage);
+    self.stage_map.insert(stage_name.to_string(), self.stage_list.len() - 1);
 
-    return self.stage_list.len() - 1
+    stage_name
   }
 
   pub fn handle_input(&mut self, key: usize) {

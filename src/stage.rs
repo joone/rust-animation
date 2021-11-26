@@ -10,6 +10,7 @@ use crate::actor::EventHandler;
 use crate::actor::Layout;
 
 pub struct Stage<'a> {
+  pub name: String,
   width: u32,
   height: u32,
   viewport_width: u32,
@@ -18,9 +19,10 @@ pub struct Stage<'a> {
   pub stage_actor: Actor<'a>,
 }
 
-impl<'a>  Stage<'a> {
-  pub fn new(vw: u32, vh: u32, event_handler:  Option<Box<dyn EventHandler + 'a>>) -> Self {
+impl<'a> Stage<'a> {
+  pub fn new(name: String, vw: u32, vh: u32, event_handler:  Option<Box<dyn EventHandler + 'a>>) -> Self {
     Stage {
+      name: name,
       width: 0,
       height: 0,
       viewport_width: vw,
