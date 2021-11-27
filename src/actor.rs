@@ -4,6 +4,7 @@
 
 extern crate gl;
 extern crate image;
+extern crate keyframe;
 
 use self::gl::types::*;
 use cgmath::{Matrix, Matrix4, Deg, SquareMatrix, Vector3};
@@ -12,6 +13,9 @@ use std::mem;
 use std::os::raw::c_void;
 use std::path::Path;
 use std::ptr;
+use std::time::{Instant};
+
+use keyframe::{ease, functions::*};
 
 use crate::actor::image::GenericImage;
 
@@ -41,22 +45,31 @@ pub struct Actor<'a> {
   vertex_array_obj: gl::types::GLuint,
   texture: gl::types::GLuint,
   pub animated: bool,
+  animation_time_instance: Instant,
+
   translation_x_animation_running: bool,
+  translation_x_animation_starting_time: u128,
+  translation_x_animation_time_duration: u128,
   translation_x_animation_from_value: i32,
   translation_x_animation_to_value: i32,
-  translation_x_animation_by_value: i32,
+ 
   translation_y_animation_running: bool,
+  translation_y_animation_starting_time: u128,
+  translation_y_animation_time_duration: u128,
   translation_y_animation_from_value: i32,
   translation_y_animation_to_value: i32,
-  translation_y_animation_by_value: i32,
+
   scale_animation_running: bool,
+  scale_animation_starting_time: u128,
+  scale_animation_time_duration: u128,
   scale_animation_from_value: f32,
   scale_animation_to_value: f32,
-  scale_animation_by_value: f32,
+
   rotation_animation_running: bool,
+  rotation_animation_starting_time: u128,
+  rotation_animation_time_duration: u128,
   rotation_animation_from_value: i32,
   rotation_animation_to_value: i32,
-  rotation_animation_by_value: i32,
   event_handelr: Option<Box<dyn EventHandler + 'a>>,
   layout: Option<Box<dyn Layout + 'a>>,
   focused_sub_actor: usize,
@@ -95,22 +108,28 @@ impl<'a> Actor<'a> {
       vertex_array_obj: gl::types::GLuint::default(),
       texture: gl::types::GLuint::default(),
       animated: false,
+      animation_time_instance: Instant::now(),
       translation_x_animation_running: false,
+
+      translation_x_animation_starting_time: 0,
+      translation_x_animation_time_duration: 0,
       translation_x_animation_from_value: 0,
       translation_x_animation_to_value: 0,
-      translation_x_animation_by_value: 0,
       translation_y_animation_running: false,
+      translation_y_animation_starting_time: 0,
+      translation_y_animation_time_duration: 0,
       translation_y_animation_from_value: 0,
       translation_y_animation_to_value: 0,
-      translation_y_animation_by_value: 0,
       scale_animation_running: false,
+      scale_animation_starting_time: 0,
+      scale_animation_time_duration: 0,
       scale_animation_from_value: 0.0,
       scale_animation_to_value: 0.0,
-      scale_animation_by_value: 0.0,
       rotation_animation_running: false,
+      rotation_animation_starting_time: 0,
+      rotation_animation_time_duration: 0,
       rotation_animation_from_value: 0,
       rotation_animation_to_value: 0,
-      rotation_animation_by_value: 0,
       event_handelr: event_handler,
       layout: None,
       focused_sub_actor: 0,
@@ -223,46 +242,35 @@ impl<'a> Actor<'a> {
     }
 
     if self.translation_x_animation_running == true {
-      if self.translation_x_animation_to_value >
-          self.translation_x_animation_from_value {
-        if self.x < self.translation_x_animation_to_value {
-          self.x += self.translation_x_animation_by_value;
-        } else {
-          self.translation_x_animation_running = false;
-          self.x = self.translation_x_animation_to_value;
-        }
+      let cur_time = (self.animation_time_instance.elapsed().as_millis() -
+          self.translation_x_animation_starting_time) as f32 / self.translation_x_animation_time_duration as f32;
+      if cur_time <= 1.0 {
+        self.x = ease(Linear, self.translation_x_animation_from_value as f32, 
+          self.translation_x_animation_to_value as f32, cur_time) as i32;
       } else {
-        if self.x > self.translation_x_animation_to_value {
-          self.x -= self.translation_x_animation_by_value;
-        } else {
-          self.translation_x_animation_running = false;
-          self.x = self.translation_x_animation_to_value;
-        }
+        self.translation_x_animation_running = false;
+        self.x = self.translation_x_animation_to_value;
       }
     }
 
     if self.translation_y_animation_running == true {
-      if self.translation_y_animation_to_value >
-          self.translation_y_animation_from_value {
-        if self.y < self.translation_y_animation_to_value {
-          self.y += self.translation_y_animation_by_value;
-        } else {
-          self.translation_y_animation_running = false;
-          self.y = self.translation_y_animation_to_value;
-        }
+      let cur_time = (self.animation_time_instance.elapsed().as_millis() -
+          self.translation_y_animation_starting_time) as f32 / self.translation_y_animation_time_duration as f32;
+      if cur_time <= 1.0 {
+        self.y = ease(EaseInOut, self.translation_y_animation_from_value as f32, 
+          self.translation_y_animation_to_value as f32, cur_time) as i32;
       } else {
-        if self.y > self.translation_y_animation_to_value {
-          self.y -= self.translation_y_animation_by_value;
-        } else {
-          self.translation_y_animation_running = false;
-          self.y = self.translation_y_animation_to_value;
-        }
+        self.translation_y_animation_running = false;
+        self.y = self.translation_y_animation_to_value;
       }
     }
 
     if self.rotation_animation_running == true {
-      if self.rotation < self.rotation_animation_to_value {
-        self.rotation += self.rotation_animation_by_value;
+      let cur_time = (self.animation_time_instance.elapsed().as_millis() -
+          self.rotation_animation_starting_time) as f32 / self.rotation_animation_time_duration as f32;
+      if cur_time <= 1.0 {
+        self.rotation = ease(Linear, self.rotation_animation_from_value as f32, 
+            self.rotation_animation_to_value as f32, cur_time) as i32;
       } else {
         self.rotation_animation_running = false;
         self.rotation = self.rotation_animation_to_value;
@@ -270,9 +278,13 @@ impl<'a> Actor<'a> {
     }
 
     if self.scale_animation_running == true {
-      if self.scale_x < self.scale_animation_to_value {
-        self.scale_x += self.scale_animation_by_value;
-        self.scale_y += self.scale_animation_by_value;
+      let cur_time = (self.animation_time_instance.elapsed().as_millis() -
+          self.scale_animation_starting_time) as f32 / self.scale_animation_time_duration as f32;
+      if cur_time <= 1.0 {
+        self.scale_x = ease(Linear, self.scale_animation_from_value, 
+            self.scale_animation_to_value, cur_time) as f32;
+        self.scale_y = ease(Linear, self.scale_animation_from_value, 
+            self.scale_animation_to_value, cur_time) as f32;
       } else {
         self.scale_animation_running = false;
         self.scale_x = self.scale_animation_to_value;
@@ -293,35 +305,45 @@ impl<'a> Actor<'a> {
     }
   }
 
-  pub fn apply_translation_x_animation(&mut self, from_value: i32, to_value: i32, by_value: i32) {
+  pub fn apply_translation_x_animation(&mut self, from_value: i32, to_value: i32, time: f32) {
+    self.translation_x_animation_starting_time =
+        self.animation_time_instance.elapsed().as_millis();
     self.translation_x_animation_running = true;
     self.translation_x_animation_from_value = from_value;
     self.translation_x_animation_to_value = to_value;
-    self.translation_x_animation_by_value = by_value;
+    self.translation_x_animation_time_duration = time as u128 * 1000; // msec.
     self.x = self.translation_x_animation_from_value;
   }
- 
-  pub fn apply_translation_y_animation(&mut self, from_value: i32, to_value: i32, by_value: i32) {
+
+  pub fn apply_translation_y_animation(&mut self, from_value: i32, to_value: i32, time: f32) {
+    self.translation_y_animation_starting_time =
+        self.animation_time_instance.elapsed().as_millis();
+
     self.translation_y_animation_running = true;
     self.translation_y_animation_from_value = from_value;
     self.translation_y_animation_to_value = to_value;
-    self.translation_y_animation_by_value = by_value;
-    self.y = self.translation_y_animation_from_value;
+    self.translation_y_animation_time_duration = time as u128 * 1000; // msec.
+    self.x = self.translation_y_animation_from_value;
   }
 
-  pub fn apply_rotation_animation(&mut self, from_value: i32, to_value: i32, by_value: i32) {
+  pub fn apply_rotation_animation(&mut self, from_value: i32, to_value: i32, time: f32) {
+    self.translation_y_animation_starting_time =
+        self.animation_time_instance.elapsed().as_millis();
+
     self.rotation_animation_running = true;
     self.rotation_animation_from_value = from_value;
     self.rotation_animation_to_value = to_value;
-    self.rotation_animation_by_value = by_value;
+    self.rotation_animation_time_duration = time as u128 * 1000; // msec.
     self.rotation = self.rotation_animation_from_value;
   }
 
-  pub fn apply_scale_animation(&mut self, from_value: f32, to_value: f32, by_value: f32) {
+  pub fn apply_scale_animation(&mut self, from_value: f32, to_value: f32, time: f32) {
+    self.scale_animation_starting_time =
+        self.animation_time_instance.elapsed().as_millis();
     self.scale_animation_running = true;
     self.scale_animation_from_value = from_value;
     self.scale_animation_to_value = to_value;
-    self.scale_animation_by_value = by_value;
+    self.scale_animation_time_duration = time as u128 * 1000; // msec.
     self.scale_x = self.scale_animation_from_value;
     self.scale_y = self.scale_animation_from_value;
   }

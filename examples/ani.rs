@@ -39,9 +39,10 @@ fn main() {
   actor.rotation = 5;
   actor.set_image("examples/splash.png".to_string());
 
-  actor.apply_scale_animation(1.0, 2.0, 0.01);
-  actor.apply_translation_x_animation(100, 600, 5);
-  actor.apply_translation_y_animation(100, 200, 5);
+  // 1X -> 2X for 5 sec.
+  actor.apply_scale_animation(1.0, 2.0, 5.0);
+  actor.apply_translation_x_animation(100, 600, 5.0);
+  actor.apply_translation_y_animation(100, 200, 5.0);
 
   let mut actor_2 = Play::new_actor("actor_2".to_string(), 120, 120, None);
   actor_2.x = 100;
@@ -49,7 +50,8 @@ fn main() {
   actor_2.scale_x = 1.5;
   actor_2.scale_y = 1.5;
   actor_2.set_color(0.0, 0.0, 1.0);
-  actor_2.apply_rotation_animation(0, 360, 1);
+  // 0 degree -> 360 degree for 5 sec
+  actor_2.apply_rotation_animation(0, 360, 5.0);
 
   stage.add_actor(actor);
   stage.add_actor(actor_2);
