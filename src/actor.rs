@@ -49,13 +49,13 @@ pub struct Actor<'a> {
 
   translation_x_animation_running: bool,
   translation_x_animation_starting_time: u128,
-  translation_x_animation_time_duration: u128,
+  translation_x_animation_time_duration: f32,
   translation_x_animation_from_value: i32,
   translation_x_animation_to_value: i32,
  
   translation_y_animation_running: bool,
   translation_y_animation_starting_time: u128,
-  translation_y_animation_time_duration: u128,
+  translation_y_animation_time_duration: f32,
   translation_y_animation_from_value: i32,
   translation_y_animation_to_value: i32,
 
@@ -112,12 +112,12 @@ impl<'a> Actor<'a> {
       translation_x_animation_running: false,
 
       translation_x_animation_starting_time: 0,
-      translation_x_animation_time_duration: 0,
+      translation_x_animation_time_duration: 0.0,
       translation_x_animation_from_value: 0,
       translation_x_animation_to_value: 0,
       translation_y_animation_running: false,
       translation_y_animation_starting_time: 0,
-      translation_y_animation_time_duration: 0,
+      translation_y_animation_time_duration: 0.0,
       translation_y_animation_from_value: 0,
       translation_y_animation_to_value: 0,
       scale_animation_running: false,
@@ -242,30 +242,42 @@ impl<'a> Actor<'a> {
     }
 
     if self.translation_x_animation_running == true {
+      if self.translation_x_animation_starting_time == 0 {
+        self.translation_x_animation_starting_time = self.animation_time_instance.elapsed().as_millis();
+      }
       let cur_time = (self.animation_time_instance.elapsed().as_millis() -
-          self.translation_x_animation_starting_time) as f32 / self.translation_x_animation_time_duration as f32;
+          self.translation_x_animation_starting_time) as f32 / self.translation_x_animation_time_duration;
       if cur_time <= 1.0 {
         self.x = ease(Linear, self.translation_x_animation_from_value as f32, 
           self.translation_x_animation_to_value as f32, cur_time) as i32;
       } else {
         self.translation_x_animation_running = false;
+        self.translation_x_animation_starting_time = 0;
         self.x = self.translation_x_animation_to_value;
       }
     }
 
     if self.translation_y_animation_running == true {
+      if self.translation_y_animation_starting_time == 0 {
+        self.translation_y_animation_starting_time = self.animation_time_instance.elapsed().as_millis();
+      }
       let cur_time = (self.animation_time_instance.elapsed().as_millis() -
-          self.translation_y_animation_starting_time) as f32 / self.translation_y_animation_time_duration as f32;
+          self.translation_y_animation_starting_time) as f32 / self.translation_y_animation_time_duration;
       if cur_time <= 1.0 {
-        self.y = ease(EaseInOut, self.translation_y_animation_from_value as f32, 
+        self.y = ease(Linear, self.translation_y_animation_from_value as f32, 
           self.translation_y_animation_to_value as f32, cur_time) as i32;
       } else {
         self.translation_y_animation_running = false;
+        self.translation_y_animation_starting_time = 0;
         self.y = self.translation_y_animation_to_value;
       }
     }
 
     if self.rotation_animation_running == true {
+      if self.rotation_animation_starting_time == 0 {
+        self.rotation_animation_starting_time = self.animation_time_instance.elapsed().as_millis();
+      }
+ 
       let cur_time = (self.animation_time_instance.elapsed().as_millis() -
           self.rotation_animation_starting_time) as f32 / self.rotation_animation_time_duration as f32;
       if cur_time <= 1.0 {
@@ -273,11 +285,16 @@ impl<'a> Actor<'a> {
             self.rotation_animation_to_value as f32, cur_time) as i32;
       } else {
         self.rotation_animation_running = false;
+        self.rotation_animation_starting_time = 0;
         self.rotation = self.rotation_animation_to_value;
       }
     }
 
     if self.scale_animation_running == true {
+      if self.scale_animation_starting_time == 0 {
+        self.scale_animation_starting_time = self.animation_time_instance.elapsed().as_millis();
+      }
+
       let cur_time = (self.animation_time_instance.elapsed().as_millis() -
           self.scale_animation_starting_time) as f32 / self.scale_animation_time_duration as f32;
       if cur_time <= 1.0 {
@@ -287,6 +304,7 @@ impl<'a> Actor<'a> {
             self.scale_animation_to_value, cur_time) as f32;
       } else {
         self.scale_animation_running = false;
+        self.scale_animation_starting_time = 0;
         self.scale_x = self.scale_animation_to_value;
         self.scale_y = self.scale_animation_to_value;
       }
@@ -306,30 +324,22 @@ impl<'a> Actor<'a> {
   }
 
   pub fn apply_translation_x_animation(&mut self, from_value: i32, to_value: i32, time: f32) {
-    self.translation_x_animation_starting_time =
-        self.animation_time_instance.elapsed().as_millis();
     self.translation_x_animation_running = true;
     self.translation_x_animation_from_value = from_value;
     self.translation_x_animation_to_value = to_value;
-    self.translation_x_animation_time_duration = time as u128 * 1000; // msec.
+    self.translation_x_animation_time_duration = time * 1000.0; // msec.
     self.x = self.translation_x_animation_from_value;
   }
 
   pub fn apply_translation_y_animation(&mut self, from_value: i32, to_value: i32, time: f32) {
-    self.translation_y_animation_starting_time =
-        self.animation_time_instance.elapsed().as_millis();
-
     self.translation_y_animation_running = true;
     self.translation_y_animation_from_value = from_value;
     self.translation_y_animation_to_value = to_value;
-    self.translation_y_animation_time_duration = time as u128 * 1000; // msec.
+    self.translation_y_animation_time_duration = time * 1000.0; // msec.
     self.x = self.translation_y_animation_from_value;
   }
 
   pub fn apply_rotation_animation(&mut self, from_value: i32, to_value: i32, time: f32) {
-    self.translation_y_animation_starting_time =
-        self.animation_time_instance.elapsed().as_millis();
-
     self.rotation_animation_running = true;
     self.rotation_animation_from_value = from_value;
     self.rotation_animation_to_value = to_value;
@@ -338,8 +348,6 @@ impl<'a> Actor<'a> {
   }
 
   pub fn apply_scale_animation(&mut self, from_value: f32, to_value: f32, time: f32) {
-    self.scale_animation_starting_time =
-        self.animation_time_instance.elapsed().as_millis();
     self.scale_animation_running = true;
     self.scale_animation_from_value = from_value;
     self.scale_animation_to_value = to_value;

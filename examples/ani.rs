@@ -36,13 +36,14 @@ fn main() {
   let mut actor = Actor::new("actor_1".to_string(), 400, 225, None);
   actor.x = 100;
   actor.y = 100;
-  actor.rotation = 5;
   actor.set_image("examples/splash.png".to_string());
 
   // 1X -> 2X for 5 sec.
-  actor.apply_scale_animation(1.0, 2.0, 5.0);
-  actor.apply_translation_x_animation(100, 600, 5.0);
-  actor.apply_translation_y_animation(100, 200, 5.0);
+  let time = 1.0;
+  actor.apply_scale_animation(1.0, 2.0, time);
+  actor.apply_translation_x_animation(100, 1000, time);
+  actor.apply_translation_y_animation(100, 300, time);
+  actor.apply_rotation_animation(0, 360, time);
 
   let mut actor_2 = Play::new_actor("actor_2".to_string(), 120, 120, None);
   actor_2.x = 100;
