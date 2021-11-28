@@ -1,4 +1,7 @@
-# Introduction
+# rust-animation &emsp;  [![Latest Version]][crates.io] 
+[Latest Version]: https://img.shields.io/crates/v/rust-animation.svg
+[crates.io]: https://crates.io/crates/rust-animation
+
 rust-animation is an OpenGL based graphics library for creating hardware-accelerated user interfaces written in Rust.
 It allows us to implement a simple animated UI for embedded devices.
 
