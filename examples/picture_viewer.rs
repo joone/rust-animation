@@ -20,6 +20,7 @@ use rust_animation::stage::Stage;
 use rust_animation::actor::Actor;
 use rust_animation::actor::EventHandler;
 use rust_animation::actor::Layout;
+use rust_animation::actor::EasingFunction;
 
 type ResultUrl<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
@@ -78,7 +79,7 @@ impl ActorEvent {
 impl EventHandler for ActorEvent {
   fn key_focus_in(&mut self, val: u32, actor: &mut Actor) {
      println!("key_focus_in: {}  {}  {}", self.name, val, actor.name);
-     actor.apply_scale_animation(1.0, 1.15, 0.01);
+     actor.apply_scale_animation(1.0, 1.15, 0.5, EasingFunction::EaseInOut);
   }
 
   fn key_focus_out(&mut self, val: u32, actor: &mut Actor) {

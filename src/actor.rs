@@ -19,6 +19,27 @@ use keyframe::{ease, functions::*};
 
 use crate::actor::image::GenericImage;
 
+#[derive(Copy, Clone)]
+pub enum EasingFunction {
+    EaseIn,
+    EaseInCubic,
+    EaseInOut,
+    EaseInOutCubic,
+    EaseInOutQuad,
+    EaseInOutQuart,
+    EaseInOutQuint,
+    EaseInQuad,
+    EaseInQuart,
+    EaseInQuint,
+    EaseOut,
+    EaseOutCubic,
+    EaseOutQuad,
+    EaseOutQuart,
+    EaseOutQuint,
+    Linear,
+    Step,
+}
+
 macro_rules! c_str {
   ($literal:expr) => {
       CStr::from_bytes_with_nul_unchecked(concat!($literal, "\0").as_bytes())
@@ -46,6 +67,7 @@ pub struct Actor<'a> {
   texture: gl::types::GLuint,
   pub animated: bool,
   animation_time_instance: Instant,
+  easing_function: EasingFunction,
 
   translation_x_animation_running: bool,
   translation_x_animation_starting_time: u128,
@@ -110,6 +132,7 @@ impl<'a> Actor<'a> {
       animated: false,
       animation_time_instance: Instant::now(),
       translation_x_animation_running: false,
+      easing_function: EasingFunction::Linear,
 
       translation_x_animation_starting_time: 0,
       translation_x_animation_time_duration: 0.0,
@@ -235,6 +258,29 @@ impl<'a> Actor<'a> {
     self.sub_actor_list.sort_by(|a, b| a.z.partial_cmp(&b.z).unwrap());
   }*/
 
+  fn easing_function(easing: EasingFunction, from: f32, to: f32, duration: f32) -> f32 {
+     let val : f32;
+     match easing {
+        EasingFunction::EaseIn => { val = ease(EaseIn, from, to, duration); }
+        EasingFunction::EaseInCubic  => { val = ease(EaseInCubic, from, to, duration); }
+        EasingFunction::EaseInOut => { val = ease(EaseInOut, from, to, duration); }
+        EasingFunction::EaseInOutCubic => { val = ease(EaseInOutCubic, from, to, duration); }
+        EasingFunction::EaseInOutQuad => { val = ease(EaseInOutQuad , from, to, duration); }
+        EasingFunction::EaseInOutQuart => { val = ease(EaseInOutQuart, from, to, duration); }
+        EasingFunction::EaseInOutQuint => { val = ease(EaseInOutQuint, from, to, duration); }
+        EasingFunction::EaseInQuad => { val = ease(EaseInQuad, from, to, duration); }
+        EasingFunction::EaseInQuart => { val = ease(EaseInQuart, from, to, duration); }
+        EasingFunction::EaseInQuint => { val = ease(EaseInQuint, from, to, duration); }
+        EasingFunction::EaseOut => { val = ease(EaseOut, from, to, duration); }
+        EasingFunction::EaseOutCubic => { val = ease(EaseOutCubic, from, to, duration); }
+        EasingFunction::EaseOutQuad => { val = ease(EaseOutQuad, from, to, duration); }
+        EasingFunction::EaseOutQuart => { val = ease(EaseOutQuart, from, to, duration); }
+        EasingFunction::EaseOutQuint => { val = ease(EaseInQuint, from, to, duration); }
+        EasingFunction::Linear =>{ val = ease(Linear, from, to, duration); }
+        EasingFunction::Step => { val = ease(Step, from, to, duration); }
+     }
+     val
+  }
   pub fn animate(&mut self) {
     if self.needsUpdate {
         self.layout_sub_actors();
@@ -248,7 +294,7 @@ impl<'a> Actor<'a> {
       let cur_time = (self.animation_time_instance.elapsed().as_millis() -
           self.translation_x_animation_starting_time) as f32 / self.translation_x_animation_time_duration;
       if cur_time <= 1.0 {
-        self.x = ease(Linear, self.translation_x_animation_from_value as f32, 
+        self.x = Actor::easing_function(self.easing_function, self.translation_x_animation_from_value as f32, 
           self.translation_x_animation_to_value as f32, cur_time) as i32;
       } else {
         self.translation_x_animation_running = false;
@@ -264,7 +310,7 @@ impl<'a> Actor<'a> {
       let cur_time = (self.animation_time_instance.elapsed().as_millis() -
           self.translation_y_animation_starting_time) as f32 / self.translation_y_animation_time_duration;
       if cur_time <= 1.0 {
-        self.y = ease(Linear, self.translation_y_animation_from_value as f32, 
+        self.y = Actor::easing_function(self.easing_function, self.translation_y_animation_from_value as f32, 
           self.translation_y_animation_to_value as f32, cur_time) as i32;
       } else {
         self.translation_y_animation_running = false;
@@ -281,7 +327,7 @@ impl<'a> Actor<'a> {
       let cur_time = (self.animation_time_instance.elapsed().as_millis() -
           self.rotation_animation_starting_time) as f32 / self.rotation_animation_time_duration as f32;
       if cur_time <= 1.0 {
-        self.rotation = ease(Linear, self.rotation_animation_from_value as f32, 
+        self.rotation = Actor::easing_function(self.easing_function, self.rotation_animation_from_value as f32, 
             self.rotation_animation_to_value as f32, cur_time) as i32;
       } else {
         self.rotation_animation_running = false;
@@ -298,9 +344,9 @@ impl<'a> Actor<'a> {
       let cur_time = (self.animation_time_instance.elapsed().as_millis() -
           self.scale_animation_starting_time) as f32 / self.scale_animation_time_duration as f32;
       if cur_time <= 1.0 {
-        self.scale_x = ease(Linear, self.scale_animation_from_value, 
+        self.scale_x = Actor::easing_function(self.easing_function, self.scale_animation_from_value, 
             self.scale_animation_to_value, cur_time) as f32;
-        self.scale_y = ease(Linear, self.scale_animation_from_value, 
+        self.scale_y = Actor::easing_function(self.easing_function, self.scale_animation_from_value, 
             self.scale_animation_to_value, cur_time) as f32;
       } else {
         self.scale_animation_running = false;
@@ -323,32 +369,36 @@ impl<'a> Actor<'a> {
     }
   }
 
-  pub fn apply_translation_x_animation(&mut self, from_value: i32, to_value: i32, time: f32) {
+  pub fn apply_translation_x_animation(&mut self, from_value: i32, to_value: i32, time: f32, easing: EasingFunction) {
     self.translation_x_animation_running = true;
+    self.easing_function = easing;
     self.translation_x_animation_from_value = from_value;
     self.translation_x_animation_to_value = to_value;
     self.translation_x_animation_time_duration = time * 1000.0; // msec.
     self.x = self.translation_x_animation_from_value;
   }
 
-  pub fn apply_translation_y_animation(&mut self, from_value: i32, to_value: i32, time: f32) {
+  pub fn apply_translation_y_animation(&mut self, from_value: i32, to_value: i32, time: f32, easing: EasingFunction) {
     self.translation_y_animation_running = true;
+    self.easing_function = easing;
     self.translation_y_animation_from_value = from_value;
     self.translation_y_animation_to_value = to_value;
     self.translation_y_animation_time_duration = time * 1000.0; // msec.
     self.x = self.translation_y_animation_from_value;
   }
 
-  pub fn apply_rotation_animation(&mut self, from_value: i32, to_value: i32, time: f32) {
+  pub fn apply_rotation_animation(&mut self, from_value: i32, to_value: i32, time: f32, easing: EasingFunction) {
     self.rotation_animation_running = true;
+    self.easing_function = easing;
     self.rotation_animation_from_value = from_value;
     self.rotation_animation_to_value = to_value;
     self.rotation_animation_time_duration = time as u128 * 1000; // msec.
     self.rotation = self.rotation_animation_from_value;
   }
 
-  pub fn apply_scale_animation(&mut self, from_value: f32, to_value: f32, time: f32) {
+  pub fn apply_scale_animation(&mut self, from_value: f32, to_value: f32, time: f32, easing: EasingFunction) {
     self.scale_animation_running = true;
+    self.easing_function = easing;
     self.scale_animation_from_value = from_value;
     self.scale_animation_to_value = to_value;
     self.scale_animation_time_duration = time as u128 * 1000; // msec.

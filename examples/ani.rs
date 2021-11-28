@@ -10,6 +10,7 @@ use std::sync::mpsc::Receiver;
 use rust_animation::play::Play;
 use rust_animation::stage::Stage;
 use rust_animation::actor::Actor;
+use rust_animation::actor::EasingFunction;
 
 fn main() {
   let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
@@ -39,11 +40,11 @@ fn main() {
   actor.set_image("examples/splash.png".to_string());
 
   // 1X -> 2X for 5 sec.
-  let time = 1.0;
-  actor.apply_scale_animation(1.0, 2.0, time);
-  actor.apply_translation_x_animation(100, 1000, time);
-  actor.apply_translation_y_animation(100, 300, time);
-  actor.apply_rotation_animation(0, 360, time);
+  let time = 5.0;
+  actor.apply_scale_animation(1.0, 2.0, time, EasingFunction::Linear);
+  actor.apply_translation_x_animation(100, 1000, time, EasingFunction::EaseInOut);
+  actor.apply_translation_y_animation(100, 300, time, EasingFunction::EaseInOut);
+  actor.apply_rotation_animation(0, 360, time, EasingFunction::EaseInOut);
 
   let mut actor_2 = Play::new_actor("actor_2".to_string(), 120, 120, None);
   actor_2.x = 100;
@@ -52,7 +53,7 @@ fn main() {
   actor_2.scale_y = 1.5;
   actor_2.set_color(0.0, 0.0, 1.0);
   // 0 degree -> 360 degree for 5 sec
-  actor_2.apply_rotation_animation(0, 360, 5.0);
+  actor_2.apply_rotation_animation(0, 360, 5.0, EasingFunction::EaseInOut);
 
   stage.add_actor(actor);
   stage.add_actor(actor_2);
