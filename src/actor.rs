@@ -275,7 +275,7 @@ impl<'a> Actor<'a> {
         EasingFunction::EaseOutCubic => { val = ease(EaseOutCubic, from, to, duration); }
         EasingFunction::EaseOutQuad => { val = ease(EaseOutQuad, from, to, duration); }
         EasingFunction::EaseOutQuart => { val = ease(EaseOutQuart, from, to, duration); }
-        EasingFunction::EaseOutQuint => { val = ease(EaseInQuint, from, to, duration); }
+        EasingFunction::EaseOutQuint => { val = ease(EaseOutQuint, from, to, duration); }
         EasingFunction::Linear =>{ val = ease(Linear, from, to, duration); }
         EasingFunction::Step => { val = ease(Step, from, to, duration); }
      }
