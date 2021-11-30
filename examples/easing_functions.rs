@@ -20,7 +20,7 @@ fn main() {
   glfw.window_hint(glfw::WindowHint::OpenGlForwardCompat(true));
 
   let (mut window, events) = glfw.create_window(1920, 1080,
-      "Image Viewer", glfw::WindowMode::Windowed)
+      "Easing functions demo", glfw::WindowMode::Windowed)
       .expect("Failed to create GLFW window.");
 
   window.set_key_polling(true);
@@ -29,7 +29,7 @@ fn main() {
 
   gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-  let mut play = Play::new("Animation test".to_string());
+  let mut play = Play::new("Easing functions demo".to_string());
   play.initialize();
   let mut stage = Stage::new("stage".to_string(), 1920, 1080, None);
   stage.set_visible(true);
