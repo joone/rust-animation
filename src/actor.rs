@@ -19,7 +19,7 @@ use keyframe::{ease, functions::*};
 
 use crate::actor::image::GenericImage;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum EasingFunction {
     EaseIn,
     EaseInCubic,
@@ -67,31 +67,35 @@ pub struct Actor<'a> {
   texture: gl::types::GLuint,
   pub animated: bool,
   animation_time_instance: Instant,
-  easing_function: EasingFunction,
 
   translation_x_animation_running: bool,
   translation_x_animation_starting_time: u128,
   translation_x_animation_time_duration: f32,
   translation_x_animation_from_value: i32,
   translation_x_animation_to_value: i32,
+  translation_x_animation_ease: EasingFunction,
  
   translation_y_animation_running: bool,
   translation_y_animation_starting_time: u128,
   translation_y_animation_time_duration: f32,
   translation_y_animation_from_value: i32,
   translation_y_animation_to_value: i32,
+  translation_y_animation_ease: EasingFunction,
 
   scale_animation_running: bool,
   scale_animation_starting_time: u128,
   scale_animation_time_duration: u128,
   scale_animation_from_value: f32,
   scale_animation_to_value: f32,
+  scale_animation_ease: EasingFunction, 
 
   rotation_animation_running: bool,
   rotation_animation_starting_time: u128,
   rotation_animation_time_duration: u128,
   rotation_animation_from_value: i32,
   rotation_animation_to_value: i32,
+  rotation_animation_ease: EasingFunction,
+
   event_handelr: Option<Box<dyn EventHandler + 'a>>,
   layout: Option<Box<dyn Layout + 'a>>,
   focused_sub_actor: usize,
@@ -132,27 +136,29 @@ impl<'a> Actor<'a> {
       animated: false,
       animation_time_instance: Instant::now(),
       translation_x_animation_running: false,
-      easing_function: EasingFunction::Linear,
-
       translation_x_animation_starting_time: 0,
       translation_x_animation_time_duration: 0.0,
       translation_x_animation_from_value: 0,
+      translation_x_animation_ease: EasingFunction::Linear,
       translation_x_animation_to_value: 0,
       translation_y_animation_running: false,
       translation_y_animation_starting_time: 0,
       translation_y_animation_time_duration: 0.0,
       translation_y_animation_from_value: 0,
       translation_y_animation_to_value: 0,
+      translation_y_animation_ease: EasingFunction::Linear,
       scale_animation_running: false,
       scale_animation_starting_time: 0,
       scale_animation_time_duration: 0,
       scale_animation_from_value: 0.0,
       scale_animation_to_value: 0.0,
+      scale_animation_ease: EasingFunction::Linear,
       rotation_animation_running: false,
       rotation_animation_starting_time: 0,
       rotation_animation_time_duration: 0,
       rotation_animation_from_value: 0,
       rotation_animation_to_value: 0,
+      rotation_animation_ease: EasingFunction::Linear,
       event_handelr: event_handler,
       layout: None,
       focused_sub_actor: 0,
@@ -294,7 +300,7 @@ impl<'a> Actor<'a> {
       let cur_time = (self.animation_time_instance.elapsed().as_millis() -
           self.translation_x_animation_starting_time) as f32 / self.translation_x_animation_time_duration;
       if cur_time <= 1.0 {
-        self.x = Actor::easing_function(self.easing_function, self.translation_x_animation_from_value as f32, 
+        self.x = Actor::easing_function(self.translation_x_animation_ease, self.translation_x_animation_from_value as f32, 
           self.translation_x_animation_to_value as f32, cur_time) as i32;
       } else {
         self.translation_x_animation_running = false;
@@ -310,7 +316,7 @@ impl<'a> Actor<'a> {
       let cur_time = (self.animation_time_instance.elapsed().as_millis() -
           self.translation_y_animation_starting_time) as f32 / self.translation_y_animation_time_duration;
       if cur_time <= 1.0 {
-        self.y = Actor::easing_function(self.easing_function, self.translation_y_animation_from_value as f32, 
+        self.y = Actor::easing_function(self.translation_y_animation_ease, self.translation_y_animation_from_value as f32, 
           self.translation_y_animation_to_value as f32, cur_time) as i32;
       } else {
         self.translation_y_animation_running = false;
@@ -327,7 +333,7 @@ impl<'a> Actor<'a> {
       let cur_time = (self.animation_time_instance.elapsed().as_millis() -
           self.rotation_animation_starting_time) as f32 / self.rotation_animation_time_duration as f32;
       if cur_time <= 1.0 {
-        self.rotation = Actor::easing_function(self.easing_function, self.rotation_animation_from_value as f32, 
+        self.rotation = Actor::easing_function(self.rotation_animation_ease, self.rotation_animation_from_value as f32, 
             self.rotation_animation_to_value as f32, cur_time) as i32;
       } else {
         self.rotation_animation_running = false;
@@ -344,9 +350,9 @@ impl<'a> Actor<'a> {
       let cur_time = (self.animation_time_instance.elapsed().as_millis() -
           self.scale_animation_starting_time) as f32 / self.scale_animation_time_duration as f32;
       if cur_time <= 1.0 {
-        self.scale_x = Actor::easing_function(self.easing_function, self.scale_animation_from_value, 
+        self.scale_x = Actor::easing_function(self.scale_animation_ease, self.scale_animation_from_value, 
             self.scale_animation_to_value, cur_time) as f32;
-        self.scale_y = Actor::easing_function(self.easing_function, self.scale_animation_from_value, 
+        self.scale_y = Actor::easing_function(self.scale_animation_ease, self.scale_animation_from_value, 
             self.scale_animation_to_value, cur_time) as f32;
       } else {
         self.scale_animation_running = false;
@@ -371,7 +377,8 @@ impl<'a> Actor<'a> {
 
   pub fn apply_translation_x_animation(&mut self, from_value: i32, to_value: i32, time: f32, easing: EasingFunction) {
     self.translation_x_animation_running = true;
-    self.easing_function = easing;
+    println!("{} {:?}", self.name, easing);
+    self.translation_x_animation_ease = easing;
     self.translation_x_animation_from_value = from_value;
     self.translation_x_animation_to_value = to_value;
     self.translation_x_animation_time_duration = time * 1000.0; // msec.
@@ -380,7 +387,7 @@ impl<'a> Actor<'a> {
 
   pub fn apply_translation_y_animation(&mut self, from_value: i32, to_value: i32, time: f32, easing: EasingFunction) {
     self.translation_y_animation_running = true;
-    self.easing_function = easing;
+    self.translation_y_animation_ease = easing;
     self.translation_y_animation_from_value = from_value;
     self.translation_y_animation_to_value = to_value;
     self.translation_y_animation_time_duration = time * 1000.0; // msec.
@@ -389,7 +396,7 @@ impl<'a> Actor<'a> {
 
   pub fn apply_rotation_animation(&mut self, from_value: i32, to_value: i32, time: f32, easing: EasingFunction) {
     self.rotation_animation_running = true;
-    self.easing_function = easing;
+    self.rotation_animation_ease = easing;
     self.rotation_animation_from_value = from_value;
     self.rotation_animation_to_value = to_value;
     self.rotation_animation_time_duration = time as u128 * 1000; // msec.
@@ -398,7 +405,7 @@ impl<'a> Actor<'a> {
 
   pub fn apply_scale_animation(&mut self, from_value: f32, to_value: f32, time: f32, easing: EasingFunction) {
     self.scale_animation_running = true;
-    self.easing_function = easing;
+    self.scale_animation_ease = easing;
     self.scale_animation_from_value = from_value;
     self.scale_animation_to_value = to_value;
     self.scale_animation_time_duration = time as u128 * 1000; // msec.
