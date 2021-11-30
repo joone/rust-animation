@@ -16,6 +16,7 @@ use std::ptr;
 use std::time::{Instant};
 
 use keyframe::{ease, functions::*};
+use stretch::{style::*, node::{Node, Stretch}, geometry::Size, geometry::Rect};
 
 use crate::actor::image::GenericImage;
 
@@ -100,7 +101,8 @@ pub struct Actor<'a> {
   layout: Option<Box<dyn Layout + 'a>>,
   focused_sub_actor: usize,
   focused: bool,
-  needsUpdate: bool
+  needsUpdate: bool,
+  pub node: Option<Node>
 }
 
 pub trait EventHandler {
@@ -163,13 +165,30 @@ impl<'a> Actor<'a> {
       layout: None,
       focused_sub_actor: 0,
       focused: false,
-      needsUpdate: false
+      needsUpdate: false,
+      node: None
     }
   }
 
-  pub fn init_gl(&mut self, viewport_width: u32, viewport_height: u32) {
+  pub fn init_gl(&mut self, viewport_width: u32, viewport_height: u32,
+      stretch: &mut Stretch) {
     self.viewport_width = viewport_width;
     self.viewport_height = viewport_height;
+    println!("actor::init_gl");
+    self.node = Some(stretch.new_node(Style {
+      size: Size { 
+          width: Dimension::Points(self.width as f32), 
+          height: Dimension::Points(self.height as f32),
+      }, justify_content: JustifyContent::SpaceEvenly,
+       margin: Rect {
+                    start: Dimension::Points(2.0),
+                    end: Dimension::Points(2.0),
+                    top: Dimension::Points(2.0),
+                    bottom: Dimension::Points(2.0),
+                    ..Default::default()
+      },
+      ..Default::default()
+  }, vec![]).unwrap());
 
     unsafe {
       let (mut vertex_array_buffer, mut elem_array_buffer) = (0, 0);
@@ -460,14 +479,18 @@ impl<'a> Actor<'a> {
     }
   }
 
-  pub fn render(&self, shader_program: GLuint, actor: Option<&Actor>) {
-    let mut x : f32 = self.x as f32;
-    let mut y : f32 = self.y as f32;
+  pub fn render(&self, shader_program: GLuint, stretch: &Stretch, actor: Option<&Actor>) {
+    let layout = stretch.layout(self.node.unwrap()).unwrap();
+    let mut x = layout.location.x;
+    let mut y = layout.location.y;
 
+    println!("node: {:#?}", stretch.layout(self.node.unwrap()));
     if let Some(main_actor) = actor {
       x += main_actor.x as f32;
       y += main_actor.y as f32;
     }
+    
+    println!("{}: x,y = {}, {}", self.name, x, y);
 
     let mut transform: Matrix4<f32> = Matrix4::identity();
 
@@ -516,17 +539,18 @@ impl<'a> Actor<'a> {
 
     for sub_actor in self.sub_actor_list.iter() {
       if sub_actor.focused == false {
-        sub_actor.render(shader_program, Some(&self));
+        sub_actor.render(shader_program, stretch, Some(&self));
       }
     }
 
     // render the focused sub_actor at the end.
     if self.sub_actor_list.len() > 0 {
-      self.sub_actor_list[self.focused_sub_actor].render(shader_program, Some(&self));
+      self.sub_actor_list[self.focused_sub_actor].render(shader_program, stretch, Some(&self));
     }
   }
 
   pub fn add_sub_actor(&mut self, actor: Actor<'a>) {
+    
     self.sub_actor_list.push(actor);
   }
 }
