@@ -377,7 +377,6 @@ impl<'a> Actor<'a> {
 
   pub fn apply_translation_x_animation(&mut self, from_value: i32, to_value: i32, time: f32, easing: EasingFunction) {
     self.translation_x_animation_running = true;
-    println!("{} {:?}", self.name, easing);
     self.translation_x_animation_ease = easing;
     self.translation_x_animation_from_value = from_value;
     self.translation_x_animation_to_value = to_value;
