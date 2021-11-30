@@ -55,14 +55,16 @@ fn main() {
   ];
   let mut y = 0;
   let time = 5.0;
+  let width  = 63;
+  let height = width;
   for i in 0..17 {
     let actor_name = format!("actor_{}", i+1);
-    let mut actor = Actor::new(actor_name.to_string(), 63, 63, None);
+    let mut actor = Actor::new(actor_name.to_string(), width, height, None);
     actor.x = 0;
     actor.y = y;
-    y += 63;
+    y += height as i32;
     actor.set_color(i as f32 / 18.0, i as f32 / 18.0, i as f32 / 18.0);
-    actor.apply_translation_x_animation(0, 1920 - 63, time, easing_functions[i]);
+    actor.apply_translation_x_animation(0, (1920 - width) as i32, time, easing_functions[i]);
     actor.apply_rotation_animation(0, 360, time, EasingFunction::Linear);
     stage.add_actor(actor);
   }
