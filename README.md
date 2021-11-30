@@ -2,6 +2,8 @@
 [Latest Version]: https://img.shields.io/crates/v/rust-animation.svg
 [crates.io]: https://crates.io/crates/rust-animation
 
+![alt text](https://github.com/joone/rust-animation/blob/main/examples/easing_functions.gif?raw=true)
+
 rust-animation is an OpenGL based graphics library for creating hardware-accelerated user interfaces written in Rust.
 It allows us to implement a simple animated UI for embedded devices.
 
@@ -20,12 +22,14 @@ There are several examples so you can build them as follows:
 ```
 $ cargo build --example ani
 $ cargo build --example picture_viewer
+$ cargo build --example easing_functions
 ```
 
 # Run
 ```
 $ target/debug/examples/ani
 $ target/debug/examples/picture_viewer
+$ target/debug/examples/easing_functions
 ```
 
 # Code examples
