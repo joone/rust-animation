@@ -265,27 +265,25 @@ impl<'a> Actor<'a> {
   }*/
 
   fn easing_function(easing: EasingFunction, from: f32, to: f32, duration: f32) -> f32 {
-     let val : f32;
      match easing {
-        EasingFunction::EaseIn => { val = ease(EaseIn, from, to, duration); }
-        EasingFunction::EaseInCubic  => { val = ease(EaseInCubic, from, to, duration); }
-        EasingFunction::EaseInOut => { val = ease(EaseInOut, from, to, duration); }
-        EasingFunction::EaseInOutCubic => { val = ease(EaseInOutCubic, from, to, duration); }
-        EasingFunction::EaseInOutQuad => { val = ease(EaseInOutQuad , from, to, duration); }
-        EasingFunction::EaseInOutQuart => { val = ease(EaseInOutQuart, from, to, duration); }
-        EasingFunction::EaseInOutQuint => { val = ease(EaseInOutQuint, from, to, duration); }
-        EasingFunction::EaseInQuad => { val = ease(EaseInQuad, from, to, duration); }
-        EasingFunction::EaseInQuart => { val = ease(EaseInQuart, from, to, duration); }
-        EasingFunction::EaseInQuint => { val = ease(EaseInQuint, from, to, duration); }
-        EasingFunction::EaseOut => { val = ease(EaseOut, from, to, duration); }
-        EasingFunction::EaseOutCubic => { val = ease(EaseOutCubic, from, to, duration); }
-        EasingFunction::EaseOutQuad => { val = ease(EaseOutQuad, from, to, duration); }
-        EasingFunction::EaseOutQuart => { val = ease(EaseOutQuart, from, to, duration); }
-        EasingFunction::EaseOutQuint => { val = ease(EaseOutQuint, from, to, duration); }
-        EasingFunction::Linear =>{ val = ease(Linear, from, to, duration); }
-        EasingFunction::Step => { val = ease(Step, from, to, duration); }
+        EasingFunction::EaseIn => ease(EaseIn, from, to, duration),
+        EasingFunction::EaseInCubic  => ease(EaseInCubic, from, to, duration),
+        EasingFunction::EaseInOut => ease(EaseInOut, from, to, duration),
+        EasingFunction::EaseInOutCubic => ease(EaseInOutCubic, from, to, duration),
+        EasingFunction::EaseInOutQuad => ease(EaseInOutQuad , from, to, duration),
+        EasingFunction::EaseInOutQuart => ease(EaseInOutQuart, from, to, duration),
+        EasingFunction::EaseInOutQuint => ease(EaseInOutQuint, from, to, duration),
+        EasingFunction::EaseInQuad => ease(EaseInQuad, from, to, duration),
+        EasingFunction::EaseInQuart => ease(EaseInQuart, from, to, duration),
+        EasingFunction::EaseInQuint => ease(EaseInQuint, from, to, duration),
+        EasingFunction::EaseOut => ease(EaseOut, from, to, duration),
+        EasingFunction::EaseOutCubic => ease(EaseOutCubic, from, to, duration),
+        EasingFunction::EaseOutQuad => ease(EaseOutQuad, from, to, duration),
+        EasingFunction::EaseOutQuart => ease(EaseOutQuart, from, to, duration),
+        EasingFunction::EaseOutQuint => ease(EaseOutQuint, from, to, duration),
+        EasingFunction::Linear => ease(Linear, from, to, duration),
+        EasingFunction::Step => ease(Step, from, to, duration)
      }
-     val
   }
   pub fn animate(&mut self) {
     if self.needsUpdate {
