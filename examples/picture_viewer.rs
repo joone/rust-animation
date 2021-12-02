@@ -142,8 +142,8 @@ impl<'a> PictureBrowser<'a> {
     self.play.initialize();
     let mut splash_stage = Stage::new("splash_stage".to_string(), 1920, 1080,
         LayoutMode::UserDefine, Some(Box::new(ActorEvent::new())));
+    splash_stage.set_image("examples/splash.png".to_string());
     splash_stage.set_visible(true);
-    splash_stage.stage_actor.set_image("examples/splash.png".to_string());
     self.splash_stage_name = self.play.add_stage(splash_stage);
 
     let mut stage = Stage::new("main_stage".to_string(), 1920, 1080,

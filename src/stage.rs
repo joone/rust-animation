@@ -19,7 +19,7 @@ pub struct Stage<'a> {
   viewport_width: u32,
   viewport_height: u32,
   visible: bool,
-  pub stage_actor: Actor<'a>,
+  stage_actor: Actor<'a>,
   pub stretch: Option<Stretch>
 }
 
@@ -34,7 +34,6 @@ impl<'a> Stage<'a> {
        LayoutMode::Flex => {
          stretch = Some(Stretch::new());
          actor = Actor::new("stage_actor".to_string(), vw, vh, event_handler);
-         actor.init_gl(vw, vh, &mut stretch);
 
        }
        LayoutMode::UserDefine => {
@@ -55,8 +54,14 @@ impl<'a> Stage<'a> {
     }
   }
 
+  pub fn set_image(&mut self, path: String) {
+    self.stage_actor.set_image(path);
+  }
+
   pub fn set_visible(&mut self, visible: bool) {
     self.visible = visible;
+    self.stage_actor.init_gl(self.viewport_width, self.viewport_height,
+        &mut self.stretch);
   }
 
   pub fn set_needs_layout(&mut self) {
