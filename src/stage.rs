@@ -110,7 +110,7 @@ impl<'a> Stage<'a> {
       }
     }
 
-    self.stage_actor.sub_actor_list.push(actor);
+    self.stage_actor.add_sub_actor(actor);
 
     self.stage_actor.sub_actor_list.len() - 1
   }
