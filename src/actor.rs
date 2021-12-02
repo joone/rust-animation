@@ -178,31 +178,11 @@ impl<'a> Actor<'a> {
     }
   }
 
-  pub fn init_gl(&mut self, viewport_width: u32, viewport_height: u32,
-      stretch: &mut Option<Stretch>) {
+  pub fn init_gl(&mut self, viewport_width: u32, viewport_height: u32) {
     self.viewport_width = viewport_width;
     self.viewport_height = viewport_height;
 
-    if let Some(stretch_obj) = stretch {
-      if let Some(style_obj) = self.style {
-        self.node = Some(stretch_obj.new_node(style_obj, vec![]).unwrap());
-      } else {
-        self.node = Some(stretch_obj.new_node(Style {
-          size: Size { 
-              width: Dimension::Points(self.width as f32), 
-              height: Dimension::Points(self.height as f32),
-          }, justify_content: JustifyContent::SpaceEvenly,
-          margin: Rect {
-              start: Dimension::Points(2.0),
-              end: Dimension::Points(2.0),
-              top: Dimension::Points(2.0),
-              bottom: Dimension::Points(2.0),
-              ..Default::default()
-          },
-          ..Default::default()
-        }, vec![]).unwrap());
-      }
-    }
+    println!("init_gl {}", self.name);
 
     unsafe {
       let (mut vertex_array_buffer, mut elem_array_buffer) = (0, 0);
@@ -486,8 +466,40 @@ impl<'a> Actor<'a> {
   }
 
   // Marks the layer’s contents as needing to be updated.
-  pub fn set_needs_layout(&mut self) {
+  pub fn set_needs_layout(&mut self, stretch: &mut Option<Stretch>) {
      self.needsUpdate = true;
+
+    if let Some(stretch_obj) = stretch {
+      if let Some(style_obj) = self.style {
+        self.node = Some(stretch_obj.new_node(style_obj, vec![]).unwrap());
+      } else {
+        println!("default style: {}: {},{}", self.name, self.width, self.height);
+        self.node = Some(stretch_obj.new_node(Style {
+          size: Size { 
+              width: Dimension::Points(self.width as f32), 
+              height: Dimension::Points(self.height as f32),
+          },
+          margin: Rect {
+              start: Dimension::Points(2.0),
+              end: Dimension::Points(2.0),
+              top: Dimension::Points(2.0),
+              bottom: Dimension::Points(2.0),
+              ..Default::default()
+          },
+          ..Default::default()
+        }, vec![]).unwrap());
+      }
+    }
+    for sub_actor in self.sub_actor_list.iter_mut() {
+       sub_actor.set_needs_layout(stretch);
+      if !self.node.is_none() {
+        match stretch.as_mut().unwrap().add_child(self.node.unwrap(),
+          sub_actor.node.unwrap()) {
+          Ok(()) => { println!(" stretch node  is added {} {}", self.name, sub_actor.name)}
+          Err(..) => {}
+        }
+      }
+    }
   }
 
   // layout sub-actors.
@@ -497,25 +509,30 @@ impl<'a> Actor<'a> {
     }
   }
 
+  pub fn update_layout(&mut self, stretch: &mut Option<Stretch>) {
+    // If Stretch's node is set, Stretch does a layout job.
+    if let Some(stretch_obj) = stretch {
+      let layout = stretch_obj.layout(self.node.unwrap()).unwrap();
+      self.x = layout.location.x as i32;
+      self.y = layout.location.y as i32;
+      //println!("node: {:#?}", stretch_obj.layout(self.node.unwrap())); 
+  
+      for sub_actor in self.sub_actor_list.iter_mut() {
+        sub_actor.update_layout(stretch);
+      }
+    }
+  }
+
   pub fn render(&self, shader_program: GLuint, stretch: &mut Option<Stretch>, actor: Option<&Actor>) {
     let mut x = self.x;
     let mut y = self.y;
-
-    // If Stretch's node is set, Stretch does a layout job.
-     if let Some(stretch_obj) = stretch {
-      let layout = stretch_obj.layout(self.node.unwrap()).unwrap();
-      x = layout.location.x as i32;
-      y = layout.location.y as i32;
-
-      println!("node: {:#?}", stretch_obj.layout(self.node.unwrap())); 
-    }
 
     if let Some(main_actor) = actor {
       x += main_actor.x;
       y += main_actor.y;
     }
 
-    //println!("{}: x,y = {}, {}", self.name, x, y);
+    //println!("render: {}: x,y = {}, {}", self.name, x, y);
 
     let mut transform: Matrix4<f32> = Matrix4::identity();
 
@@ -564,7 +581,7 @@ impl<'a> Actor<'a> {
 
     for sub_actor in self.sub_actor_list.iter() {
       if sub_actor.focused == false {
-        sub_actor.render(shader_program, stretch, Some(&self));
+        sub_actor.render(shader_program, stretch,  Some(&self));
       }
     }
 
@@ -574,8 +591,13 @@ impl<'a> Actor<'a> {
     }
   }
 
-  pub fn add_sub_actor(&mut self, actor: Actor<'a>) {
-    
+  pub fn add_sub_actor(&mut self, mut actor: Actor<'a>) {
+    println!("{} : {}, {}", self.name, self.viewport_width, self.viewport_height);
+
+    // FIXME
+    // actor.init_gl(self.viewport_width, self.viewport_height);
+    actor.init_gl(1920, 1080);
+    //println!("stage::add_actor");
     self.sub_actor_list.push(actor);
   }
 }
