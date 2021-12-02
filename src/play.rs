@@ -155,7 +155,7 @@ pub fn set_visible_stage(&mut self, name: &String, visible: bool) {
     }
   }
 
-  pub fn add_stage(&mut self, mut stage: Stage<'a>) -> String {
+  pub fn add_stage(&mut self, stage: Stage<'a>) -> String {
     println!("play::add_stage");
    // stage.initialize();
     let stage_name = stage.name.to_string();
