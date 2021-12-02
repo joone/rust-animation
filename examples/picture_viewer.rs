@@ -21,6 +21,7 @@ use rust_animation::actor::Actor;
 use rust_animation::actor::EventHandler;
 use rust_animation::actor::Layout;
 use rust_animation::actor::EasingFunction;
+use rust_animation::actor::LayoutMode;
 
 type ResultUrl<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
@@ -140,13 +141,13 @@ impl<'a> PictureBrowser<'a> {
   pub fn initialize(&mut self) {
     self.play.initialize();
     let mut splash_stage = Stage::new("splash_stage".to_string(), 1920, 1080,
-        Some(Box::new(ActorEvent::new())));
+        LayoutMode::UserDefine, Some(Box::new(ActorEvent::new())));
     splash_stage.set_visible(true);
     splash_stage.stage_actor.set_image("examples/splash.png".to_string());
     self.splash_stage_name = self.play.add_stage(splash_stage);
 
     let mut stage = Stage::new("main_stage".to_string(), 1920, 1080,
-        Some(Box::new(ActorEvent::new())));
+        LayoutMode::UserDefine, Some(Box::new(ActorEvent::new())));
     stage.set_layout(Some(Box::new(ActorLayout::new())));
     self.main_stage_name = self.play.add_stage(stage);
   }

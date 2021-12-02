@@ -11,6 +11,7 @@ use rust_animation::play::Play;
 use rust_animation::stage::Stage;
 use rust_animation::actor::Actor;
 use rust_animation::actor::EasingFunction;
+use rust_animation::actor::LayoutMode;
 
 fn main() {
   let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
@@ -31,7 +32,7 @@ fn main() {
 
   let mut play = Play::new("Animation test".to_string());
   play.initialize();
-  let mut stage = Stage::new("stage".to_string(), 1920, 1080, None);
+  let mut stage = Stage::new("stage".to_string(), 1920, 1080, LayoutMode::UserDefine, None);
   stage.set_visible(true);
 
   let mut actor = Actor::new("actor_1".to_string(), 400, 225, None);

@@ -41,6 +41,12 @@ pub enum EasingFunction {
     Step,
 }
 
+#[derive(Copy, Clone, Debug)]
+pub enum LayoutMode {
+  UserDefine,
+  Flex
+}
+
 macro_rules! c_str {
   ($literal:expr) => {
       CStr::from_bytes_with_nul_unchecked(concat!($literal, "\0").as_bytes())
@@ -171,24 +177,26 @@ impl<'a> Actor<'a> {
   }
 
   pub fn init_gl(&mut self, viewport_width: u32, viewport_height: u32,
-      stretch: &mut Stretch) {
+      stretch: &mut Option<Stretch>) {
     self.viewport_width = viewport_width;
     self.viewport_height = viewport_height;
-    println!("actor::init_gl");
-    self.node = Some(stretch.new_node(Style {
-      size: Size { 
-          width: Dimension::Points(self.width as f32), 
-          height: Dimension::Points(self.height as f32),
-      }, justify_content: JustifyContent::SpaceEvenly,
-       margin: Rect {
-                    start: Dimension::Points(2.0),
-                    end: Dimension::Points(2.0),
-                    top: Dimension::Points(2.0),
-                    bottom: Dimension::Points(2.0),
-                    ..Default::default()
-      },
-      ..Default::default()
-  }, vec![]).unwrap());
+
+    if let Some(stretch_obj) = stretch {
+      self.node = Some(stretch_obj.new_node(Style {
+        size: Size { 
+            width: Dimension::Points(self.width as f32), 
+            height: Dimension::Points(self.height as f32),
+        }, justify_content: JustifyContent::SpaceEvenly,
+        margin: Rect {
+            start: Dimension::Points(2.0),
+            end: Dimension::Points(2.0),
+            top: Dimension::Points(2.0),
+            bottom: Dimension::Points(2.0),
+            ..Default::default()
+        },
+        ..Default::default()
+      }, vec![]).unwrap());
+    }
 
     unsafe {
       let (mut vertex_array_buffer, mut elem_array_buffer) = (0, 0);
@@ -479,18 +487,25 @@ impl<'a> Actor<'a> {
     }
   }
 
-  pub fn render(&self, shader_program: GLuint, stretch: &Stretch, actor: Option<&Actor>) {
-    let layout = stretch.layout(self.node.unwrap()).unwrap();
-    let mut x = layout.location.x;
-    let mut y = layout.location.y;
+  pub fn render(&self, shader_program: GLuint, stretch: &mut Option<Stretch>, actor: Option<&Actor>) {
+    let mut x = self.x;
+    let mut y = self.y;
 
-    println!("node: {:#?}", stretch.layout(self.node.unwrap()));
-    if let Some(main_actor) = actor {
-      x += main_actor.x as f32;
-      y += main_actor.y as f32;
+    // If Stretch's node is set, Stretch does a layout job.
+     if let Some(stretch_obj) = stretch {
+      let layout = stretch_obj.layout(self.node.unwrap()).unwrap();
+      x = layout.location.x as i32;
+      y = layout.location.y as i32;
+
+      println!("node: {:#?}", stretch_obj.layout(self.node.unwrap())); 
     }
-    
-    println!("{}: x,y = {}, {}", self.name, x, y);
+
+    if let Some(main_actor) = actor {
+      x += main_actor.x;
+      y += main_actor.y;
+    }
+
+    //println!("{}: x,y = {}, {}", self.name, x, y);
 
     let mut transform: Matrix4<f32> = Matrix4::identity();
 

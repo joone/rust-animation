@@ -8,6 +8,7 @@ use self::gl::types::*;
 use crate::actor::Actor;
 use crate::actor::EventHandler;
 use crate::actor::Layout;
+use crate::actor::LayoutMode;
 
 use stretch::{style::*, node::{Node, Stretch}, geometry::Size};
 
@@ -19,26 +20,39 @@ pub struct Stage<'a> {
   viewport_height: u32,
   visible: bool,
   pub stage_actor: Actor<'a>,
-  pub stretch: Stretch
+  pub stretch: Option<Stretch>
 }
 
 impl<'a> Stage<'a> {
-  pub fn new(name: String, vw: u32, vh: u32, event_handler:  Option<Box<dyn EventHandler + 'a>>) -> Self {
-    Stage {
+  pub fn new(name: String, vw: u32, vh: u32, layout_mode: LayoutMode,
+      event_handler:  Option<Box<dyn EventHandler + 'a>>) -> Self {
+
+    let mut stretch = None;
+    let mut actor;
+
+     match layout_mode {
+       LayoutMode::Flex => {
+         stretch = Some(Stretch::new());
+         actor = Actor::new("stage_actor".to_string(), vw, vh, event_handler);
+         actor.init_gl(vw, vh, &mut stretch);
+
+       }
+       LayoutMode::UserDefine => {
+          actor = Actor::new("stage_actor".to_string(), vw, vh, event_handler);
+          actor.init_gl(vw, vh, &mut stretch);
+       }
+     }
+
+    Self {
       name: name,
       width: 0,
       height: 0,
       viewport_width: vw,
       viewport_height: vh,
       visible: false,
-      stage_actor: Actor::new("stage_actor".to_string(), vw, vh, event_handler),
-      stretch: Stretch::new()
+      stage_actor: actor,
+      stretch: stretch
     }
-  }
-
-  pub fn initialize(&mut self) {
-    println!("stage::initialize");
-    self.stage_actor.init_gl(self.viewport_width, self.viewport_height, &mut self.stretch);
   }
 
   pub fn set_visible(&mut self, visible: bool) {
@@ -46,12 +60,14 @@ impl<'a> Stage<'a> {
   }
 
   pub fn set_needs_layout(&mut self) {
-     self.stage_actor.set_needs_layout();
-     self.stretch.compute_layout(self.stage_actor.node.unwrap(),
-         Size::undefined()).unwrap();
+    self.stage_actor.set_needs_layout();
+    if let Some(stretch_obj) = &mut self.stretch {
+      stretch_obj.compute_layout(self.stage_actor.node.unwrap(),
+          Size::undefined()).unwrap();
 
-    let layout = self.stretch.layout(self.stage_actor.node.unwrap()).unwrap();
-    println!("{}, {}", layout.size.width, layout.size.height);
+      let layout = stretch_obj.layout(self.stage_actor.node.unwrap()).unwrap();
+      println!("{}, {}", layout.size.width, layout.size.height);
+    }
   }
 
   pub fn set_layout(&mut self, layout: Option<Box<dyn Layout + 'a>>) {
@@ -70,19 +86,21 @@ impl<'a> Stage<'a> {
       return
     }
     self.stage_actor.animate();
-    self.stage_actor.render(shader_program, &self.stretch, None);
+    self.stage_actor.render(shader_program, &mut self.stretch, None);
   }
 
   pub fn add_actor(&mut self, mut actor: Actor<'a>) -> usize {
-        println!("stage::add_actor");
-    actor.init_gl(self.viewport_width, self.viewport_height,
-        &mut self.stretch);
+    //println!("stage::add_actor");
+    actor.init_gl(self.viewport_width, self.viewport_height, &mut self.stretch);
 
-    match self.stretch.add_child(self.stage_actor.node.unwrap(),
-        actor.node.unwrap()) {
-       Ok(()) => {}
-       Err(..) => {}
+    if !self.stage_actor.node.is_none() {
+      match self.stretch.as_mut().unwrap().add_child(self.stage_actor.node.unwrap(),
+          actor.node.unwrap()) {
+        Ok(()) => {}
+        Err(..) => {}
+      }
     }
+
     self.stage_actor.sub_actor_list.push(actor);
 
     self.stage_actor.sub_actor_list.len() - 1
