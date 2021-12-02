@@ -108,7 +108,8 @@ pub struct Actor<'a> {
   focused_sub_actor: usize,
   focused: bool,
   needsUpdate: bool,
-  pub node: Option<Node>
+  pub node: Option<Node>,
+  style: Option<Style>
 }
 
 pub trait EventHandler {
@@ -172,7 +173,8 @@ impl<'a> Actor<'a> {
       focused_sub_actor: 0,
       focused: false,
       needsUpdate: false,
-      node: None
+      node: None,
+      style: None
     }
   }
 
@@ -182,20 +184,24 @@ impl<'a> Actor<'a> {
     self.viewport_height = viewport_height;
 
     if let Some(stretch_obj) = stretch {
-      self.node = Some(stretch_obj.new_node(Style {
-        size: Size { 
-            width: Dimension::Points(self.width as f32), 
-            height: Dimension::Points(self.height as f32),
-        }, justify_content: JustifyContent::SpaceEvenly,
-        margin: Rect {
-            start: Dimension::Points(2.0),
-            end: Dimension::Points(2.0),
-            top: Dimension::Points(2.0),
-            bottom: Dimension::Points(2.0),
-            ..Default::default()
-        },
-        ..Default::default()
-      }, vec![]).unwrap());
+      if let Some(style_obj) = self.style {
+        self.node = Some(stretch_obj.new_node(style_obj, vec![]).unwrap());
+      } else {
+        self.node = Some(stretch_obj.new_node(Style {
+          size: Size { 
+              width: Dimension::Points(self.width as f32), 
+              height: Dimension::Points(self.height as f32),
+          }, justify_content: JustifyContent::SpaceEvenly,
+          margin: Rect {
+              start: Dimension::Points(2.0),
+              end: Dimension::Points(2.0),
+              top: Dimension::Points(2.0),
+              bottom: Dimension::Points(2.0),
+              ..Default::default()
+          },
+          ..Default::default()
+        }, vec![]).unwrap());
+      }
     }
 
     unsafe {
@@ -284,6 +290,10 @@ impl<'a> Actor<'a> {
 
   pub fn set_layout(&mut self, layout: Option<Box<dyn Layout + 'a>>) {
     self.layout = layout;
+  }
+
+  pub fn set_style(&mut self, style: Style) {
+    self.style = Some(style);
   }
 
   /*pub fn update(&mut self) {

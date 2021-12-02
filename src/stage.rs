@@ -50,12 +50,16 @@ impl<'a> Stage<'a> {
       viewport_height: vh,
       visible: false,
       stage_actor: actor,
-      stretch: stretch
+      stretch: stretch,
     }
   }
 
   pub fn set_image(&mut self, path: String) {
     self.stage_actor.set_image(path);
+  }
+
+  pub fn set_style(&mut self, style: Style) {
+    self.stage_actor.set_style(style);
   }
 
   pub fn set_visible(&mut self, visible: bool) {
