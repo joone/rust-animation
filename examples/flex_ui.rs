@@ -40,6 +40,7 @@ fn main() {
               height: Dimension::Points(1080.0),
           }, justify_content: JustifyContent::Center,
           flex_direction: FlexDirection::Column,
+          align_items: AlignItems::Center,
           margin: Rect {
               start: Dimension::Points(1.0),
               end: Dimension::Points(1.0),
