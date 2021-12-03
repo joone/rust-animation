@@ -137,7 +137,7 @@ let mut play = Play::new("Easing functions demo".to_string());
 ```
 ## flex_ui.rs
 ![alt flex_ui](https://github.com/joone/rust-animation/blob/main/examples/flex_ui.png?raw=true)
-rust-animation experimentally uses [Stretch](https://github.com/vislyhq/stretch) to support Flex UI. You can set Stretch style to a stage or actor. You can also implement your own layout using a Layout trait.
+rust-animation experimentally uses [Stretch](https://github.com/vislyhq/stretch) to support Flex UI. You can apply a Stretch style to a stage or an actor. You can also implement your own layout using a Layout trait.
 
 ```
 $ target/debug/examples/flex_ui
