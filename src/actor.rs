@@ -107,7 +107,7 @@ pub struct Actor<'a> {
   layout: Option<Box<dyn Layout + 'a>>,
   focused_sub_actor: usize,
   focused: bool,
-  needsUpdate: bool,
+  needs_update: bool,
   pub node: Option<Node>,
   style: Option<Style>
 }
@@ -172,7 +172,7 @@ impl<'a> Actor<'a> {
       layout: None,
       focused_sub_actor: 0,
       focused: false,
-      needsUpdate: false,
+      needs_update: false,
       node: None,
       style: None
     }
@@ -302,9 +302,9 @@ impl<'a> Actor<'a> {
      }
   }
   pub fn animate(&mut self) {
-    if self.needsUpdate {
+    if self.needs_update {
         self.layout_sub_actors();
-      self.needsUpdate = false;
+      self.needs_update = false;
     }
 
     if self.translation_x_animation_running == true {
@@ -466,7 +466,7 @@ impl<'a> Actor<'a> {
 
   // Marks the layer’s contents as needing to be updated.
   pub fn set_needs_layout(&mut self, stretch: &mut Option<Stretch>) {
-     self.needsUpdate = true;
+     self.needs_update = true;
 
     if let Some(stretch_obj) = stretch {
       if let Some(style_obj) = self.style {
