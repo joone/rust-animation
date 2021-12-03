@@ -4,7 +4,7 @@
 
 ![alt easing_funcitions](https://github.com/joone/rust-animation/blob/main/examples/easing_functions.gif?raw=true)
 
-rust-animation is an OpenGL based graphics library for creating hardware-accelerated user interfaces written in Rust. It is designed to implement a simple animated UI for embedded devices.
+rust-animation is an OpenGL based graphics library for creating hardware-accelerated user interfaces written in Rust. It is designed to implement a simple animated UI for embedded devices. This project is inspired by [GNOME Clutter project](https://en.wikipedia.org/wiki/Clutter_(software)) and [Apple Core Animation](https://en.wikipedia.org/wiki/Core_Animation).
 
 Note: this project is in early development stage so many features are still missing, some dependencies are experimental, and there are probably many bugs. Feel free to file any bugs.
 
@@ -24,65 +24,11 @@ There are several examples so you can build them as follows:
 * Flex UI
 
 # Examples
-## ani.rs
-```
-$ cargo build --example ani
-$ target/debug/examples/ani
-
-```
-This examples shows the basic animation features.
-
-```
-  let mut play = Play::new("Animation test".to_string());
-  play.initialize();
-  let mut stage = Stage::new("stage".to_string(), 1920, 1080, LayoutMode::UserDefine, None);
-  stage.set_visible(true);
-
-  let mut actor = Actor::new("actor_1".to_string(), 400, 225, None);
-  actor.x = 100;
-  actor.y = 100;
-  actor.set_image("examples/splash.png".to_string());
-
-  // 1X -> 2X for 5 sec.
-  let time = 5.0;
-  actor.apply_scale_animation(1.0, 2.0, time, EasingFunction::Linear);
-  actor.apply_translation_x_animation(100, 1000, time, EasingFunction::EaseInOut);
-  actor.apply_translation_y_animation(100, 300, time, EasingFunction::EaseInOut);
-  actor.apply_rotation_animation(0, 360, time, EasingFunction::EaseInOut);
-
-  let mut actor_2 = Play::new_actor("actor_2".to_string(), 120, 120, None);
-  actor_2.x = 100;
-  actor_2.y = 100;
-  actor_2.scale_x = 1.5;
-  actor_2.scale_y = 1.5;
-  actor_2.set_color(0.0, 0.0, 1.0);
-  // 0 degree -> 360 degree for 5 sec
-  actor_2.apply_rotation_animation(0, 360, 5.0, EasingFunction::EaseInOut);
-
-  let mut actor_3 = Play::new_actor("actor_3".to_string(), 50, 50, None);
-  actor_3.x = 10;
-  actor_3.y = 10;
-  actor_3.set_color(1.0, 0.0, 0.0);
-  actor_2.add_sub_actor(actor_3);
-
-  stage.add_actor(actor);
-  stage.add_actor(actor_2);
-  play.add_stage(stage);
-
-  while !window.should_close() {
-    process_events(&mut window, &events);
-    play.render();
-    window.swap_buffers();
-    glfw.poll_events();
-  }
-}
-```
-
 ## easing_functions.rs
 You can see all the easing functions in this example.
 ```
-$ target/debug/examples/easing_functions
 $ cargo build --example easing_functions
+$ target/debug/examples/easing_functions
 ```
 ```
 let mut play = Play::new("Easing functions demo".to_string());
@@ -140,8 +86,9 @@ let mut play = Play::new("Easing functions demo".to_string());
 rust-animation experimentally uses [Stretch](https://github.com/vislyhq/stretch) to support Flex UI. You can apply a Stretch style to a stage or an actor. You can also implement your own layout using a Layout trait.
 
 ```
-$ target/debug/examples/flex_ui
 $ cargo build --example flex_ui
+$ target/debug/examples/flex_ui
+
 ```
 
 ```
@@ -209,10 +156,66 @@ let mut stage = Stage::new("stage".to_string(), 1920, 1080, LayoutMode::Flex, No
     }
     stage.add_actor(actor);
   }
+
 ```
+## ani.rs
+```
+$ cargo build --example ani
+$ target/debug/examples/ani
+```
+This examples shows the basic animation features.
+
+```
+  let mut play = Play::new("Animation test".to_string());
+  play.initialize();
+  let mut stage = Stage::new("stage".to_string(), 1920, 1080, LayoutMode::UserDefine, None);
+  stage.set_visible(true);
+
+  let mut actor = Actor::new("actor_1".to_string(), 400, 225, None);
+  actor.x = 100;
+  actor.y = 100;
+  actor.set_image("examples/splash.png".to_string());
+
+  // 1X -> 2X for 5 sec.
+  let time = 5.0;
+  actor.apply_scale_animation(1.0, 2.0, time, EasingFunction::Linear);
+  actor.apply_translation_x_animation(100, 1000, time, EasingFunction::EaseInOut);
+  actor.apply_translation_y_animation(100, 300, time, EasingFunction::EaseInOut);
+  actor.apply_rotation_animation(0, 360, time, EasingFunction::EaseInOut);
+
+  let mut actor_2 = Play::new_actor("actor_2".to_string(), 120, 120, None);
+  actor_2.x = 100;
+  actor_2.y = 100;
+  actor_2.scale_x = 1.5;
+  actor_2.scale_y = 1.5;
+  actor_2.set_color(0.0, 0.0, 1.0);
+  // 0 degree -> 360 degree for 5 sec
+  actor_2.apply_rotation_animation(0, 360, 5.0, EasingFunction::EaseInOut);
+
+  let mut actor_3 = Play::new_actor("actor_3".to_string(), 50, 50, None);
+  actor_3.x = 10;
+  actor_3.y = 10;
+  actor_3.set_color(1.0, 0.0, 0.0);
+  actor_2.add_sub_actor(actor_3);
+
+  stage.add_actor(actor);
+  stage.add_actor(actor_2);
+  play.add_stage(stage);
+
+  while !window.should_close() {
+    process_events(&mut window, &events);
+    play.render();
+    window.swap_buffers();
+    glfw.poll_events();
+  }
+}
+```
+
+
 ## picture_viewer.rs
 This example is still work in progress. The thumbnail view only works.
 ```
-$ target/debug/examples/picture_viewer
 $ cargo build --example picture_viewer
+$ target/debug/examples/picture_viewer
+
 ```
