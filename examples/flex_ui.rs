@@ -81,6 +81,11 @@ fn main() {
               bottom: Dimension::Points(1.0),
               ..Default::default()
           },
+          padding: Rect {
+              start: Dimension::Points(2.0),
+              end: Dimension::Points(2.0),
+              ..Default::default()
+          },
           ..Default::default()
         }
     );
