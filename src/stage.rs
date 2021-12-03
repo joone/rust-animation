@@ -28,17 +28,15 @@ impl<'a> Stage<'a> {
       event_handler:  Option<Box<dyn EventHandler + 'a>>) -> Self {
 
     let mut stretch = None;
-    let mut actor;
+    let actor;
 
      match layout_mode {
        LayoutMode::Flex => {
          stretch = Some(Stretch::new());
          actor = Actor::new("stage_actor".to_string(), vw, vh, event_handler);
-
        }
        LayoutMode::UserDefine => {
           actor = Actor::new("stage_actor".to_string(), vw, vh, event_handler);
-          actor.init_gl(vw, vh);
        }
      }
 
@@ -64,10 +62,10 @@ impl<'a> Stage<'a> {
 
   pub fn set_visible(&mut self, visible: bool) {
     self.visible = visible;
-    self.stage_actor.init_gl(self.viewport_width, self.viewport_height);
   }
 
   pub fn set_needs_layout(&mut self) {
+    self.stage_actor.init_gl(self.viewport_width, self.viewport_height);
     self.stage_actor.set_needs_layout(&mut self.stretch);
     if let Some(stretch_obj) = &mut self.stretch {
       stretch_obj.compute_layout(self.stage_actor.node.unwrap(),

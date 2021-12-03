@@ -65,6 +65,8 @@ fn main() {
 
   stage.add_actor(actor);
   stage.add_actor(actor_2);
+
+  stage.set_needs_layout();
   play.add_stage(stage);
 
   while !window.should_close() {

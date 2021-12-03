@@ -70,6 +70,7 @@ fn main() {
     actor.apply_rotation_animation(0, 360, time, EasingFunction::Linear);
     stage.add_actor(actor);
   }
+  stage.set_needs_layout();
   play.add_stage(stage);
 
   while !window.should_close() {

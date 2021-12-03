@@ -181,8 +181,7 @@ impl<'a> Actor<'a> {
   pub fn init_gl(&mut self, viewport_width: u32, viewport_height: u32) {
     self.viewport_width = viewport_width;
     self.viewport_height = viewport_height;
-
-    println!("init_gl {}", self.name);
+    //println!("init_gl {}", self.name);
 
     unsafe {
       let (mut vertex_array_buffer, mut elem_array_buffer) = (0, 0);
@@ -491,6 +490,7 @@ impl<'a> Actor<'a> {
       }
     }
     for sub_actor in self.sub_actor_list.iter_mut() {
+       sub_actor.init_gl(self.viewport_width, self.viewport_height);
        sub_actor.set_needs_layout(stretch);
       if !self.node.is_none() {
         match stretch.as_mut().unwrap().add_child(self.node.unwrap(),
@@ -591,13 +591,8 @@ impl<'a> Actor<'a> {
     }
   }
 
-  pub fn add_sub_actor(&mut self, mut actor: Actor<'a>) {
-    println!("{} : {}, {}", self.name, self.viewport_width, self.viewport_height);
-
-    // FIXME
-    // actor.init_gl(self.viewport_width, self.viewport_height);
-    actor.init_gl(1920, 1080);
-    //println!("stage::add_actor");
+  pub fn add_sub_actor(&mut self, actor: Actor<'a>) {
+    //println!("{} : {}, {}", self.name, self.viewport_width, self.viewport_height);
     self.sub_actor_list.push(actor);
   }
 }
