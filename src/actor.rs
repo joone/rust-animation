@@ -472,7 +472,7 @@ impl<'a> Actor<'a> {
       if let Some(style_obj) = self.style {
         self.node = Some(stretch_obj.new_node(style_obj, vec![]).unwrap());
       } else {
-        println!("default style: {}: {},{}", self.name, self.width, self.height);
+        //println!("default style: {}: {},{}", self.name, self.width, self.height);
         self.node = Some(stretch_obj.new_node(Style {
           size: Size { 
               width: Dimension::Points(self.width as f32), 

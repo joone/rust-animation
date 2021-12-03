@@ -72,7 +72,7 @@ impl<'a> Stage<'a> {
           Size::undefined()).unwrap();
 
       let layout = stretch_obj.layout(self.stage_actor.node.unwrap()).unwrap();
-      println!("set_needs_layout {}, {}", layout.size.width, layout.size.height);
+      //println!("set_needs_layout {}, {}", layout.size.width, layout.size.height);
     }
   }
 
@@ -81,10 +81,8 @@ impl<'a> Stage<'a> {
   }
 
   pub fn handle_input(&mut self, key: usize) {
-     println!("stage key: {}", key);
-
-      self.stage_actor.handle_input(key);
-
+    // println!("stage key: {}", key);
+    self.stage_actor.handle_input(key);
   }
 
   pub fn render(&mut self, shader_program: GLuint) {
