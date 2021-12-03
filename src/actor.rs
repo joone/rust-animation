@@ -250,7 +250,7 @@ impl<'a> Actor<'a> {
                       &data[0] as *const u8 as *const c_void);
             gl::GenerateMipmap(gl::TEXTURE_2D);
           }
-          Err(err) => println!("Fail to load a image")
+          Err(err) => println!("Fail to load a image {:?}", err)
         }
 
       }

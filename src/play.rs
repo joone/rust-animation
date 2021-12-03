@@ -50,7 +50,7 @@ pub fn render(name:String) {
 }
 
 pub struct Play<'a>  {
-  name : String,
+  _name : String,
   stage_list: Vec<Stage<'a>>,
   shader_program: GLuint,
   stage_map: HashMap<String, usize>
@@ -59,7 +59,7 @@ pub struct Play<'a>  {
 impl<'a> Play<'a>  {
   pub fn new(name: String) -> Self {
     Play {
-      name : name,
+      _name : name,
       stage_list: Vec::new(),
       shader_program: 0,
       stage_map: HashMap::new()

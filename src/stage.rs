@@ -10,12 +10,10 @@ use crate::actor::EventHandler;
 use crate::actor::Layout;
 use crate::actor::LayoutMode;
 
-use stretch::{style::*, node::{Node, Stretch}, geometry::Size};
+use stretch::{style::*, node::{Stretch}, geometry::Size};
 
 pub struct Stage<'a> {
   pub name: String,
-  width: u32,
-  height: u32,
   viewport_width: u32,
   viewport_height: u32,
   visible: bool,
@@ -42,8 +40,6 @@ impl<'a> Stage<'a> {
 
     Self {
       name: name,
-      width: 0,
-      height: 0,
       viewport_width: vw,
       viewport_height: vh,
       visible: false,
@@ -71,7 +67,7 @@ impl<'a> Stage<'a> {
       stretch_obj.compute_layout(self.stage_actor.node.unwrap(),
           Size::undefined()).unwrap();
 
-      let layout = stretch_obj.layout(self.stage_actor.node.unwrap()).unwrap();
+      //let layout = stretch_obj.layout(self.stage_actor.node.unwrap()).unwrap();
       //println!("set_needs_layout {}, {}", layout.size.width, layout.size.height);
     }
   }
