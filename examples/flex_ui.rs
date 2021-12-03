@@ -62,17 +62,18 @@ fn main() {
       JustifyContent::SpaceEvenly,
   ];
   let width  = 1500;
-  let height = 100;
+  let height = 108;
   for i in 0..6 {
     let actor_name = format!("actor_{}", i+1);
     let mut actor = Actor::new(actor_name.to_string(), width, height, None);
-    actor.set_color(i as f32 / 18.0, i as f32 / 18.0, i as f32 / 18.0);
+    actor.set_color(i as f32 / 6.0, i as f32 / 6.0, i as f32 / 6.0);
     actor.set_style(Style {
            size: Size { 
               width: Dimension::Points(width as f32), 
               height: Dimension::Points(height as f32),
           },
           justify_content: justify_content[i],
+          align_items: AlignItems::Center,
           margin: Rect {
               start: Dimension::Points(1.0),
               end: Dimension::Points(1.0),
@@ -85,7 +86,7 @@ fn main() {
     );
     for j in 0..10 {
       let mut sub_actor = Actor::new(format!("actor_{}_{}", i+1, j+1).to_string(),
-          100, 98, None);
+          100, 100, None);
       sub_actor.set_color(1.0, j as f32 / 10.0, j as f32 / 10.0);
       actor.add_sub_actor(sub_actor);
     }
