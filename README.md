@@ -30,7 +30,7 @@ You can see all the easing functions in this example.
 $ cargo build --example easing_functions
 $ target/debug/examples/easing_functions
 ```
-```
+```rust
 let mut play = Play::new("Easing functions demo".to_string());
   play.initialize();
   let mut stage = Stage::new("stage".to_string(), 1920, 1080,
@@ -88,10 +88,9 @@ rust-animation experimentally uses [Stretch](https://github.com/vislyhq/stretch)
 ```
 $ cargo build --example flex_ui
 $ target/debug/examples/flex_ui
-
 ```
 
-```
+```rust
 let mut stage = Stage::new("stage".to_string(), 1920, 1080, LayoutMode::Flex, None);
   stage.set_style(Style {
           size: Size { 
@@ -165,7 +164,7 @@ $ target/debug/examples/ani
 ```
 This examples shows the basic animation features.
 
-```
+```rust
   let mut play = Play::new("Animation test".to_string());
   play.initialize();
   let mut stage = Stage::new("stage".to_string(), 1920, 1080, LayoutMode::UserDefine, None);
@@ -217,5 +216,4 @@ This example is still work in progress. The thumbnail view only works.
 ```
 $ cargo build --example picture_viewer
 $ target/debug/examples/picture_viewer
-
 ```
