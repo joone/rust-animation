@@ -78,13 +78,13 @@ impl ActorEvent {
 }
 
 impl EventHandler for ActorEvent {
-  fn key_focus_in(&mut self, val: u32, actor: &mut Actor) {
-     println!("key_focus_in: {}  {}  {}", self.name, val, actor.name);
+  fn key_focus_in(&mut self, actor: &mut Actor) {
+     println!("key_focus_in: {} {}", self.name, actor.name);
      actor.apply_scale_animation(1.0, 1.1, 0.3, EasingFunction::EaseInOut);
   }
 
-  fn key_focus_out(&mut self, val: u32, actor: &mut Actor) {
-    println!("key_focus_out: {}  {}  {}", self.name, val, actor.name);
+  fn key_focus_out(&mut self, actor: &mut Actor) {
+    println!("key_focus_out: {} {}", self.name, actor.name);
     actor.scale_x = 1.0;
     actor.scale_y = 1.0;
   }

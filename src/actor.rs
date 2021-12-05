@@ -113,8 +113,8 @@ pub struct Actor<'a> {
 }
 
 pub trait EventHandler {
-  fn key_focus_in(&mut self, val: u32, actor: &mut Actor);
-  fn key_focus_out(&mut self, val: u32, actor: &mut Actor);
+  fn key_focus_in(&mut self, actor: &mut Actor);
+  fn key_focus_out(&mut self, actor: &mut Actor);
   fn key_down(&mut self, key: usize, actor: &mut Actor);
 }
 
@@ -460,9 +460,9 @@ impl<'a> Actor<'a> {
       //println!("set_focus {} {} ", self.name, focused);
   
       if self.focused {
-        event_handler.key_focus_in(1, self);
+        event_handler.key_focus_in(self);
       } else {
-        event_handler.key_focus_out(1, self);
+        event_handler.key_focus_out(self);
       }
       self.event_handler = Some(event_handler);
     }
