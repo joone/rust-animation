@@ -115,6 +115,7 @@ pub struct Actor<'a> {
 pub trait EventHandler {
   fn key_focus_in(&mut self, val: u32, actor: &mut Actor);
   fn key_focus_out(&mut self, val: u32, actor: &mut Actor);
+  fn key_down(&mut self, key: usize, actor: &mut Actor);
 }
 
 pub trait Layout {
@@ -426,41 +427,56 @@ impl<'a> Actor<'a> {
     self.scale_y = self.scale_animation_from_value;
   }
 
-  pub fn handle_input(&mut self, key: usize) {
+  pub fn select_next_sub_actor(&mut self) {
     if self.sub_actor_list.len() <= 0 {
         return;
     }
+    // no more next actor.
+    if self.focused_sub_actor < self.sub_actor_list.len() - 1 {
+      let prev_focused_sub_actor = self.focused_sub_actor;  
+      self.focused_sub_actor += 1;
+      self.sub_actor_list[self.focused_sub_actor].set_focus(true);
+      self.sub_actor_list[prev_focused_sub_actor].set_focus(false);
+    }  
+  }
 
-    if let Some(ref mut event_handler) = self.event_handelr {
-      if key == 262 {     // right cursor
-        if self.focused_sub_actor < self.sub_actor_list.len() - 1 {
-          let prev_focused_sub_actor = self.focused_sub_actor;  
-          self.focused_sub_actor += 1;
+  pub fn select_prev_sub_actor(&mut self) {
+    if self.sub_actor_list.len() <= 0 {
+        return;
+    }
+    // ne more previus actor.
+    if self.focused_sub_actor == 0 {
+      return;
+    }
+    let prev_focused_sub_actor = self.focused_sub_actor;
+    self.focused_sub_actor -= 1;
+    self.sub_actor_list[self.focused_sub_actor].set_focus(true);
+    self.sub_actor_list[prev_focused_sub_actor].set_focus(false);
+  }
 
-          self.sub_actor_list[self.focused_sub_actor].focused = true;
-          event_handler.key_focus_in(key as u32, 
-              &mut self.sub_actor_list[self.focused_sub_actor]);
-
-          self.sub_actor_list[prev_focused_sub_actor].focused = false;
-            event_handler.key_focus_out(key as u32, 
-              &mut self.sub_actor_list[prev_focused_sub_actor]);
-        }
-      } else if key == 263 { // left cursor 
-        if self.focused_sub_actor > 0 {
-          let prev_focused_sub_actor = self.focused_sub_actor;
-          self.focused_sub_actor -= 1;
-
-          self.sub_actor_list[self.focused_sub_actor].focused = true;
-
-          event_handler.key_focus_in(key as u32, 
-            &mut self.sub_actor_list[self.focused_sub_actor]);
-      
-          self.sub_actor_list[prev_focused_sub_actor].focused = false;
-
-          event_handler.key_focus_out(key as u32, 
-              &mut self.sub_actor_list[prev_focused_sub_actor]);
-        }
+  pub fn set_focus(&mut self, focused: bool) {
+    self.focused = focused;
+    if let Some(mut event_handler) = self.event_handelr.take() {
+      //println!("set_focus {} {} ", self.name, focused);
+  
+      if self.focused {
+        event_handler.key_focus_in(1, self);
+      } else {
+        event_handler.key_focus_out(1, self);
       }
+      self.event_handelr = Some(event_handler);
+    }
+  }
+
+  pub fn handle_input(&mut self, key: usize) {
+    for sub_actor in self.sub_actor_list.iter_mut() {
+      if sub_actor.focused {
+        sub_actor.handle_input(key);
+      }
+    }
+    if let Some(mut event_handler) = self.event_handelr.take() {
+      event_handler.key_down(key, self);
+      self.event_handelr = Some(event_handler);
     }
   }
 

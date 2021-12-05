@@ -80,13 +80,23 @@ impl ActorEvent {
 impl EventHandler for ActorEvent {
   fn key_focus_in(&mut self, val: u32, actor: &mut Actor) {
      println!("key_focus_in: {}  {}  {}", self.name, val, actor.name);
-     actor.apply_scale_animation(1.0, 1.15, 0.5, EasingFunction::EaseInOut);
+     actor.apply_scale_animation(1.0, 1.1, 0.3, EasingFunction::EaseInOut);
   }
 
   fn key_focus_out(&mut self, val: u32, actor: &mut Actor) {
     println!("key_focus_out: {}  {}  {}", self.name, val, actor.name);
     actor.scale_x = 1.0;
     actor.scale_y = 1.0;
+  }
+
+  fn key_down(&mut self, key: usize, actor: &mut Actor) {
+     println!("key_down: {}  {}  {}", self.name, key, actor.name);
+
+    if key == 262 {     // right cursor
+       actor.select_next_sub_actor();
+    } else if key == 263 { // left cursor 
+       actor.select_prev_sub_actor();
+    }
   }
 }
 
@@ -141,7 +151,7 @@ impl<'a> PictureBrowser<'a> {
   pub fn initialize(&mut self) {
     self.play.initialize();
     let mut splash_stage = Stage::new("splash_stage".to_string(), 1920, 1080,
-        LayoutMode::UserDefine, Some(Box::new(ActorEvent::new())));
+        LayoutMode::UserDefine, None);
     splash_stage.set_image("examples/splash.png".to_string());
     splash_stage.set_visible(true);
     splash_stage.set_needs_layout();

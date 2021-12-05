@@ -8,7 +8,7 @@
       "name": "(lldb) Launch",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/target/debug/examples/ani",
+      "program": "${workspaceFolder}/target/debug/examples/picture_viewer",
       "preLaunchTask": "cargo build",
       "args": [],
       "stopAtEntry": false,
