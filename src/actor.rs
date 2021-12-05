@@ -91,14 +91,14 @@ pub struct Actor<'a> {
 
   scale_animation_running: bool,
   scale_animation_starting_time: u128,
-  scale_animation_time_duration: u128,
+  scale_animation_time_duration: f32,
   scale_animation_from_value: f32,
   scale_animation_to_value: f32,
   scale_animation_ease: EasingFunction, 
 
   rotation_animation_running: bool,
   rotation_animation_starting_time: u128,
-  rotation_animation_time_duration: u128,
+  rotation_animation_time_duration: f32,
   rotation_animation_from_value: i32,
   rotation_animation_to_value: i32,
   rotation_animation_ease: EasingFunction,
@@ -158,13 +158,13 @@ impl<'a> Actor<'a> {
       translation_y_animation_ease: EasingFunction::Linear,
       scale_animation_running: false,
       scale_animation_starting_time: 0,
-      scale_animation_time_duration: 0,
+      scale_animation_time_duration: 0.0,
       scale_animation_from_value: 0.0,
       scale_animation_to_value: 0.0,
       scale_animation_ease: EasingFunction::Linear,
       rotation_animation_running: false,
       rotation_animation_starting_time: 0,
-      rotation_animation_time_duration: 0,
+      rotation_animation_time_duration: 0.0,
       rotation_animation_from_value: 0,
       rotation_animation_to_value: 0,
       rotation_animation_ease: EasingFunction::Linear,
@@ -412,7 +412,7 @@ impl<'a> Actor<'a> {
     self.rotation_animation_ease = easing;
     self.rotation_animation_from_value = from_value;
     self.rotation_animation_to_value = to_value;
-    self.rotation_animation_time_duration = time as u128 * 1000; // msec.
+    self.rotation_animation_time_duration = time * 1000.0; // msec.
     self.rotation = self.rotation_animation_from_value;
   }
 
@@ -421,7 +421,7 @@ impl<'a> Actor<'a> {
     self.scale_animation_ease = easing;
     self.scale_animation_from_value = from_value;
     self.scale_animation_to_value = to_value;
-    self.scale_animation_time_duration = time as u128 * 1000; // msec.
+    self.scale_animation_time_duration = time * 1000.0; // msec.
     self.scale_x = self.scale_animation_from_value;
     self.scale_y = self.scale_animation_from_value;
   }
