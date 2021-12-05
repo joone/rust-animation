@@ -56,7 +56,6 @@ fn main() {
   // 0 degree -> 360 degree for 5 sec
   actor_2.apply_rotation_animation(0, 360, 5.0, EasingFunction::EaseInOut);
 
-
   let mut actor_3 = Play::new_actor("actor_3".to_string(), 50, 50, None);
   actor_3.x = 10;
   actor_3.y = 10;
@@ -70,12 +69,8 @@ fn main() {
   play.add_stage(stage);
 
   while !window.should_close() {
-    // events
     process_events(&mut window, &events);
-
     play.render();
-
-    // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
     window.swap_buffers();
     glfw.poll_events();
   }

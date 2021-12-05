@@ -89,9 +89,11 @@ rust-animation experimentally uses [Stretch](https://github.com/vislyhq/stretch)
 $ cargo build --example flex_ui
 $ target/debug/examples/flex_ui
 ```
-
 ```rust
-let mut stage = Stage::new("stage".to_string(), 1920, 1080, LayoutMode::Flex, None);
+
+let mut play = Play::new("Flex UI test".to_string());
+  play.initialize();
+  let mut stage = Stage::new("stage".to_string(), 1920, 1080, LayoutMode::Flex, None);
   stage.set_style(Style {
           size: Size { 
               width: Dimension::Points(1920.0), 
@@ -156,6 +158,8 @@ let mut stage = Stage::new("stage".to_string(), 1920, 1080, LayoutMode::Flex, No
     stage.add_actor(actor);
   }
 
+  stage.set_needs_layout();
+  play.add_stage(stage);
 ```
 ## ani.rs
 ```
@@ -199,6 +203,8 @@ This examples shows the basic animation features.
 
   stage.add_actor(actor);
   stage.add_actor(actor_2);
+
+  stage.set_needs_layout();
   play.add_stage(stage);
 
   while !window.should_close() {
@@ -207,13 +213,77 @@ This examples shows the basic animation features.
     window.swap_buffers();
     glfw.poll_events();
   }
-}
 ```
-
 
 ## picture_viewer.rs
 This example is still work in progress. The thumbnail view only works.
 ```
 $ cargo build --example picture_viewer
 $ target/debug/examples/picture_viewer
+```
+This code shows how to handle events and user-defined layout. More event handler methods would be added.
+
+```rust
+pub struct ActorEvent {
+  name: String,
+}
+
+impl ActorEvent {
+ pub fn new() -> Self {
+    ActorEvent {
+      name: "actor_event".to_string()
+    }
+ }
+}
+
+impl EventHandler for ActorEvent {
+  fn key_focus_in(&mut self, val: u32, actor: &mut Actor) {
+     println!("key_focus_in: {}  {}  {}", self.name, val, actor.name);
+     actor.apply_scale_animation(1.0, 1.1, 0.3, EasingFunction::EaseInOut);
+  }
+
+  fn key_focus_out(&mut self, val: u32, actor: &mut Actor) {
+    println!("key_focus_out: {}  {}  {}", self.name, val, actor.name);
+    actor.scale_x = 1.0;
+    actor.scale_y = 1.0;
+  }
+
+  fn key_down(&mut self, key: usize, actor: &mut Actor) {
+     println!("key_down: {}  {}  {}", self.name, key, actor.name);
+
+    if key == 262 {  // right cursor
+       actor.select_next_sub_actor();
+    } else if key == 263 { // left cursor 
+       actor.select_prev_sub_actor();
+    }
+  }
+}
+
+pub struct ActorLayout {
+  name: String,
+  cur_x: i32,
+}
+
+impl ActorLayout {
+ pub fn new() -> Self {
+    ActorLayout {
+      name: "actor_layout".to_string(),
+      cur_x: 0
+    }
+ }
+}
+
+impl Layout for ActorLayout {
+  fn layout_sub_actors(&mut self, sub_actor_list: &mut Vec<Actor>) {
+    println!("layout_sub_layer {}", self.name);
+    let mut index : i32 = 0;
+    for sub_actor in sub_actor_list.iter_mut() {
+      self.cur_x += sub_actor.width as i32;
+      sub_actor.x = index % 5 * IMAGE_WIDTH as i32;
+      let col = index  / 5;
+      sub_actor.y =  col * IMAGE_HEIGHT as i32;
+      index +=1;
+    }
+  }
+}
 ```
