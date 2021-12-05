@@ -103,7 +103,7 @@ pub struct Actor<'a> {
   rotation_animation_to_value: i32,
   rotation_animation_ease: EasingFunction,
 
-  event_handelr: Option<Box<dyn EventHandler + 'a>>,
+  event_handler: Option<Box<dyn EventHandler + 'a>>,
   layout: Option<Box<dyn Layout + 'a>>,
   focused_sub_actor: usize,
   focused: bool,
@@ -169,7 +169,7 @@ impl<'a> Actor<'a> {
       rotation_animation_from_value: 0,
       rotation_animation_to_value: 0,
       rotation_animation_ease: EasingFunction::Linear,
-      event_handelr: event_handler,
+      event_handler: event_handler,
       layout: None,
       focused_sub_actor: 0,
       focused: false,
@@ -444,7 +444,7 @@ impl<'a> Actor<'a> {
     if self.sub_actor_list.len() <= 0 {
         return;
     }
-    // ne more previus actor.
+    // ne more previous actor.
     if self.focused_sub_actor == 0 {
       return;
     }
@@ -456,7 +456,7 @@ impl<'a> Actor<'a> {
 
   pub fn set_focus(&mut self, focused: bool) {
     self.focused = focused;
-    if let Some(mut event_handler) = self.event_handelr.take() {
+    if let Some(mut event_handler) = self.event_handler.take() {
       //println!("set_focus {} {} ", self.name, focused);
   
       if self.focused {
@@ -464,7 +464,7 @@ impl<'a> Actor<'a> {
       } else {
         event_handler.key_focus_out(1, self);
       }
-      self.event_handelr = Some(event_handler);
+      self.event_handler = Some(event_handler);
     }
   }
 
@@ -474,9 +474,9 @@ impl<'a> Actor<'a> {
         sub_actor.handle_input(key);
       }
     }
-    if let Some(mut event_handler) = self.event_handelr.take() {
+    if let Some(mut event_handler) = self.event_handler.take() {
       event_handler.key_down(key, self);
-      self.event_handelr = Some(event_handler);
+      self.event_handler = Some(event_handler);
     }
   }
 
