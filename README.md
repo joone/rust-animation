@@ -21,7 +21,7 @@ There are several examples so you can build them as follows:
 # Features
 * 2D transforms: translate, scale, and rotate.
 * Animations with easing functions
-* Flex UI
+* [Flex UI](https://css-tricks.com/snippets/css/a-guide-to-flexbox/)
 
 # Examples
 ## easing_functions.rs
