@@ -89,12 +89,12 @@ impl EventHandler for ActorEvent {
     actor.scale_y = 1.0;
   }
 
-  fn key_down(&mut self, key: usize, actor: &mut Actor) {
-     println!("key_down: {}  {}  {}", self.name, key, actor.name);
+  fn key_down(&mut self, key: rust_animation::actor::Key, actor: &mut Actor) {
+     println!("key_down: {}  {:?}  {}", self.name, key, actor.name);
 
-    if key == 262 {     // right cursor
+    if key == rust_animation::actor::Key::Right {     // right cursor
        actor.select_next_sub_actor();
-    } else if key == 263 { // left cursor 
+    } else if key == rust_animation::actor::Key::Left { // left cursor 
        actor.select_prev_sub_actor();
     }
   }
@@ -198,7 +198,8 @@ impl<'a> PictureBrowser<'a> {
   }
 
   pub fn handle_input(&mut self, key: glfw::Key) {
-    self.play.handle_input(key as usize);
+  
+    self.play.handle_input(unsafe { ::std::mem::transmute(key)});
   }
 
   pub fn render_splash_screen(&mut self) {
@@ -270,11 +271,11 @@ fn handle_window_event(window: &mut glfw::Window, (_time, event): (f64, glfw::Wi
     glfw::WindowEvent::FramebufferSize(w, h) => {
         unsafe { gl::Viewport(0, 0, w, h) }
     }
-    glfw::WindowEvent::Key(key, _scancode, action, _mods) => {
-      /*println!(
+    glfw::WindowEvent::Key(key, scancode, action, mods) => {
+      println!(
           "Time: {:?}, Key: {:?}, ScanCode: {:?}, Action: {:?}, Modifiers: [{:?}]",
-          time, key, scancode, action, mods
-      );*/
+          _time, key, scancode, action, mods
+      );
       match (key, action) {
         (Key::Escape, Action::Press) => window.set_should_close(true),
         (Key::Up, Action::Press) => browser.handle_input(Key::Up),

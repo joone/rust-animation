@@ -20,6 +20,20 @@ use stretch::{style::*, node::{Node, Stretch}, geometry::Size, geometry::Rect};
 
 use crate::actor::image::GenericImage;
 
+#[repr(i32)]
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum Key {
+  Space = 32,
+  Enter = 36,
+  Tab = 48,
+  Backspace = 51,
+  Escape = 53,
+  Right = 262,
+  Left = 263,
+  Down = 264,
+  Up = 265
+}
+
 #[derive(Copy, Clone, Debug)]
 pub enum EasingFunction {
     EaseIn,
@@ -115,7 +129,7 @@ pub struct Actor<'a> {
 pub trait EventHandler {
   fn key_focus_in(&mut self, actor: &mut Actor);
   fn key_focus_out(&mut self, actor: &mut Actor);
-  fn key_down(&mut self, key: usize, actor: &mut Actor);
+  fn key_down(&mut self, key: Key, actor: &mut Actor);
 }
 
 pub trait Layout {
@@ -468,7 +482,7 @@ impl<'a> Actor<'a> {
     }
   }
 
-  pub fn handle_input(&mut self, key: usize) {
+  pub fn handle_input(&mut self, key: Key) {
     for sub_actor in self.sub_actor_list.iter_mut() {
       if sub_actor.focused {
         sub_actor.handle_input(key);

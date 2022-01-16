@@ -9,6 +9,7 @@ use crate::actor::Actor;
 use crate::actor::EventHandler;
 use crate::actor::Layout;
 use crate::actor::LayoutMode;
+use crate::actor::Key;
 
 use stretch::{style::*, node::{Stretch}, geometry::Size};
 
@@ -76,7 +77,7 @@ impl<'a> Stage<'a> {
     self.stage_actor.set_layout(layout);
   }
 
-  pub fn handle_input(&mut self, key: usize) {
+  pub fn handle_input(&mut self, key: Key) {
     // println!("stage key: {}", key);
     self.stage_actor.handle_input(key);
   }

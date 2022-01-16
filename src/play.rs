@@ -13,6 +13,7 @@ use std::str;
 use crate::stage::Stage;
 use crate::actor::Actor;
 use crate::actor::EventHandler;
+use crate::actor::Key;
 
 const VERTEX_SHADER_SOURCE: &str = r#"
     #version 330 core
@@ -163,7 +164,7 @@ pub fn set_visible_stage(&mut self, name: &String, visible: bool) {
     stage_name
   }
 
-  pub fn handle_input(&mut self, key: usize) {
+  pub fn handle_input(&mut self, key: Key) {
     // println!("key: {}", key);
     for stage in self.stage_list.iter_mut() {
         stage.handle_input(key);
