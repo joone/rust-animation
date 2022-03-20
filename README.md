@@ -12,8 +12,12 @@ Note: this project is in early development stage so many features are still miss
 rust-animation is written in Rust so you need to install Rust:
 * https://www.rust-lang.org/tools/install
 
-If you build rust-animation in Windows, you have to install cmake first.
+If you build rust-animation in Windows or Mac, you have to install cmake first:
 
+For Max OSX,
+```
+$ brew install cmake
+```
 Note: rust-animation is tested in Ubuntu 20.04, Windows10, and Mac OSX.
 
 There are several examples so you can build them as follows:
