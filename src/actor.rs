@@ -556,10 +556,12 @@ impl<'a> Actor<'a> {
   pub fn render(&self, shader_program: GLuint, stretch: &mut Option<Stretch>, actor: Option<&Actor>) {
     let mut x = self.x;
     let mut y = self.y;
+    let mut rotation = self.rotation;
 
     if let Some(main_actor) = actor {
       x += main_actor.x;
       y += main_actor.y;
+      rotation += main_actor.rotation;
     }
 
     //println!("render: {}: x,y = {}, {}", self.name, x, y);
@@ -581,8 +583,8 @@ impl<'a> Actor<'a> {
         Matrix4::<f32>::from_translation(Vector3::new(self.width as f32 * self.anchor_x,
         self.height as f32 * self.anchor_y, 0.0));
 
-    if self.rotation != 0 {
-      transform = transform * Matrix4::<f32>::from_angle_z(Deg(self.rotation as f32));
+    if rotation != 0 {
+      transform = transform * Matrix4::<f32>::from_angle_z(Deg(rotation as f32));
     }
 
     transform = transform * Matrix4::from_nonuniform_scale(self.scale_x,

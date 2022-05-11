@@ -56,7 +56,6 @@ fn main() {
   // 0 degree -> 360 degree for 5 sec
   actor_2.apply_rotation_animation(0, 360, 5.0, EasingFunction::EaseInOut);
 
-  // FIXME: actor_3 should rotate like its parent.
   let mut actor_3 = Play::new_actor("actor_3".to_string(), 50, 50, None);
   actor_3.x = 10;
   actor_3.y = 10;
