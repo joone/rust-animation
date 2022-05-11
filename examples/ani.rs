@@ -35,17 +35,17 @@ fn main() {
   let mut stage = Stage::new("stage".to_string(), 1920, 1080, LayoutMode::UserDefine, None);
   stage.set_visible(true);
 
-  let mut actor = Actor::new("actor_1".to_string(), 400, 225, None);
-  actor.x = 100;
-  actor.y = 100;
-  actor.set_image("examples/splash.png".to_string());
+  let mut actor_1 = Actor::new("actor_1".to_string(), 400, 225, None);
+  actor_1.x = 100;
+  actor_1.y = 100;
+  actor_1.set_image("examples/splash.png".to_string());
 
   // 1X -> 2X for 5 sec.
   let time = 5.0;
-  actor.apply_scale_animation(1.0, 2.0, time, EasingFunction::Linear);
-  actor.apply_translation_x_animation(100, 1000, time, EasingFunction::EaseInOut);
-  actor.apply_translation_y_animation(100, 300, time, EasingFunction::EaseInOut);
-  actor.apply_rotation_animation(0, 360, time, EasingFunction::EaseInOut);
+  actor_1.apply_scale_animation(1.0, 2.0, time, EasingFunction::Linear);
+  actor_1.apply_translation_x_animation(100, 1000, time, EasingFunction::EaseInOut);
+  actor_1.apply_translation_y_animation(100, 300, time, EasingFunction::EaseInOut);
+  actor_1.apply_rotation_animation(0, 360, time, EasingFunction::EaseInOut);
 
   let mut actor_2 = Play::new_actor("actor_2".to_string(), 120, 120, None);
   actor_2.x = 100;
@@ -56,13 +56,14 @@ fn main() {
   // 0 degree -> 360 degree for 5 sec
   actor_2.apply_rotation_animation(0, 360, 5.0, EasingFunction::EaseInOut);
 
+  // FIXME: actor_3 should rotate like its parent.
   let mut actor_3 = Play::new_actor("actor_3".to_string(), 50, 50, None);
   actor_3.x = 10;
   actor_3.y = 10;
   actor_3.set_color(1.0, 0.0, 0.0);
   actor_2.add_sub_actor(actor_3);
 
-  stage.add_actor(actor);
+  stage.add_actor(actor_1);
   stage.add_actor(actor_2);
 
   stage.set_needs_layout();
