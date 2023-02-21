@@ -4,32 +4,38 @@
 
 ![alt easing_funcitions](https://github.com/joone/rust-animation/blob/main/examples/easing_functions.gif?raw=true)
 
-rust-animation is an OpenGL based graphics library for creating hardware-accelerated user interfaces written in Rust. It is designed to implement a simple animated UI for embedded devices. This project is inspired by [GNOME Clutter project](https://en.wikipedia.org/wiki/Clutter_(software)) and [Apple Core Animation](https://en.wikipedia.org/wiki/Core_Animation).
+rust-animation is an OpenGL-based graphics library written in Rust for creating hardware-accelerated user interfaces.
+It is designed to implement a simple animated UI for embedded devices, inspired by [GNOME Clutter project](https://en.wikipedia.org/wiki/Clutter_(software)) and [Apple Core Animation](https://en.wikipedia.org/wiki/Core_Animation).
 
-Note: this project is in early development stage so many features are still missing, some dependencies are experimental, and there are probably many bugs. Feel free to file any bugs.
+The library supports the following features:
+
+* 2D transforms: translate, scale, and rotate
+* Animations with easing functions
+* [Flex UI](https://css-tricks.com/snippets/css/a-guide-to-flexbox/)
+* Various examples
+
+Note that rust-animation is still in the early stages of development, so some features may be missing, and there may be bugs. Feel free to file any bugs.
 
 # Installation
-rust-animation is written in Rust so you need to install Rust:
+To use rust-animation, you need to install Rust first:
 * https://www.rust-lang.org/tools/install
 
-If you build rust-animation in Windows or Mac, you have to install cmake first:
+If you're building rust-animation on Windows or Mac, you'll need to install cmake as well:
 
 For Max OSX,
 ```
 $ brew install cmake
 ```
-Note: rust-animation is tested in Ubuntu 20.04, Windows10, and Mac OSX.
+Note: rust-animation has been tested on Ubuntu 20.04, Windows10, and Mac OSX.
 
 There are several examples so you can build them as follows:
 
-# Features
-* 2D transforms: translate, scale, and rotate.
-* Animations with easing functions
-* [Flex UI](https://css-tricks.com/snippets/css/a-guide-to-flexbox/)
 
 # Examples
+rust-animation includes several examples to help you get started. To build and run them, you can use the following commands:
+
 ## easing_functions.rs
-You can see all the easing functions in this example.
+This example shows all the available easing functions.
 ```
 $ cargo build --example easing_functions
 $ target/debug/examples/easing_functions
