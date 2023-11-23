@@ -39,7 +39,7 @@ fn fetch_url(url: String, file_name: String) -> ResultUrl<()> {
 fn download_images() -> Result<(), Error> {
   fs::create_dir_all("examples/images").unwrap_or_else(|e| panic!("Error creating dir: {}", e));
 
-  let request_url = format!("https://api.disneyapi.dev/characters");
+  let request_url = format!("https://api.disneyapi.dev/character");
   let response = reqwest::blocking::get(&request_url)?;
   let text_json :String = response.text()?;
   let json_value  : Value = serde_json::from_str(&text_json).unwrap();
@@ -53,9 +53,22 @@ fn download_images() -> Result<(), Error> {
       if Path::new(&file_name.to_string()).exists() {
         println!("Skip the downloaded file: {}", file_name.to_string());
       } else {
-        match fetch_url(image_url.as_str().unwrap().to_string(), file_name.to_string()) {
-          Ok(()) => {}
-          Err(..) => {}
+        match image_url.as_str() {
+          Some(url) => {
+              match fetch_url(url.to_string(), file_name.to_string()) {
+                  Ok(()) => {
+                      // Handle the success case
+                  }
+                  Err(e) => {
+                      // Handle the error case, perhaps log the error or retry
+                      eprintln!("Failed to fetch URL: {:?}", e);
+                  }
+              }
+          }
+          None => {
+              // Handle the case where image_url is None
+              eprintln!("image_url was None");
+          }
         }
       }
   }
