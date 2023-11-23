@@ -33,16 +33,15 @@ const FRAGMENT_SHADER_SOURCE: &str = r#"
     #version 330 core
     out vec4 outColor;
     uniform vec4 color;
-
+    uniform int useTexture; // Flag to determine whether to use the texture
     in vec2 v_texCoord;
     uniform sampler2D s_texture;
 
     void main() {
-      if (v_texCoord[0] == 0.0f)
-        outColor = color;
-      else {
+      if (useTexture > 0)
         outColor = texture(s_texture, v_texCoord);
-      }
+      else
+        outColor = color;
     }
 "#;
 

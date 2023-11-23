@@ -599,12 +599,16 @@ impl<'a> Actor<'a> {
       gl::UseProgram(shader_program);
       let loc_color = gl::GetUniformLocation(shader_program, c_str!("color").as_ptr());
       let loc_transform = gl::GetUniformLocation(shader_program, c_str!("transform").as_ptr());
+      let loc_use_texture = gl::GetUniformLocation(shader_program, c_str!("useTexture").as_ptr());
 
       gl::Uniform4f(loc_color, self.color[0], self.color[1], self.color[2], 1.0);
       gl::UniformMatrix4fv(loc_transform, 1, gl::FALSE, transform.as_ptr());
 
       if self.image_path.len() > 0 {
         gl::BindTexture(gl::TEXTURE_2D, self.texture);
+        gl::Uniform1i(loc_use_texture, 1);
+      } else {
+        gl::Uniform1i(loc_use_texture, 0);
       }
 
       gl::BindVertexArray(self.vertex_array_obj);
