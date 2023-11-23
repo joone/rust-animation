@@ -723,7 +723,6 @@ impl<'a> Actor<'a> {
       gl::UniformMatrix4fv(loc_transform, 1, gl::FALSE, transform.as_ptr());
 
       if self.image_path.len() > 0 {
-        gl::BindTexture(gl::TEXTURE_2D, self.texture);
         gl::Uniform1i(loc_use_texture, 1);
       } else {
         gl::Uniform1i(loc_use_texture, 0);
