@@ -660,6 +660,7 @@ impl<'a> Actor<'a> {
     shader_program: GLuint,
     stretch: &mut Option<Stretch>,
     actor: Option<&Actor>,
+    projection: &Matrix4<f32>,
   ) {
     let mut x = self.x;
     let mut y = self.y;
@@ -672,16 +673,6 @@ impl<'a> Actor<'a> {
     }
 
     //println!("render: {}: x,y = {}, {}", self.name, x, y);
-
-    // Apply orthographic projection matrix: left, right, bottom, top, near, far
-    let projection: Matrix4<f32> = cgmath::ortho(
-      0.0,
-      self.viewport_width as f32,
-      self.viewport_height as f32,
-      0.0,
-      1.0,
-      -1.0,
-    );
 
     //println!("{} {}", self.name, self.z);
     let mut transform: Matrix4<f32> = Matrix4::identity();
@@ -734,13 +725,13 @@ impl<'a> Actor<'a> {
 
     for sub_actor in self.sub_actor_list.iter() {
       if sub_actor.focused == false {
-        sub_actor.render(shader_program, stretch, Some(&self));
+        sub_actor.render(shader_program, stretch, Some(&self), projection);
       }
     }
 
     // render the focused sub_actor at the end.
     if self.sub_actor_list.len() > 0 {
-      self.sub_actor_list[self.focused_sub_actor].render(shader_program, stretch, Some(&self));
+      self.sub_actor_list[self.focused_sub_actor].render(shader_program, stretch, Some(&self), projection);
     }
   }
 

@@ -11,6 +11,7 @@ use crate::actor::Key;
 use crate::actor::Layout;
 use crate::actor::LayoutMode;
 
+use cgmath::Matrix4;
 use stretch::{geometry::Size, node::Stretch, style::*};
 
 pub struct Stage<'a> {
@@ -19,6 +20,7 @@ pub struct Stage<'a> {
   viewport_height: u32,
   visible: bool,
   stage_actor: Actor<'a>,
+  projection: Matrix4<f32>,
   pub stretch: Option<Stretch>,
 }
 
@@ -33,6 +35,8 @@ impl<'a> Stage<'a> {
     let mut stretch = None;
     let actor;
 
+    // Apply orthographic projection matrix: left, right, bottom, top, near, far
+    let orth_matrix = cgmath::ortho(0.0, vw as f32, vh as f32, 0.0, 1.0, -1.0);
     match layout_mode {
       LayoutMode::Flex => {
         stretch = Some(Stretch::new());
@@ -49,6 +53,7 @@ impl<'a> Stage<'a> {
       viewport_height: vh,
       visible: false,
       stage_actor: actor,
+      projection: orth_matrix,
       stretch: stretch,
     }
   }
@@ -97,7 +102,7 @@ impl<'a> Stage<'a> {
     self.stage_actor.update_layout(&mut self.stretch);
     self
       .stage_actor
-      .render(shader_program, &mut self.stretch, None);
+      .render(shader_program, &mut self.stretch, None, &self.projection);
   }
 
   pub fn add_actor(&mut self, actor: Actor<'a>) -> usize {
