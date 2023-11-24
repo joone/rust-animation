@@ -109,8 +109,4 @@ impl<'a> Stage<'a> {
     self.stage_actor.add_sub_actor(actor);
     self.stage_actor.sub_actor_list.len() - 1
   }
-
-  pub fn add_sub_actor(&mut self, actor: &mut Actor<'a>, sub_actor: Actor<'a>) {
-    actor.add_sub_actor(sub_actor);
-  }
 }
