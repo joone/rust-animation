@@ -655,29 +655,10 @@ impl<'a> Actor<'a> {
     }
   }
 
-  pub fn render(
-    &self,
-    shader_program: GLuint,
-    stretch: &mut Option<Stretch>,
-    actor: Option<&Actor>,
-    projection: &Matrix4<f32>,
-  ) {
-    let mut x = self.x;
-    let mut y = self.y;
-    let mut rotation = self.rotation;
-
-    if let Some(main_actor) = actor {
-      x += main_actor.x;
-      y += main_actor.y;
-      rotation += main_actor.rotation;
-    }
-
-    //println!("render: {}: x,y = {}, {}", self.name, x, y);
-
-    //println!("{} {}", self.name, self.z);
+  pub fn model_matrix(&self) -> Matrix4<f32> {
     let mut transform: Matrix4<f32> = Matrix4::identity();
-    transform =
-      transform * Matrix4::<f32>::from_translation(Vector3::new(x as f32, y as f32, self.z));
+    transform = transform
+      * Matrix4::<f32>::from_translation(Vector3::new(self.x as f32, self.y as f32, self.z as f32));
 
     // Handle rotation and scale.
     // Move back to the original position.
@@ -688,8 +669,8 @@ impl<'a> Actor<'a> {
         0.0,
       ));
 
-    if rotation != 0 {
-      transform = transform * Matrix4::<f32>::from_angle_z(Deg(rotation as f32));
+    if self.rotation != 0 {
+      transform = transform * Matrix4::<f32>::from_angle_z(Deg(self.rotation as f32));
     }
 
     transform = transform * Matrix4::from_nonuniform_scale(self.scale_x, self.scale_y, 0.0);
@@ -701,6 +682,21 @@ impl<'a> Actor<'a> {
         -(self.height as f32 * self.anchor_y),
         0.0,
       ));
+
+    transform
+  }
+
+  pub fn render(
+    &self,
+    shader_program: GLuint,
+    stretch: &mut Option<Stretch>,
+    parent_model_matrix: Option<&Matrix4<f32>>,
+    projection: &Matrix4<f32>,
+  ) {
+    let mut transform: Matrix4<f32> = self.model_matrix();
+    if let Some(parent_model_matrix) = parent_model_matrix {
+      transform = transform * parent_model_matrix;
+    }
 
     unsafe {
       gl::UseProgram(shader_program);
@@ -725,13 +721,18 @@ impl<'a> Actor<'a> {
 
     for sub_actor in self.sub_actor_list.iter() {
       if sub_actor.focused == false {
-        sub_actor.render(shader_program, stretch, Some(&self), projection);
+        sub_actor.render(shader_program, stretch, Some(&transform), projection);
       }
     }
 
     // render the focused sub_actor at the end.
     if self.sub_actor_list.len() > 0 {
-      self.sub_actor_list[self.focused_sub_actor].render(shader_program, stretch, Some(&self), projection);
+      self.sub_actor_list[self.focused_sub_actor].render(
+        shader_program,
+        stretch,
+        Some(&transform),
+        projection,
+      );
     }
   }
 
