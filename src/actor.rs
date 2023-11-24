@@ -673,20 +673,18 @@ impl<'a> Actor<'a> {
 
     //println!("render: {}: x,y = {}, {}", self.name, x, y);
 
-    let mut transform: Matrix4<f32> = Matrix4::identity();
-
     // Apply orthographic projection matrix: left, right, bottom, top, near, far
-    transform = transform
-      * cgmath::ortho(
-        0.0,
-        self.viewport_width as f32,
-        self.viewport_height as f32,
-        0.0,
-        1.0,
-        -1.0,
-      );
+    let projection: Matrix4<f32> = cgmath::ortho(
+      0.0,
+      self.viewport_width as f32,
+      self.viewport_height as f32,
+      0.0,
+      1.0,
+      -1.0,
+    );
 
     //println!("{} {}", self.name, self.z);
+    let mut transform: Matrix4<f32> = Matrix4::identity();
     transform =
       transform * Matrix4::<f32>::from_translation(Vector3::new(x as f32, y as f32, self.z));
 
@@ -717,10 +715,12 @@ impl<'a> Actor<'a> {
       gl::UseProgram(shader_program);
       let loc_color = gl::GetUniformLocation(shader_program, c_str!("color").as_ptr());
       let loc_transform = gl::GetUniformLocation(shader_program, c_str!("transform").as_ptr());
+      let loc_projection = gl::GetUniformLocation(shader_program, c_str!("projection").as_ptr());
       let loc_use_texture = gl::GetUniformLocation(shader_program, c_str!("useTexture").as_ptr());
 
       gl::Uniform4f(loc_color, self.color[0], self.color[1], self.color[2], 1.0);
       gl::UniformMatrix4fv(loc_transform, 1, gl::FALSE, transform.as_ptr());
+      gl::UniformMatrix4fv(loc_projection, 1, gl::FALSE, projection.as_ptr());
 
       if self.image_path.len() > 0 {
         gl::Uniform1i(loc_use_texture, 1);

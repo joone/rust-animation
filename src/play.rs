@@ -21,10 +21,11 @@ const VERTEX_SHADER_SOURCE: &str = r#"
     layout(location = 1) in vec2 a_texCoord;
 
     uniform mat4 transform;
+    uniform mat4 projection;   
     out vec2 v_texCoord;
 
     void main() {
-      gl_Position = transform * a_position;
+      gl_Position = projection * transform * a_position;
       v_texCoord = a_texCoord;
     }
 "#;
@@ -51,6 +52,7 @@ pub fn render(name: String) {
 
 pub struct Play<'a> {
   _name: String,
+  // `Play` holds a list of `Stage`s, each of which will share the same lifetime `'a`
   stage_list: Vec<Stage<'a>>,
   shader_program: GLuint,
   stage_map: HashMap<String, usize>,
