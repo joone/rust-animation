@@ -102,7 +102,7 @@ impl Stage {
     self.stage_actor.update_layout(&mut self.stretch);
     self
       .stage_actor
-      .render(shader_program, &mut self.stretch, None, &self.projection);
+      .render(shader_program, None, &self.projection);
   }
 
   pub fn add_actor(&mut self, actor: Actor) -> usize {

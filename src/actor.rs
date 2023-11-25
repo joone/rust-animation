@@ -84,6 +84,7 @@ pub struct Actor {
   pub scale_x: f32,
   pub scale_y: f32,
   pub rotation: i32,
+  pub visible: bool,
   color: [f32; 3],
   viewport_width: u32,
   viewport_height: u32,
@@ -160,6 +161,7 @@ impl Actor {
       scale_x: 1.0,
       scale_y: 1.0,
       rotation: 0,
+      visible: false,
       color: [1.0, 1.0, 1.0],
       viewport_width: 0,
       viewport_height: 0,
@@ -326,6 +328,10 @@ impl Actor {
 
   pub fn set_style(&mut self, style: Style) {
     self.style = Some(style);
+  }
+
+  pub fn set_visible(&mut self, visible: bool) {
+    self.visible = visible;
   }
 
   /*pub fn update(&mut self) {
@@ -689,7 +695,6 @@ impl Actor {
   pub fn render(
     &self,
     shader_program: GLuint,
-    stretch: &mut Option<Stretch>,
     parent_model_matrix: Option<&Matrix4<f32>>,
     projection: &Matrix4<f32>,
   ) {
@@ -722,7 +727,7 @@ impl Actor {
 
     for sub_actor in self.sub_actor_list.iter() {
       if sub_actor.focused == false {
-        sub_actor.render(shader_program, stretch, Some(&transform), projection);
+        sub_actor.render(shader_program, Some(&transform), projection);
       }
     }
 
@@ -730,7 +735,6 @@ impl Actor {
     if self.sub_actor_list.len() > 0 {
       self.sub_actor_list[self.focused_sub_actor].render(
         shader_program,
-        stretch,
         Some(&transform),
         projection,
       );

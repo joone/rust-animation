@@ -21,7 +21,6 @@ use rust_animation::actor::EventHandler;
 use rust_animation::actor::Layout;
 use rust_animation::actor::LayoutMode;
 use rust_animation::play::Play;
-use rust_animation::stage::Stage;
 
 type ResultUrl<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
@@ -165,7 +164,7 @@ impl PictureBrowser {
   }
   pub fn initialize(&mut self) {
     self.play.initialize();
-    let mut splash_stage = Stage::new(
+    let mut splash_stage = Actor::new(
       "splash_stage".to_string(),
       1920,
       1080,
@@ -177,7 +176,7 @@ impl PictureBrowser {
     splash_stage.set_needs_layout();
     self.splash_stage_name = self.play.add_stage(splash_stage);
 
-    let mut stage = Stage::new(
+    let mut stage = Actor::new(
       "main_stage".to_string(),
       1920,
       1080,

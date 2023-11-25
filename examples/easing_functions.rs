@@ -10,7 +10,6 @@ use rust_animation::actor::Actor;
 use rust_animation::actor::EasingFunction;
 use rust_animation::actor::LayoutMode;
 use rust_animation::play::Play;
-use rust_animation::stage::Stage;
 use std::sync::mpsc::Receiver;
 
 fn main() {
@@ -37,13 +36,12 @@ fn main() {
 
   gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-  let mut play = Play::new("Easing functions demo".to_string());
+  let mut play = Play::new("Easing functions demo".to_string(), LayoutMode::UserDefine);
   play.initialize();
-  let mut stage = Stage::new(
+  let mut stage = Actor::new(
     "stage".to_string(),
     1920,
     1080,
-    LayoutMode::UserDefine,
     None,
   );
   stage.set_visible(true);
@@ -80,9 +78,9 @@ fn main() {
     actor.set_color(i as f32 / 18.0, i as f32 / 18.0, i as f32 / 18.0);
     actor.apply_translation_x_animation(0, (1920 - width) as i32, time, easing_functions[i]);
     actor.apply_rotation_animation(0, 360, time, EasingFunction::Linear);
-    stage.add_actor(actor);
+    stage.add_sub_actor(actor);
   }
-  stage.set_needs_layout();
+  stage.set_needs_layout(&mut None);
   play.add_stage(stage);
 
   while !window.should_close() {

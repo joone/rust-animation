@@ -5,6 +5,8 @@
 extern crate gl;
 
 use self::gl::types::*;
+use cgmath::{Deg, Matrix, Matrix4, SquareMatrix, Vector3};
+use stretch::{geometry::Size, node::Stretch, style::*};
 use std::collections::HashMap;
 use std::ffi::CString;
 use std::ptr;
@@ -13,7 +15,7 @@ use std::str;
 use crate::actor::Actor;
 use crate::actor::EventHandler;
 use crate::actor::Key;
-use crate::stage::Stage;
+use crate::actor::LayoutMode;
 
 const VERTEX_SHADER_SOURCE: &str = r#"
     #version 330 core
@@ -53,22 +55,43 @@ pub fn render(name: String) {
 pub struct Play {
   _name: String,
   // `Play` holds a list of `Stage`s, each of which will share the same lifetime `'a`
-  stage_list: Vec<Stage>,
+  stage_list: Vec<Actor>,
   shader_program: GLuint,
   stage_map: HashMap<String, usize>,
+  projection: Matrix4<f32>,
+  pub stretch: Option<Stretch>,
 }
 
 impl Play {
-  pub fn new(name: String) -> Self {
-    Play {
+  pub fn new(name: String, layout_mode: LayoutMode) -> Self {
+    let mut stretch = None;
+    match layout_mode {
+      LayoutMode::Flex => {
+        stretch = Some(Stretch::new());
+      }
+      LayoutMode::UserDefine => {
+        print!("UserDefine");
+      }
+    }
+
+
+    Self {
       _name: name,
       stage_list: Vec::new(),
       shader_program: 0,
       stage_map: HashMap::new(),
+      projection: Matrix4::identity(),
+      stretch: stretch,
     }
   }
 
   pub fn initialize(&mut self) {
+    let vw = 1920;
+    let vh = 1080;
+     // Apply orthographic projection matrix: left, right, bottom, top, near, far
+    let orth_matrix = cgmath::ortho(0.0, vw as f32, vh as f32, 0.0, 1.0, -1.0);
+    self.projection = orth_matrix;
+    //self.stretch = Some(Stretch::new());
     self.compile_shader();
   }
 
@@ -84,7 +107,7 @@ impl Play {
   pub fn add_new_actor_to_stage(&mut self, stage_name: &String, actor: Actor) {
     match self.stage_map.get(stage_name) {
       Some(&index) => {
-        self.stage_list[index].add_actor(actor);
+        self.stage_list[index].add_sub_actor(actor);
       }
       _ => println!("Can't find the stage with the given name: {}", stage_name),
     }
@@ -93,7 +116,15 @@ impl Play {
   pub fn set_stage_needs_layout(&mut self, stage_name: &String) {
     match self.stage_map.get(stage_name) {
       Some(&index) => {
-        self.stage_list[index].set_needs_layout();
+        self.stage_list[index].set_needs_layout(&mut self.stretch);
+        if let Some(stretch_obj) = &mut self.stretch {
+          stretch_obj
+            .compute_layout(self.stage_list[index].node.unwrap(), Size::undefined())
+            .unwrap();
+
+          //let layout = stretch_obj.layout(self.stage_actor.node.unwrap()).unwrap();
+          //println!("set_needs_layout {}, {}", layout.size.width, layout.size.height);
+        }
       }
       _ => println!("Can't find the stage with the given name: {}", stage_name),
     }
@@ -186,7 +217,7 @@ impl Play {
     }
   }
 
-  pub fn add_stage(&mut self, stage: Stage) -> String {
+  pub fn add_stage(&mut self, stage: Actor) -> String {
     let stage_name = stage.name.to_string();
     self.stage_list.push(stage);
     self
@@ -209,7 +240,10 @@ impl Play {
       gl::Clear(gl::COLOR_BUFFER_BIT);
 
       for stage in self.stage_list.iter_mut() {
-        stage.render(self.shader_program);
+
+        stage.animate();
+        stage.update_layout(&mut self.stretch);
+        stage.render(self.shader_program, None, &self.projection);
       }
     }
   }

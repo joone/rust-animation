@@ -11,7 +11,6 @@ use rust_animation::actor::Actor;
 use rust_animation::actor::EasingFunction;
 use rust_animation::actor::LayoutMode;
 use rust_animation::play::Play;
-use rust_animation::stage::Stage;
 use std::sync::mpsc::Receiver;
 
 fn main() {
@@ -33,9 +32,9 @@ fn main() {
 
   gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-  let mut play = Play::new("Flex UI test".to_string());
+  let mut play = Play::new("Flex UI test".to_string(), LayoutMode::Flex);
   play.initialize();
-  let mut stage = Stage::new("stage".to_string(), 1920, 1080, LayoutMode::Flex, None);
+  let mut stage = Actor::new("stage".to_string(), 1920, 1080, None);
   stage.set_style(Style {
     size: Size {
       width: Dimension::Points(1920.0),
@@ -100,11 +99,12 @@ fn main() {
       sub_actor.set_color(1.0, j as f32 / 10.0, j as f32 / 10.0);
       actor.add_sub_actor(sub_actor);
     }
-    stage.add_actor(actor);
+    stage.add_sub_actor(actor);
   }
-
-  stage.set_needs_layout();
+  stage.init_gl(width, height);
   play.add_stage(stage);
+
+  play.set_stage_needs_layout(&"stage".to_string());
 
   while !window.should_close() {
     // events
