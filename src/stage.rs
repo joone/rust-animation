@@ -14,23 +14,23 @@ use crate::actor::LayoutMode;
 use cgmath::Matrix4;
 use stretch::{geometry::Size, node::Stretch, style::*};
 
-pub struct Stage<'a> {
+pub struct Stage {
   pub name: String,
   viewport_width: u32,
   viewport_height: u32,
   visible: bool,
-  stage_actor: Actor<'a>,
+  stage_actor: Actor,
   projection: Matrix4<f32>,
   pub stretch: Option<Stretch>,
 }
 
-impl<'a> Stage<'a> {
+impl Stage {
   pub fn new(
     name: String,
     vw: u32,
     vh: u32,
     layout_mode: LayoutMode,
-    event_handler: Option<Box<dyn EventHandler + 'a>>,
+    event_handler: Option<Box<dyn EventHandler>>,
   ) -> Self {
     let mut stretch = None;
     let actor;
@@ -85,7 +85,7 @@ impl<'a> Stage<'a> {
     }
   }
 
-  pub fn set_layout(&mut self, layout: Option<Box<dyn Layout + 'a>>) {
+  pub fn set_layout(&mut self, layout: Option<Box<dyn Layout>>) {
     self.stage_actor.set_layout(layout);
   }
 
@@ -105,7 +105,7 @@ impl<'a> Stage<'a> {
       .render(shader_program, &mut self.stretch, None, &self.projection);
   }
 
-  pub fn add_actor(&mut self, actor: Actor<'a>) -> usize {
+  pub fn add_actor(&mut self, actor: Actor) -> usize {
     self.stage_actor.add_sub_actor(actor);
     self.stage_actor.sub_actor_list.len() - 1
   }

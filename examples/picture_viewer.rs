@@ -143,8 +143,8 @@ impl Layout for ActorLayout {
   }
 }
 
-pub struct PictureBrowser<'a> {
-  play: Play<'a>,
+pub struct PictureBrowser {
+  play: Play,
   image_loaded: bool,
   file_list: Vec<String>,
   cur_file_index: usize,
@@ -152,7 +152,7 @@ pub struct PictureBrowser<'a> {
   splash_stage_name: String,
 }
 
-impl<'a> PictureBrowser<'a> {
+impl PictureBrowser {
   pub fn new(w: u32, h: u32) -> Self {
     PictureBrowser {
       image_loaded: false,

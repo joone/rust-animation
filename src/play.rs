@@ -50,15 +50,15 @@ pub fn render(name: String) {
   println!("Render {}", name);
 }
 
-pub struct Play<'a> {
+pub struct Play {
   _name: String,
   // `Play` holds a list of `Stage`s, each of which will share the same lifetime `'a`
-  stage_list: Vec<Stage<'a>>,
+  stage_list: Vec<Stage>,
   shader_program: GLuint,
   stage_map: HashMap<String, usize>,
 }
 
-impl<'a> Play<'a> {
+impl Play {
   pub fn new(name: String) -> Self {
     Play {
       _name: name,
@@ -76,12 +76,12 @@ impl<'a> Play<'a> {
     name: String,
     w: u32,
     h: u32,
-    event_handler: Option<Box<dyn EventHandler + 'a>>,
+    event_handler: Option<Box<dyn EventHandler>>,
   ) -> Actor {
     Actor::new(name, w, h, event_handler)
   }
 
-  pub fn add_new_actor_to_stage(&mut self, stage_name: &String, actor: Actor<'a>) {
+  pub fn add_new_actor_to_stage(&mut self, stage_name: &String, actor: Actor) {
     match self.stage_map.get(stage_name) {
       Some(&index) => {
         self.stage_list[index].add_actor(actor);
@@ -186,7 +186,7 @@ impl<'a> Play<'a> {
     }
   }
 
-  pub fn add_stage(&mut self, stage: Stage<'a>) -> String {
+  pub fn add_stage(&mut self, stage: Stage) -> String {
     let stage_name = stage.name.to_string();
     self.stage_list.push(stage);
     self

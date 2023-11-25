@@ -72,7 +72,7 @@ macro_rules! c_str {
   };
 }
 
-pub struct Actor<'a> {
+pub struct Actor {
   pub name: String,
   pub x: i32,
   pub y: i32,
@@ -88,7 +88,7 @@ pub struct Actor<'a> {
   viewport_width: u32,
   viewport_height: u32,
   pub image_path: String,
-  pub sub_actor_list: Vec<Actor<'a>>,
+  pub sub_actor_list: Vec<Actor>,
   vertex_array_obj: gl::types::GLuint,
   texture: gl::types::GLuint,
   pub animated: bool,
@@ -122,8 +122,8 @@ pub struct Actor<'a> {
   rotation_animation_to_value: i32,
   rotation_animation_ease: EasingFunction,
 
-  event_handler: Option<Box<dyn EventHandler + 'a>>,
-  layout: Option<Box<dyn Layout + 'a>>,
+  event_handler: Option<Box<dyn EventHandler>>,
+  layout: Option<Box<dyn Layout>>,
   focused_sub_actor: usize,
   focused: bool,
   needs_update: bool,
@@ -141,12 +141,12 @@ pub trait Layout {
   fn layout_sub_actors(&mut self, actor: &mut Vec<Actor>);
 }
 
-impl<'a> Actor<'a> {
+impl Actor {
   pub fn new(
     name: String,
     w: u32,
     h: u32,
-    event_handler: Option<Box<dyn EventHandler + 'a>>,
+    event_handler: Option<Box<dyn EventHandler>>,
   ) -> Self {
     Actor {
       name: name,
@@ -320,7 +320,7 @@ impl<'a> Actor<'a> {
     self.image_path = path;
   }
 
-  pub fn set_layout(&mut self, layout: Option<Box<dyn Layout + 'a>>) {
+  pub fn set_layout(&mut self, layout: Option<Box<dyn Layout>>) {
     self.layout = layout;
   }
 
@@ -737,7 +737,7 @@ impl<'a> Actor<'a> {
     }
   }
 
-  pub fn add_sub_actor(&mut self, actor: Actor<'a>) {
+  pub fn add_sub_actor(&mut self, actor: Actor) {
     //println!("{} : {}, {}", self.name, self.viewport_width, self.viewport_height);
     self.sub_actor_list.push(actor);
   }
