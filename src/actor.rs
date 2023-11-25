@@ -141,13 +141,365 @@ pub trait Layout {
   fn layout_sub_actors(&mut self, actor: &mut Vec<Actor>);
 }
 
-impl Actor {
-  pub fn new(
+pub trait Base {
+  fn new(
     name: String,
     w: u32,
     h: u32,
     event_handler: Option<Box<dyn EventHandler>>,
-  ) -> Self {
+  ) -> Self;
+
+  fn set_viewport_size(&mut self, w: u32, h: u32);
+  fn width(&self) -> u32;
+  fn height(&self) -> u32;
+  fn init_gl(&mut self, viewport_width: u32, viewport_height: u32);
+
+  fn set_color(&mut self, r: f32, g: f32, b: f32);
+  fn set_image(&mut self, path: String);
+
+  fn set_layout(&mut self, layout: Option<Box<dyn Layout>>);
+  fn set_style(&mut self, style: Style);
+
+  fn set_translation_x_animation_running(&mut self, running: bool);
+  fn set_translation_x_animation_ease(&mut self, easing: EasingFunction);
+  fn set_translation_x_animation_from_value(&mut self, from_value: i32);
+  fn set_translation_x_animation_to_value(&mut self, to_value: i32);
+  fn set_translation_x_animation_time_duration(&mut self, duration: f32); // msec.
+  fn set_x(&mut self, x: i32);
+  fn translation_x_animation_from_value(&mut self) -> i32;
+
+
+  fn set_translation_y_animation_running(&mut self, running: bool);
+  fn set_translation_y_animation_ease(&mut self, easing: EasingFunction);
+  fn set_translation_y_animation_from_value(&mut self, from_value: i32);
+  fn set_translation_y_animation_to_value(&mut self, to_value: i32);
+  fn set_translation_y_animation_time_duration(&mut self, duration: f32); // msec.
+  fn set_y(&mut self, y: i32);
+  fn translation_y_animation_from_value(&mut self) -> i32;
+
+  fn set_rotation_animation_running(&mut self, running: bool);
+  fn set_rotation_animation_ease(&mut self, easing: EasingFunction);
+  fn set_rotation_animation_from_value(&mut self, from_value: i32);
+  fn set_rotation_animation_to_value(&mut self, to_value: i32);
+  fn set_rotation_animation_time_duration(&mut self, duration: f32); // msec.
+  fn set_rotation(&mut self, angle: i32);
+  fn rotation_animation_from_value(&mut self) -> i32;
+
+  fn set_scale_animation_running(&mut self, running: bool);
+  fn set_scale_animation_ease(&mut self, easing: EasingFunction);
+  fn set_scale_animation_from_value(&mut self, from_value: f32);
+  fn set_scale_animation_to_value(&mut self, to_value: f32);
+  fn set_scale_animation_time_duration(&mut self, duration: f32); // msec.
+  fn set_scale(&mut self, scale_x: f32);
+  fn scale_animation_from_value(&mut self) -> f32;
+
+  /*pub fn update(&mut self) {
+    // Sort sub actors by z-axis
+    self.sub_actor_list.sort_by(|a, b| a.z.partial_cmp(&b.z).unwrap());
+  }*/
+
+  fn easing_function(easing: EasingFunction, from: f32, to: f32, duration: f32) -> f32 {
+    match easing {
+      EasingFunction::EaseIn => ease(EaseIn, from, to, duration),
+      EasingFunction::EaseInCubic => ease(EaseInCubic, from, to, duration),
+      EasingFunction::EaseInOut => ease(EaseInOut, from, to, duration),
+      EasingFunction::EaseInOutCubic => ease(EaseInOutCubic, from, to, duration),
+      EasingFunction::EaseInOutQuad => ease(EaseInOutQuad, from, to, duration),
+      EasingFunction::EaseInOutQuart => ease(EaseInOutQuart, from, to, duration),
+      EasingFunction::EaseInOutQuint => ease(EaseInOutQuint, from, to, duration),
+      EasingFunction::EaseInQuad => ease(EaseInQuad, from, to, duration),
+      EasingFunction::EaseInQuart => ease(EaseInQuart, from, to, duration),
+      EasingFunction::EaseInQuint => ease(EaseInQuint, from, to, duration),
+      EasingFunction::EaseOut => ease(EaseOut, from, to, duration),
+      EasingFunction::EaseOutCubic => ease(EaseOutCubic, from, to, duration),
+      EasingFunction::EaseOutQuad => ease(EaseOutQuad, from, to, duration),
+      EasingFunction::EaseOutQuart => ease(EaseOutQuart, from, to, duration),
+      EasingFunction::EaseOutQuint => ease(EaseOutQuint, from, to, duration),
+      EasingFunction::Linear => ease(Linear, from, to, duration),
+      EasingFunction::Step => ease(Step, from, to, duration),
+    }
+  }
+
+  fn animate(&mut self);
+  fn apply_translation_x_animation(
+    &mut self,
+    from_value: i32,
+    to_value: i32,
+    time: f32,
+    easing: EasingFunction,
+  ) {
+    self.set_translation_x_animation_running(true);
+    self.set_translation_x_animation_ease(easing);
+    self.set_translation_x_animation_from_value(from_value);
+    self.set_translation_x_animation_to_value(to_value);
+    self.set_translation_x_animation_time_duration(time * 1000.0); // msec.
+    self.set_x(self.translation_x_animation_from_value());
+  }
+
+  fn apply_translation_y_animation(
+    &mut self,
+    from_value: i32,
+    to_value: i32,
+    time: f32,
+    easing: EasingFunction,
+  ) {
+    self.set_translation_y_animation_running(true);
+    self.set_translation_y_animation_ease(easing);
+    self.set_translation_y_animation_from_value(from_value);
+    self.set_translation_y_animation_to_value(to_value);
+    self.set_translation_y_animation_time_duration(time * 1000.0);
+    self.set_x(self.translation_y_animation_from_value());
+  }
+
+  fn apply_rotation_animation(
+    &mut self,
+    from_value: i32,
+    to_value: i32,
+    time: f32,
+    easing: EasingFunction,
+  ) {
+    self.set_rotation_animation_running(true);
+    self.set_rotation_animation_ease(easing);
+    self.set_rotation_animation_from_value(from_value);
+    self.set_rotation_animation_to_value(to_value);
+    self.set_rotation_animation_time_duration(time * 1000.0);
+    self.set_rotation(self.rotation_animation_from_value());
+  }
+
+  fn apply_scale_animation(
+    &mut self,
+    from_value: f32,
+    to_value: f32,
+    time: f32,
+    easing: EasingFunction,
+  ) {
+    self.set_scale_animation_running(true);
+    self.set_scale_animation_ease(easing);
+    self.set_scale_animation_from_value(from_value);
+    self.set_scale_animation_to_value(to_value);
+    self.set_scale_animation_time_duration(time * 1000.0); // msec.
+    self.set_scale(self.scale_animation_from_value());
+  }
+
+ fn select_next_sub_actor(&mut self) {
+    if self.sub_actor_list.len() <= 0 {
+      return;
+    }
+    // no more next actor.
+    if self.focused_sub_actor < self.sub_actor_list.len() - 1 {
+      let prev_focused_sub_actor = self.focused_sub_actor;
+      self.focused_sub_actor += 1;
+      self.sub_actor_list[self.focused_sub_actor].set_focus(true);
+      self.sub_actor_list[prev_focused_sub_actor].set_focus(false);
+    }
+  }
+
+  fn select_prev_sub_actor(&mut self) {
+    if self.sub_actor_list.len() <= 0 {
+      return;
+    }
+    // ne more previous actor.
+    if self.focused_sub_actor == 0 {
+      return;
+    }
+    let prev_focused_sub_actor = self.focused_sub_actor;
+    self.focused_sub_actor -= 1;
+    self.sub_actor_list[self.focused_sub_actor].set_focus(true);
+    self.sub_actor_list[prev_focused_sub_actor].set_focus(false);
+  }
+
+  fn set_focus(&mut self, focused: bool) {
+    self.focused = focused;
+    if let Some(mut event_handler) = self.event_handler.take() {
+      //println!("set_focus {} {} ", self.name, focused);
+
+      if self.focused {
+        event_handler.key_focus_in(self);
+      } else {
+        event_handler.key_focus_out(self);
+      }
+      self.event_handler = Some(event_handler);
+    }
+  }
+
+  fn handle_input(&mut self, key: Key) {
+    for sub_actor in self.sub_actor_list.iter_mut() {
+      if sub_actor.focused {
+        sub_actor.handle_input(key);
+      }
+    }
+    if let Some(mut event_handler) = self.event_handler.take() {
+      event_handler.key_down(key, self);
+      self.event_handler = Some(event_handler);
+    }
+  }
+
+  // Marks the layer’s contents as needing to be updated.
+  fn set_needs_layout(&mut self, stretch: &mut Option<Stretch>) {
+    self.needs_update = true;
+
+    if let Some(stretch_obj) = stretch {
+      if let Some(style_obj) = self.style {
+        self.node = Some(stretch_obj.new_node(style_obj, vec![]).unwrap());
+      } else {
+        //println!("default style: {}: {},{}", self.name, self.width, self.height);
+        self.node = Some(
+          stretch_obj
+            .new_node(
+              Style {
+                size: Size {
+                  width: Dimension::Points(self.width as f32),
+                  height: Dimension::Points(self.height as f32),
+                },
+                margin: Rect {
+                  start: Dimension::Points(2.0),
+                  end: Dimension::Points(2.0),
+                  top: Dimension::Points(2.0),
+                  bottom: Dimension::Points(2.0),
+                  ..Default::default()
+                },
+                ..Default::default()
+              },
+              vec![],
+            )
+            .unwrap(),
+        );
+      }
+    }
+    for sub_actor in self.sub_actor_list.iter_mut() {
+      sub_actor.init_gl(self.viewport_width, self.viewport_height);
+      sub_actor.set_needs_layout(stretch);
+      if !self.node.is_none() {
+        match stretch
+          .as_mut()
+          .unwrap()
+          .add_child(self.node.unwrap(), sub_actor.node.unwrap())
+        {
+          Ok(()) => {
+            println!(" stretch node  is added {} {}", self.name, sub_actor.name)
+          }
+          Err(..) => {}
+        }
+      }
+    }
+  }
+
+  // layout sub-actors.
+  fn layout_sub_actors(&mut self) {
+    if let Some(ref mut layout) = self.layout {
+      layout.layout_sub_actors(&mut self.sub_actor_list);
+    }
+  }
+
+  fn update_layout(&mut self, stretch: &mut Option<Stretch>) {
+    // If Stretch's node is set, Stretch does a layout job.
+    if let Some(stretch_obj) = stretch {
+      let layout = stretch_obj.layout(self.node.unwrap()).unwrap();
+      self.x = layout.location.x as i32;
+      self.y = layout.location.y as i32;
+      //println!("node: {:#?}", stretch_obj.layout(self.node.unwrap()));
+
+      for sub_actor in self.sub_actor_list.iter_mut() {
+        sub_actor.update_layout(stretch);
+      }
+    }
+  }
+
+  fn model_matrix(&self) -> Matrix4<f32> {
+    let mut transform: Matrix4<f32> = Matrix4::identity();
+    transform = transform
+      * Matrix4::<f32>::from_translation(Vector3::new(self.x as f32, self.y as f32, self.z as f32));
+
+    // Handle rotation and scale.
+    // Move back to the original position.
+    transform = transform
+      * Matrix4::<f32>::from_translation(Vector3::new(
+        self.width as f32 * self.anchor_x,
+        self.height as f32 * self.anchor_y,
+        0.0,
+      ));
+
+    if self.rotation != 0 {
+      transform = transform * Matrix4::<f32>::from_angle_z(Deg(self.rotation as f32));
+    }
+
+    transform = transform * Matrix4::from_nonuniform_scale(self.scale_x, self.scale_y, 0.0);
+
+    // Move to the origin of coordinate.
+    transform = transform
+      * Matrix4::<f32>::from_translation(Vector3::new(
+        -(self.width as f32 * self.anchor_x),
+        -(self.height as f32 * self.anchor_y),
+        0.0,
+      ));
+
+    transform
+  }
+
+  fn render(
+    &self,
+    shader_program: GLuint,
+    stretch: &mut Option<Stretch>,
+    parent_model_matrix: Option<&Matrix4<f32>>,
+    projection: &Matrix4<f32>,
+  ) {
+    let mut transform: Matrix4<f32> = self.model_matrix();
+    if let Some(parent_model_matrix) = parent_model_matrix {
+      transform = transform * parent_model_matrix;
+    }
+
+    unsafe {
+      gl::UseProgram(shader_program);
+      let loc_color = gl::GetUniformLocation(shader_program, c_str!("color").as_ptr());
+      let loc_transform = gl::GetUniformLocation(shader_program, c_str!("transform").as_ptr());
+      let loc_projection = gl::GetUniformLocation(shader_program, c_str!("projection").as_ptr());
+      let loc_use_texture = gl::GetUniformLocation(shader_program, c_str!("useTexture").as_ptr());
+
+      gl::Uniform4f(loc_color, self.color[0], self.color[1], self.color[2], 1.0);
+      gl::UniformMatrix4fv(loc_transform, 1, gl::FALSE, transform.as_ptr());
+      gl::UniformMatrix4fv(loc_projection, 1, gl::FALSE, projection.as_ptr());
+
+      if self.image_path.len() > 0 {
+        gl::BindTexture(gl::TEXTURE_2D, self.texture);
+        gl::Uniform1i(loc_use_texture, 1);
+      } else {
+        gl::Uniform1i(loc_use_texture, 0);
+      }
+
+      gl::BindVertexArray(self.vertex_array_obj);
+      gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
+    }
+
+    for sub_actor in self.sub_actor_list.iter() {
+      if sub_actor.focused == false {
+        sub_actor.render(shader_program, stretch, Some(&transform), projection);
+      }
+    }
+
+    // render the focused sub_actor at the end.
+    if self.sub_actor_list.len() > 0 {
+      self.sub_actor_list[self.focused_sub_actor].render(
+        shader_program,
+        stretch,
+        Some(&transform),
+        projection,
+      );
+    }
+  }
+
+  fn add_sub_actor(&mut self, actor: Actor) {
+    //println!("{} : {}, {}", self.name, self.viewport_width, self.viewport_height);
+    self.sub_actor_list.push(actor);
+  }
+}
+
+impl Base for Actor {
+  fn new(
+    name: String,
+    w: u32,
+    h: u32,
+    event_handler: Option<Box<dyn EventHandler>>,
+  ) -> Actor {
     Actor {
       name: name,
       x: 0,
@@ -203,21 +555,163 @@ impl Actor {
     }
   }
 
-  pub fn init_gl(&mut self, viewport_width: u32, viewport_height: u32) {
-    self.viewport_width = viewport_width;
-    self.viewport_height = viewport_height;
-    //println!("init_gl {}", self.name);
+  fn set_viewport_size(&mut self, w: u32, h: u32) {
+    self.viewport_width = w;
+    self.viewport_height = h;
+  }
+
+  fn width(&self) -> u32 {
+    self.width
+  }
+  fn height(&self) -> u32 {
+    self.height
+  }
+
+  fn set_color(&mut self, r: f32, g: f32, b: f32) {
+    self.color[0] = r;
+    self.color[1] = g;
+    self.color[2] = b;
+  }
+
+  fn set_image(&mut self, path: String) {
+    self.image_path = path;
+  }
+
+  fn set_layout(&mut self, layout: Option<Box<dyn Layout>>) {
+    self.layout = layout;
+  }
+
+  fn set_style(&mut self, style: Style) {
+    self.style = Some(style);
+  }
+
+  fn set_translation_x_animation_running(&mut self, running: bool) {
+    self.translation_x_animation_running = running;
+  }
+
+  fn set_translation_x_animation_ease(&mut self, easing: EasingFunction) {
+    self.translation_x_animation_ease = easing;
+  }
+
+  fn set_translation_x_animation_from_value(&mut self, from_value: i32) {
+    self.translation_x_animation_from_value = from_value;
+  }
+
+  fn set_translation_x_animation_to_value(&mut self, to_value: i32) {
+    self.translation_x_animation_to_value = to_value;
+  }
+
+  fn set_translation_x_animation_time_duration(&mut self, duration: f32) {
+    self.translation_x_animation_time_duration = duration;
+  }
+
+  fn set_x(&mut self, x: i32) {
+    self.x = x;
+  }
+
+  fn translation_x_animation_from_value(&mut self) -> i32 {
+    self.translation_x_animation_from_value
+  }
+
+  fn set_translation_y_animation_running(&mut self, running: bool) {
+    self.translation_y_animation_running = running;
+  }
+
+  fn set_translation_y_animation_ease(&mut self, easing: EasingFunction) {
+    self.translation_y_animation_ease = easing;
+  }
+
+  fn set_translation_y_animation_from_value(&mut self, from_value: i32) {
+    self.translation_y_animation_from_value = from_value;
+  }
+
+  fn set_translation_y_animation_to_value(&mut self, to_value: i32) {
+    self.translation_y_animation_to_value = to_value;
+  }
+
+  fn set_translation_y_animation_time_duration(&mut self, duration: f32) {
+    self.translation_y_animation_time_duration = duration;
+  }
+
+  fn set_y(&mut self, y: i32) {
+    self.y = y;
+  }
+
+  fn translation_y_animation_from_value(&mut self) -> i32 {
+    self.translation_y_animation_from_value
+  }
+
+  fn set_rotation_animation_running(&mut self, running: bool) {
+    self.rotation_animation_running = running;
+  }
+
+  fn set_rotation_animation_ease(&mut self, easing: EasingFunction) {
+    self.rotation_animation_ease = easing;
+  }
+
+  fn set_rotation_animation_from_value(&mut self, from_value: i32) {
+    self.rotation_animation_from_value = from_value;
+  }
+
+  fn set_rotation_animation_to_value(&mut self, to_value: i32) {
+    self.rotation_animation_to_value = to_value;
+  }
+
+  fn set_rotation_animation_time_duration(&mut self, duration: f32) {
+    self.rotation_animation_time_duration = duration;
+  }
+
+  fn set_rotation(&mut self, angle: i32) {
+    self.rotation = angle;
+  }
+
+  fn rotation_animation_from_value(&mut self) -> i32 {
+    self.rotation_animation_from_value
+  }
+
+  fn set_scale_animation_running(&mut self, running: bool) {
+    self.scale_animation_running = running;
+  }
+
+  fn set_scale_animation_ease(&mut self, easing: EasingFunction) {
+    self.scale_animation_ease = easing;
+  }
+
+  fn set_scale_animation_from_value(&mut self, from_value: f32) {
+    self.scale_animation_from_value = from_value;
+  }
+
+  fn set_scale_animation_to_value(&mut self, to_value: f32) {
+    self.scale_animation_to_value = to_value;
+  }
+
+  fn set_scale_animation_time_duration(&mut self, duration: f32) {
+    self.scale_animation_time_duration = duration;
+  }
+
+  fn set_scale(&mut self, scale: f32) {
+    self.scale_x = scale;
+    self.scale_y = scale;
+  }
+
+  fn scale_animation_from_value(&mut self) -> f32 {
+    self.scale_animation_from_value
+  }
+
+
+  fn init_gl(&mut self, viewport_width: u32, viewport_height: u32) {
+    self.set_viewport_size(viewport_width, viewport_height);
 
     unsafe {
       let (mut vertex_array_buffer, mut elem_array_buffer) = (0, 0);
       let vertices: [f32; 20] = [
         // positions                   texture coords
-        self.width as f32,
-        self.height as f32,
+        self.width() as f32,
+        self.height() as f32,
         0.0,
         1.0,
         1.0, // top right
-        self.width as f32,
+        self.width() as f32,
         0.0,
         0.0,
         1.0,
@@ -228,7 +722,7 @@ impl Actor {
         0.0,
         0.0, // bottom left
         0.0,
-        self.height as f32,
+        self.height() as f32,
         0.0,
         0.0,
         1.0, // top left
@@ -310,51 +804,7 @@ impl Actor {
     }
   }
 
-  pub fn set_color(&mut self, r: f32, g: f32, b: f32) {
-    self.color[0] = r;
-    self.color[1] = g;
-    self.color[2] = b;
-  }
-
-  pub fn set_image(&mut self, path: String) {
-    self.image_path = path;
-  }
-
-  pub fn set_layout(&mut self, layout: Option<Box<dyn Layout>>) {
-    self.layout = layout;
-  }
-
-  pub fn set_style(&mut self, style: Style) {
-    self.style = Some(style);
-  }
-
-  /*pub fn update(&mut self) {
-    // Sort sub actors by z-axis
-    self.sub_actor_list.sort_by(|a, b| a.z.partial_cmp(&b.z).unwrap());
-  }*/
-
-  fn easing_function(easing: EasingFunction, from: f32, to: f32, duration: f32) -> f32 {
-    match easing {
-      EasingFunction::EaseIn => ease(EaseIn, from, to, duration),
-      EasingFunction::EaseInCubic => ease(EaseInCubic, from, to, duration),
-      EasingFunction::EaseInOut => ease(EaseInOut, from, to, duration),
-      EasingFunction::EaseInOutCubic => ease(EaseInOutCubic, from, to, duration),
-      EasingFunction::EaseInOutQuad => ease(EaseInOutQuad, from, to, duration),
-      EasingFunction::EaseInOutQuart => ease(EaseInOutQuart, from, to, duration),
-      EasingFunction::EaseInOutQuint => ease(EaseInOutQuint, from, to, duration),
-      EasingFunction::EaseInQuad => ease(EaseInQuad, from, to, duration),
-      EasingFunction::EaseInQuart => ease(EaseInQuart, from, to, duration),
-      EasingFunction::EaseInQuint => ease(EaseInQuint, from, to, duration),
-      EasingFunction::EaseOut => ease(EaseOut, from, to, duration),
-      EasingFunction::EaseOutCubic => ease(EaseOutCubic, from, to, duration),
-      EasingFunction::EaseOutQuad => ease(EaseOutQuad, from, to, duration),
-      EasingFunction::EaseOutQuart => ease(EaseOutQuart, from, to, duration),
-      EasingFunction::EaseOutQuint => ease(EaseOutQuint, from, to, duration),
-      EasingFunction::Linear => ease(Linear, from, to, duration),
-      EasingFunction::Step => ease(Step, from, to, duration),
-    }
-  }
-  pub fn animate(&mut self) {
+  fn animate(&mut self) {
     if self.needs_update {
       self.layout_sub_actors();
       self.needs_update = false;
@@ -468,277 +918,5 @@ impl Actor {
     for sub_actor in self.sub_actor_list.iter_mut() {
       sub_actor.animate();
     }
-  }
-
-  pub fn apply_translation_x_animation(
-    &mut self,
-    from_value: i32,
-    to_value: i32,
-    time: f32,
-    easing: EasingFunction,
-  ) {
-    self.translation_x_animation_running = true;
-    self.translation_x_animation_ease = easing;
-    self.translation_x_animation_from_value = from_value;
-    self.translation_x_animation_to_value = to_value;
-    self.translation_x_animation_time_duration = time * 1000.0; // msec.
-    self.x = self.translation_x_animation_from_value;
-  }
-
-  pub fn apply_translation_y_animation(
-    &mut self,
-    from_value: i32,
-    to_value: i32,
-    time: f32,
-    easing: EasingFunction,
-  ) {
-    self.translation_y_animation_running = true;
-    self.translation_y_animation_ease = easing;
-    self.translation_y_animation_from_value = from_value;
-    self.translation_y_animation_to_value = to_value;
-    self.translation_y_animation_time_duration = time * 1000.0; // msec.
-    self.x = self.translation_y_animation_from_value;
-  }
-
-  pub fn apply_rotation_animation(
-    &mut self,
-    from_value: i32,
-    to_value: i32,
-    time: f32,
-    easing: EasingFunction,
-  ) {
-    self.rotation_animation_running = true;
-    self.rotation_animation_ease = easing;
-    self.rotation_animation_from_value = from_value;
-    self.rotation_animation_to_value = to_value;
-    self.rotation_animation_time_duration = time * 1000.0; // msec.
-    self.rotation = self.rotation_animation_from_value;
-  }
-
-  pub fn apply_scale_animation(
-    &mut self,
-    from_value: f32,
-    to_value: f32,
-    time: f32,
-    easing: EasingFunction,
-  ) {
-    self.scale_animation_running = true;
-    self.scale_animation_ease = easing;
-    self.scale_animation_from_value = from_value;
-    self.scale_animation_to_value = to_value;
-    self.scale_animation_time_duration = time * 1000.0; // msec.
-    self.scale_x = self.scale_animation_from_value;
-    self.scale_y = self.scale_animation_from_value;
-  }
-
-  pub fn select_next_sub_actor(&mut self) {
-    if self.sub_actor_list.len() <= 0 {
-      return;
-    }
-    // no more next actor.
-    if self.focused_sub_actor < self.sub_actor_list.len() - 1 {
-      let prev_focused_sub_actor = self.focused_sub_actor;
-      self.focused_sub_actor += 1;
-      self.sub_actor_list[self.focused_sub_actor].set_focus(true);
-      self.sub_actor_list[prev_focused_sub_actor].set_focus(false);
-    }
-  }
-
-  pub fn select_prev_sub_actor(&mut self) {
-    if self.sub_actor_list.len() <= 0 {
-      return;
-    }
-    // ne more previous actor.
-    if self.focused_sub_actor == 0 {
-      return;
-    }
-    let prev_focused_sub_actor = self.focused_sub_actor;
-    self.focused_sub_actor -= 1;
-    self.sub_actor_list[self.focused_sub_actor].set_focus(true);
-    self.sub_actor_list[prev_focused_sub_actor].set_focus(false);
-  }
-
-  pub fn set_focus(&mut self, focused: bool) {
-    self.focused = focused;
-    if let Some(mut event_handler) = self.event_handler.take() {
-      //println!("set_focus {} {} ", self.name, focused);
-
-      if self.focused {
-        event_handler.key_focus_in(self);
-      } else {
-        event_handler.key_focus_out(self);
-      }
-      self.event_handler = Some(event_handler);
-    }
-  }
-
-  pub fn handle_input(&mut self, key: Key) {
-    for sub_actor in self.sub_actor_list.iter_mut() {
-      if sub_actor.focused {
-        sub_actor.handle_input(key);
-      }
-    }
-    if let Some(mut event_handler) = self.event_handler.take() {
-      event_handler.key_down(key, self);
-      self.event_handler = Some(event_handler);
-    }
-  }
-
-  // Marks the layer’s contents as needing to be updated.
-  pub fn set_needs_layout(&mut self, stretch: &mut Option<Stretch>) {
-    self.needs_update = true;
-
-    if let Some(stretch_obj) = stretch {
-      if let Some(style_obj) = self.style {
-        self.node = Some(stretch_obj.new_node(style_obj, vec![]).unwrap());
-      } else {
-        //println!("default style: {}: {},{}", self.name, self.width, self.height);
-        self.node = Some(
-          stretch_obj
-            .new_node(
-              Style {
-                size: Size {
-                  width: Dimension::Points(self.width as f32),
-                  height: Dimension::Points(self.height as f32),
-                },
-                margin: Rect {
-                  start: Dimension::Points(2.0),
-                  end: Dimension::Points(2.0),
-                  top: Dimension::Points(2.0),
-                  bottom: Dimension::Points(2.0),
-                  ..Default::default()
-                },
-                ..Default::default()
-              },
-              vec![],
-            )
-            .unwrap(),
-        );
-      }
-    }
-    for sub_actor in self.sub_actor_list.iter_mut() {
-      sub_actor.init_gl(self.viewport_width, self.viewport_height);
-      sub_actor.set_needs_layout(stretch);
-      if !self.node.is_none() {
-        match stretch
-          .as_mut()
-          .unwrap()
-          .add_child(self.node.unwrap(), sub_actor.node.unwrap())
-        {
-          Ok(()) => {
-            println!(" stretch node  is added {} {}", self.name, sub_actor.name)
-          }
-          Err(..) => {}
-        }
-      }
-    }
-  }
-
-  // layout sub-actors.
-  pub fn layout_sub_actors(&mut self) {
-    if let Some(ref mut layout) = self.layout {
-      layout.layout_sub_actors(&mut self.sub_actor_list);
-    }
-  }
-
-  pub fn update_layout(&mut self, stretch: &mut Option<Stretch>) {
-    // If Stretch's node is set, Stretch does a layout job.
-    if let Some(stretch_obj) = stretch {
-      let layout = stretch_obj.layout(self.node.unwrap()).unwrap();
-      self.x = layout.location.x as i32;
-      self.y = layout.location.y as i32;
-      //println!("node: {:#?}", stretch_obj.layout(self.node.unwrap()));
-
-      for sub_actor in self.sub_actor_list.iter_mut() {
-        sub_actor.update_layout(stretch);
-      }
-    }
-  }
-
-  pub fn model_matrix(&self) -> Matrix4<f32> {
-    let mut transform: Matrix4<f32> = Matrix4::identity();
-    transform = transform
-      * Matrix4::<f32>::from_translation(Vector3::new(self.x as f32, self.y as f32, self.z as f32));
-
-    // Handle rotation and scale.
-    // Move back to the original position.
-    transform = transform
-      * Matrix4::<f32>::from_translation(Vector3::new(
-        self.width as f32 * self.anchor_x,
-        self.height as f32 * self.anchor_y,
-        0.0,
-      ));
-
-    if self.rotation != 0 {
-      transform = transform * Matrix4::<f32>::from_angle_z(Deg(self.rotation as f32));
-    }
-
-    transform = transform * Matrix4::from_nonuniform_scale(self.scale_x, self.scale_y, 0.0);
-
-    // Move to the origin of coordinate.
-    transform = transform
-      * Matrix4::<f32>::from_translation(Vector3::new(
-        -(self.width as f32 * self.anchor_x),
-        -(self.height as f32 * self.anchor_y),
-        0.0,
-      ));
-
-    transform
-  }
-
-  pub fn render(
-    &self,
-    shader_program: GLuint,
-    stretch: &mut Option<Stretch>,
-    parent_model_matrix: Option<&Matrix4<f32>>,
-    projection: &Matrix4<f32>,
-  ) {
-    let mut transform: Matrix4<f32> = self.model_matrix();
-    if let Some(parent_model_matrix) = parent_model_matrix {
-      transform = transform * parent_model_matrix;
-    }
-
-    unsafe {
-      gl::UseProgram(shader_program);
-      let loc_color = gl::GetUniformLocation(shader_program, c_str!("color").as_ptr());
-      let loc_transform = gl::GetUniformLocation(shader_program, c_str!("transform").as_ptr());
-      let loc_projection = gl::GetUniformLocation(shader_program, c_str!("projection").as_ptr());
-      let loc_use_texture = gl::GetUniformLocation(shader_program, c_str!("useTexture").as_ptr());
-
-      gl::Uniform4f(loc_color, self.color[0], self.color[1], self.color[2], 1.0);
-      gl::UniformMatrix4fv(loc_transform, 1, gl::FALSE, transform.as_ptr());
-      gl::UniformMatrix4fv(loc_projection, 1, gl::FALSE, projection.as_ptr());
-
-      if self.image_path.len() > 0 {
-        gl::BindTexture(gl::TEXTURE_2D, self.texture);
-        gl::Uniform1i(loc_use_texture, 1);
-      } else {
-        gl::Uniform1i(loc_use_texture, 0);
-      }
-
-      gl::BindVertexArray(self.vertex_array_obj);
-      gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
-    }
-
-    for sub_actor in self.sub_actor_list.iter() {
-      if sub_actor.focused == false {
-        sub_actor.render(shader_program, stretch, Some(&transform), projection);
-      }
-    }
-
-    // render the focused sub_actor at the end.
-    if self.sub_actor_list.len() > 0 {
-      self.sub_actor_list[self.focused_sub_actor].render(
-        shader_program,
-        stretch,
-        Some(&transform),
-        projection,
-      );
-    }
-  }
-
-  pub fn add_sub_actor(&mut self, actor: Actor) {
-    //println!("{} : {}, {}", self.name, self.viewport_width, self.viewport_height);
-    self.sub_actor_list.push(actor);
   }
 }

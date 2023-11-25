@@ -10,6 +10,7 @@ use crate::actor::EventHandler;
 use crate::actor::Key;
 use crate::actor::Layout;
 use crate::actor::LayoutMode;
+use crate::actor::Base;
 
 use cgmath::Matrix4;
 use stretch::{geometry::Size, node::Stretch, style::*};
@@ -33,17 +34,17 @@ impl Stage {
     event_handler: Option<Box<dyn EventHandler>>,
   ) -> Self {
     let mut stretch = None;
-    let actor;
+    let actor : Actor;
 
     // Apply orthographic projection matrix: left, right, bottom, top, near, far
     let orth_matrix = cgmath::ortho(0.0, vw as f32, vh as f32, 0.0, 1.0, -1.0);
     match layout_mode {
       LayoutMode::Flex => {
         stretch = Some(Stretch::new());
-        actor = Actor::new("stage_actor".to_string(), vw, vh, event_handler);
+        actor = <dyn Base>::new("stage_actor".to_string(), vw, vh, event_handler);
       }
       LayoutMode::UserDefine => {
-        actor = Actor::new("stage_actor".to_string(), vw, vh, event_handler);
+        actor = <dyn Base>::new("stage_actor".to_string(), vw, vh, event_handler);
       }
     }
 
