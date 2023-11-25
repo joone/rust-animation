@@ -155,7 +155,7 @@ impl PictureBrowser {
   pub fn new(w: u32, h: u32) -> Self {
     PictureBrowser {
       image_loaded: false,
-      play: Play::new("Picture Browser".to_string()),
+      play: Play::new("Picture Browser".to_string(), LayoutMode::UserDefine),
       file_list: Vec::new(),
       cur_file_index: 0,
       main_stage_name: "".to_string(),
@@ -168,23 +168,22 @@ impl PictureBrowser {
       "splash_stage".to_string(),
       1920,
       1080,
-      LayoutMode::UserDefine,
       None,
     );
     splash_stage.set_image("examples/splash.png".to_string());
-    splash_stage.set_visible(true);
-    splash_stage.set_needs_layout();
+   // splash_stage.set_visible(true);
+   // splash_stage.set_needs_layout();
     self.splash_stage_name = self.play.add_stage(splash_stage);
 
     let mut stage = Actor::new(
       "main_stage".to_string(),
       1920,
       1080,
-      LayoutMode::UserDefine,
       Some(Box::new(ActorEvent::new())),
     );
+    stage.set_visible(false);
     stage.set_layout(Some(Box::new(ActorLayout::new())));
-    stage.set_needs_layout();
+  //  stage.set_needs_layout();
     self.main_stage_name = self.play.add_stage(stage);
   }
 

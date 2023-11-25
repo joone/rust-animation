@@ -71,7 +71,6 @@ fn main() {
   stage.add_sub_actor(actor_1);
   stage.add_sub_actor(actor_2);
 
-  stage.set_needs_layout(&mut None);
   play.add_stage(stage);
 
   while !window.should_close() {

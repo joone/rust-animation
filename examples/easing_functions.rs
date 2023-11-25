@@ -80,7 +80,7 @@ fn main() {
     actor.apply_rotation_animation(0, 360, time, EasingFunction::Linear);
     stage.add_sub_actor(actor);
   }
-  stage.set_needs_layout(&mut None);
+;
   play.add_stage(stage);
 
   while !window.should_close() {

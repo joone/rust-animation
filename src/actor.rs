@@ -147,7 +147,7 @@ impl Actor {
     h: u32,
     event_handler: Option<Box<dyn EventHandler>>,
   ) -> Self {
-    Actor {
+    let mut actor = Actor {
       name: name,
       x: 0,
       y: 0,
@@ -159,7 +159,7 @@ impl Actor {
       scale_x: 1.0,
       scale_y: 1.0,
       rotation: 0,
-      visible: false,
+      visible: true,
       color: [1.0, 1.0, 1.0],
       image_path: "".to_string(),
       sub_actor_list: Vec::new(),
@@ -198,7 +198,10 @@ impl Actor {
       needs_update: false,
       node: None,
       style: None,
-    }
+    };
+    actor.init_gl();
+
+    actor
   }
 
   pub fn init_gl(&mut self) {
@@ -258,8 +261,21 @@ impl Actor {
       // position attribute
       gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
       gl::EnableVertexAttribArray(0);
+    }
+  }
 
-      if self.image_path.len() > 0 {
+  pub fn set_color(&mut self, r: f32, g: f32, b: f32) {
+    self.color[0] = r;
+    self.color[1] = g;
+    self.color[2] = b;
+  }
+
+  pub fn set_image(&mut self, path: String) {
+    self.image_path = path;
+
+    if self.image_path.len() > 0 {
+      let stride = 5 * mem::size_of::<GLfloat>() as GLsizei;
+      unsafe {
         // texture coord attribute
         gl::VertexAttribPointer(
           1,
@@ -300,18 +316,8 @@ impl Actor {
           }
           Err(err) => println!("Fail to load a image {:?}", err),
         }
-      }
-    }
-  }
-
-  pub fn set_color(&mut self, r: f32, g: f32, b: f32) {
-    self.color[0] = r;
-    self.color[1] = g;
-    self.color[2] = b;
-  }
-
-  pub fn set_image(&mut self, path: String) {
-    self.image_path = path;
+     }
+   }
   }
 
   pub fn set_layout(&mut self, layout: Option<Box<dyn Layout>>) {
@@ -615,7 +621,6 @@ impl Actor {
       }
     }
     for sub_actor in self.sub_actor_list.iter_mut() {
-      sub_actor.init_gl();
       sub_actor.set_needs_layout(stretch);
       if !self.node.is_none() {
         match stretch
@@ -690,6 +695,9 @@ impl Actor {
     parent_model_matrix: Option<&Matrix4<f32>>,
     projection: &Matrix4<f32>,
   ) {
+    if !self.visible {
+      return;
+    }
     let mut transform: Matrix4<f32> = self.model_matrix();
     if let Some(parent_model_matrix) = parent_model_matrix {
       transform = transform * parent_model_matrix;

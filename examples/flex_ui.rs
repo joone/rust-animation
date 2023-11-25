@@ -101,7 +101,6 @@ fn main() {
     }
     stage.add_sub_actor(actor);
   }
-  stage.init_gl(width, height);
   play.add_stage(stage);
 
   play.set_stage_needs_layout(&"stage".to_string());
