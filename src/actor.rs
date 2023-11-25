@@ -86,8 +86,6 @@ pub struct Actor {
   pub rotation: i32,
   pub visible: bool,
   color: [f32; 3],
-  viewport_width: u32,
-  viewport_height: u32,
   pub image_path: String,
   pub sub_actor_list: Vec<Actor>,
   vertex_array_obj: gl::types::GLuint,
@@ -163,8 +161,6 @@ impl Actor {
       rotation: 0,
       visible: false,
       color: [1.0, 1.0, 1.0],
-      viewport_width: 0,
-      viewport_height: 0,
       image_path: "".to_string(),
       sub_actor_list: Vec::new(),
       vertex_array_obj: gl::types::GLuint::default(),
@@ -205,11 +201,7 @@ impl Actor {
     }
   }
 
-  pub fn init_gl(&mut self, viewport_width: u32, viewport_height: u32) {
-    self.viewport_width = viewport_width;
-    self.viewport_height = viewport_height;
-    //println!("init_gl {}", self.name);
-
+  pub fn init_gl(&mut self) {
     unsafe {
       let (mut vertex_array_buffer, mut elem_array_buffer) = (0, 0);
       let vertices: [f32; 20] = [
@@ -623,7 +615,7 @@ impl Actor {
       }
     }
     for sub_actor in self.sub_actor_list.iter_mut() {
-      sub_actor.init_gl(self.viewport_width, self.viewport_height);
+      sub_actor.init_gl();
       sub_actor.set_needs_layout(stretch);
       if !self.node.is_none() {
         match stretch
@@ -742,7 +734,6 @@ impl Actor {
   }
 
   pub fn add_sub_actor(&mut self, actor: Actor) {
-    //println!("{} : {}, {}", self.name, self.viewport_width, self.viewport_height);
     self.sub_actor_list.push(actor);
   }
 }

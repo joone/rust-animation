@@ -73,7 +73,7 @@ impl Stage {
   pub fn set_needs_layout(&mut self) {
     self
       .stage_actor
-      .init_gl(self.viewport_width, self.viewport_height);
+      .init_gl();
     self.stage_actor.set_needs_layout(&mut self.stretch);
     if let Some(stretch_obj) = &mut self.stretch {
       stretch_obj
