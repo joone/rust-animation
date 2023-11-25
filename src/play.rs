@@ -63,7 +63,7 @@ pub struct Play {
 }
 
 impl Play {
-  pub fn new(name: String, layout_mode: LayoutMode) -> Self {
+  pub fn new(name: String, viewport_width :i32, viewport_height : i32, layout_mode: LayoutMode) -> Self {
     let mut stretch = None;
     match layout_mode {
       LayoutMode::Flex => {
@@ -74,25 +74,22 @@ impl Play {
       }
     }
 
-
-    Self {
+   let mut play = Play {
       _name: name,
       stage_list: Vec::new(),
       shader_program: 0,
       stage_map: HashMap::new(),
       projection: Matrix4::identity(),
       stretch: stretch,
-    }
-  }
+    };
 
-  pub fn initialize(&mut self) {
-    let vw = 1920;
-    let vh = 1080;
      // Apply orthographic projection matrix: left, right, bottom, top, near, far
-    let orth_matrix = cgmath::ortho(0.0, vw as f32, vh as f32, 0.0, 1.0, -1.0);
-    self.projection = orth_matrix;
+    let orth_matrix = cgmath::ortho(0.0, viewport_width as f32, viewport_height as f32, 0.0, 1.0, -1.0);
+    play.projection = orth_matrix;
     //self.stretch = Some(Stretch::new());
-    self.compile_shader();
+    play.compile_shader();
+
+    play
   }
 
   pub fn new_actor(

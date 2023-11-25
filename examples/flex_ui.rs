@@ -32,8 +32,7 @@ fn main() {
 
   gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-  let mut play = Play::new("Flex UI test".to_string(), LayoutMode::Flex);
-  play.initialize();
+  let mut play = Play::new("Flex UI test".to_string(), 1920, 1080, LayoutMode::Flex);
   let mut stage = Actor::new("stage".to_string(), 1920, 1080, None);
   stage.set_style(Style {
     size: Size {

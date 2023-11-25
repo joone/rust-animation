@@ -155,7 +155,7 @@ impl PictureBrowser {
   pub fn new(w: u32, h: u32) -> Self {
     PictureBrowser {
       image_loaded: false,
-      play: Play::new("Picture Browser".to_string(), LayoutMode::UserDefine),
+      play: Play::new("Picture Browser".to_string(), 1920, 1080, LayoutMode::UserDefine),
       file_list: Vec::new(),
       cur_file_index: 0,
       main_stage_name: "".to_string(),
@@ -163,7 +163,6 @@ impl PictureBrowser {
     }
   }
   pub fn initialize(&mut self) {
-    self.play.initialize();
     let mut splash_stage = Actor::new(
       "splash_stage".to_string(),
       1920,
