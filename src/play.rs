@@ -239,7 +239,7 @@ impl Play {
       for stage in self.stage_list.iter_mut() {
 
         stage.animate();
-        stage.update_layout(&mut self.stretch);
+        stage.update_stretch_layout(&mut self.stretch);
         stage.render(self.shader_program, None, &self.projection);
       }
     }

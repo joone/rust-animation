@@ -644,7 +644,7 @@ impl Actor {
     }
   }
 
-  pub fn update_layout(&mut self, stretch: &mut Option<Stretch>) {
+  pub fn update_stretch_layout(&mut self, stretch: &mut Option<Stretch>) {
     // If Stretch's node is set, Stretch does a layout job.
     if let Some(stretch_obj) = stretch {
       let layout = stretch_obj.layout(self.node.unwrap()).unwrap();
@@ -653,7 +653,7 @@ impl Actor {
       //println!("node: {:#?}", stretch_obj.layout(self.node.unwrap()));
 
       for sub_actor in self.sub_actor_list.iter_mut() {
-        sub_actor.update_layout(stretch);
+        sub_actor.update_stretch_layout(stretch);
       }
     }
   }
