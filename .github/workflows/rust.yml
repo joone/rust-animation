@@ -20,5 +20,6 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y cmake libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
     - name: Build
       run: cargo build --verbose
+      run: cargo build --examples
     - name: Run tests
       run: cargo test --verbose
