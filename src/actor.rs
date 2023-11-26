@@ -301,7 +301,7 @@ impl Actor {
 
         match image::open(&Path::new(&self.image_path)) {
           Ok(img) => {
-            let to_rgba = img.to_rgba();
+            let to_rgba = img.to_rgba8();
             let data = to_rgba.into_vec();
             gl::TexImage2D(
               gl::TEXTURE_2D,

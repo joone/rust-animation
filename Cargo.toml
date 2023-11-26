@@ -14,9 +14,10 @@ exclude = [".gitignore", ".github"]
 [dependencies]
 cgmath = "0.14.1"
 gl = "0.10.0"
-image = "0.19.0"
+image = "0.24.7"
 keyframe = "1.0.4"
 stretch = "0.3.2"
+ab_glyph = "0.2.23"
 
 [dev-dependencies]
 glfw = "0.42.0"
