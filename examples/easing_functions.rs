@@ -36,13 +36,13 @@ fn main() {
 
   gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-  let mut play = Play::new("Easing functions demo".to_string(), 1920, 1080, LayoutMode::UserDefine);
-  let mut stage = Actor::new(
-    "stage".to_string(),
+  let mut play = Play::new(
+    "Easing functions demo".to_string(),
     1920,
     1080,
-    None,
+    LayoutMode::UserDefine,
   );
+  let mut stage = Actor::new("stage".to_string(), 1920, 1080, None);
   stage.set_visible(true);
 
   let easing_functions = vec![
@@ -79,7 +79,6 @@ fn main() {
     actor.apply_rotation_animation(0, 360, time, EasingFunction::Linear);
     stage.add_sub_actor(actor);
   }
-;
   play.add_stage(stage);
 
   while !window.should_close() {

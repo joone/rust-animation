@@ -6,11 +6,11 @@ extern crate gl;
 
 use self::gl::types::*;
 use cgmath::{Deg, Matrix, Matrix4, SquareMatrix, Vector3};
-use stretch::{geometry::Size, node::Stretch, style::*};
 use std::collections::HashMap;
 use std::ffi::CString;
 use std::ptr;
 use std::str;
+use stretch::{geometry::Size, node::Stretch, style::*};
 
 use crate::actor::Actor;
 use crate::actor::EventHandler;
@@ -63,7 +63,12 @@ pub struct Play {
 }
 
 impl Play {
-  pub fn new(name: String, viewport_width :i32, viewport_height : i32, layout_mode: LayoutMode) -> Self {
+  pub fn new(
+    name: String,
+    viewport_width: i32,
+    viewport_height: i32,
+    layout_mode: LayoutMode,
+  ) -> Self {
     let mut stretch = None;
     match layout_mode {
       LayoutMode::Flex => {
@@ -74,7 +79,7 @@ impl Play {
       }
     }
 
-   let mut play = Play {
+    let mut play = Play {
       _name: name,
       stage_list: Vec::new(),
       shader_program: 0,
@@ -83,8 +88,15 @@ impl Play {
       stretch: stretch,
     };
 
-     // Apply orthographic projection matrix: left, right, bottom, top, near, far
-    let orth_matrix = cgmath::ortho(0.0, viewport_width as f32, viewport_height as f32, 0.0, 1.0, -1.0);
+    // Apply orthographic projection matrix: left, right, bottom, top, near, far
+    let orth_matrix = cgmath::ortho(
+      0.0,
+      viewport_width as f32,
+      viewport_height as f32,
+      0.0,
+      1.0,
+      -1.0,
+    );
     play.projection = orth_matrix;
     //self.stretch = Some(Stretch::new());
     play.compile_shader();
@@ -228,7 +240,7 @@ impl Play {
             stretch_obj
               .compute_layout(stage.node.unwrap(), Size::undefined())
               .unwrap();
-  
+
             //let layout = stretch_obj.layout(self.stage_actor.node.unwrap()).unwrap();
             //println!("set_needs_layout {}, {}", layout.size.width, layout.size.height);
           }

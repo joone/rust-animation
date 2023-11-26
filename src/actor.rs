@@ -126,7 +126,7 @@ pub struct Actor {
   focused_sub_actor: usize,
   focused: bool,
   pub needs_update: bool,
-  pub node: Option<Node>, // for stretch only
+  pub node: Option<Node>,   // for stretch only
   pub style: Option<Style>, // for stretch only
 }
 
@@ -137,18 +137,18 @@ pub trait EventHandler {
 }
 
 pub trait Layout {
-  fn layout_sub_actors(&mut self, actor: &mut Actor, parent_actor: Option<&Actor>,  stretch: &mut Option<Stretch>);
+  fn layout_sub_actors(
+    &mut self,
+    actor: &mut Actor,
+    parent_actor: Option<&Actor>,
+    stretch: &mut Option<Stretch>,
+  );
   fn update_layout(&mut self, actor: &mut Actor, stretch: &mut Option<Stretch>);
   fn finalize(&mut self);
 }
 
 impl Actor {
-  pub fn new(
-    name: String,
-    w: u32,
-    h: u32,
-    event_handler: Option<Box<dyn EventHandler>>,
-  ) -> Self {
+  pub fn new(name: String, w: u32, h: u32, event_handler: Option<Box<dyn EventHandler>>) -> Self {
     let mut actor = Actor {
       name: name,
       x: 0,
@@ -318,8 +318,8 @@ impl Actor {
           }
           Err(err) => println!("Fail to load a image {:?}", err),
         }
-     }
-   }
+      }
+    }
   }
 
   pub fn set_layout(&mut self, layout: Option<Box<dyn Layout>>) {
@@ -585,11 +585,10 @@ impl Actor {
     }
   }
 
-  pub fn layout_sub_actors(&mut self, parent_actor: Option<&Actor>,
-       stretch: &mut Option<Stretch>) {
+  pub fn layout_sub_actors(&mut self, parent_actor: Option<&Actor>, stretch: &mut Option<Stretch>) {
     if let Some(mut layout) = self.layout.take() {
-        layout.layout_sub_actors(self, parent_actor, stretch);
-        self.layout = Some(layout); // Put back the layout
+      layout.layout_sub_actors(self, parent_actor, stretch);
+      self.layout = Some(layout); // Put back the layout
     }
 
     // Replace the sub_actor_list with an empty vector and take the original vector out
@@ -597,8 +596,8 @@ impl Actor {
 
     // Iterate over the vector outside of the self structure
     for sub_actor in &mut sub_actor_list {
-        // As we are outside of the self structure, we can now borrow self as immutable
-        sub_actor.layout_sub_actors(Some(self), stretch);
+      // As we are outside of the self structure, we can now borrow self as immutable
+      sub_actor.layout_sub_actors(Some(self), stretch);
     }
 
     // Put back the original sub_actor_list

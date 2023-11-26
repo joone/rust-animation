@@ -5,7 +5,7 @@
 extern crate glfw;
 
 use glfw::{Action, Context, Key};
-use stretch::{node::Stretch, geometry::Rect, geometry::Size, style::*};
+use stretch::{geometry::Rect, geometry::Size, node::Stretch, style::*};
 
 use rust_animation::actor::Actor;
 use rust_animation::actor::EasingFunction;
@@ -31,8 +31,12 @@ impl FlexLayout {
 }
 
 impl Layout for FlexLayout {
-  fn layout_sub_actors(&mut self, actor: &mut Actor, parent_actor: Option<&Actor>,
-        stretch: &mut Option<Stretch>) {
+  fn layout_sub_actors(
+    &mut self,
+    actor: &mut Actor,
+    parent_actor: Option<&Actor>,
+    stretch: &mut Option<Stretch>,
+  ) {
     println!("run layout_sub_layer for FlexLayout {}", self.name);
     if let Some(stretch_obj) = stretch {
       if let Some(style_obj) = actor.style {
@@ -60,7 +64,6 @@ impl Layout for FlexLayout {
             )
             .unwrap(),
         );
-
       }
 
       println!("actor name {}", actor.name);
@@ -84,14 +87,15 @@ impl Layout for FlexLayout {
   }
 
   fn update_layout(&mut self, actor: &mut Actor, stretch: &mut Option<Stretch>) {
-
     if let Some(stretch_obj) = stretch {
       if !actor.node.is_none() {
-
         let layout = stretch_obj.layout(actor.node.unwrap()).unwrap();
         actor.x = layout.location.x as i32;
         actor.y = layout.location.y as i32;
-        println!("run update_layout for FlexLayout {} = {},{}", actor.name, actor.x, actor.y);
+        println!(
+          "run update_layout for FlexLayout {} = {},{}",
+          actor.name, actor.x, actor.y
+        );
       }
     }
   }
@@ -193,7 +197,6 @@ fn main() {
 
   stage.set_layout(Some(Box::new(FlexLayout::new())));
   play.add_stage(stage);
-
 
   //play.set_stage_needs_layout(&"stage".to_string());
 

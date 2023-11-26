@@ -31,13 +31,13 @@ fn main() {
 
   gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-  let mut play = Play::new("Animation test".to_string(), 1920, 1080, LayoutMode::UserDefine);
-  let mut stage = Actor::new(
-    "stage".to_string(),
+  let mut play = Play::new(
+    "Animation test".to_string(),
     1920,
     1080,
-    None,
+    LayoutMode::UserDefine,
   );
+  let mut stage = Actor::new("stage".to_string(), 1920, 1080, None);
   stage.set_visible(true);
 
   let mut actor_1 = Actor::new("actor_1".to_string(), 400, 225, None);

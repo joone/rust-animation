@@ -5,7 +5,7 @@
 extern crate glfw;
 
 use glfw::{Action, Context, Key};
-use stretch::{node::Stretch};
+use stretch::node::Stretch;
 
 use reqwest::Error;
 use serde_json::Value;
@@ -130,8 +130,12 @@ impl ActorLayout {
 }
 
 impl Layout for ActorLayout {
-  fn layout_sub_actors(&mut self, actor: &mut Actor, parent_actor: Option<&Actor>,
-    stretch: &mut Option<Stretch>) {
+  fn layout_sub_actors(
+    &mut self,
+    actor: &mut Actor,
+    parent_actor: Option<&Actor>,
+    stretch: &mut Option<Stretch>,
+  ) {
     println!("layout_sub_layer {}", self.name);
     let mut index: i32 = 0;
     for sub_actor in actor.sub_actor_list.iter_mut() {
@@ -165,7 +169,12 @@ impl PictureBrowser {
   pub fn new(w: u32, h: u32) -> Self {
     PictureBrowser {
       image_loaded: false,
-      play: Play::new("Picture Browser".to_string(), 1920, 1080, LayoutMode::UserDefine),
+      play: Play::new(
+        "Picture Browser".to_string(),
+        1920,
+        1080,
+        LayoutMode::UserDefine,
+      ),
       file_list: Vec::new(),
       cur_file_index: 0,
       main_stage_name: "".to_string(),
@@ -173,15 +182,10 @@ impl PictureBrowser {
     }
   }
   pub fn initialize(&mut self) {
-    let mut splash_stage = Actor::new(
-      "splash_stage".to_string(),
-      1920,
-      1080,
-      None,
-    );
+    let mut splash_stage = Actor::new("splash_stage".to_string(), 1920, 1080, None);
     splash_stage.set_image("examples/splash.png".to_string());
-   // splash_stage.set_visible(true);
-   // splash_stage.set_needs_layout();
+    // splash_stage.set_visible(true);
+    // splash_stage.set_needs_layout();
     self.splash_stage_name = self.play.add_stage(splash_stage);
 
     let mut stage = Actor::new(
@@ -192,7 +196,7 @@ impl PictureBrowser {
     );
     stage.set_visible(false);
     stage.set_layout(Some(Box::new(ActorLayout::new())));
-  //  stage.set_needs_layout();
+    //  stage.set_needs_layout();
     self.main_stage_name = self.play.add_stage(stage);
   }
 
