@@ -36,8 +36,7 @@ fn main() {
 
   gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-  let mut play = Play::new("Easing functions demo".to_string(), LayoutMode::UserDefine);
-  play.initialize();
+  let mut play = Play::new("Easing functions demo".to_string(), 1920, 1080, LayoutMode::UserDefine);
   let mut stage = Actor::new(
     "stage".to_string(),
     1920,
