@@ -5,12 +5,12 @@
 extern crate gl;
 
 use self::gl::types::*;
-use cgmath::{Deg, Matrix, Matrix4, SquareMatrix, Vector3};
+use cgmath::{Matrix4, SquareMatrix};
 use std::collections::HashMap;
 use std::ffi::CString;
 use std::ptr;
 use std::str;
-use stretch::{geometry::Size, node::Stretch, style::*};
+use stretch::{geometry::Size, node::Stretch};
 
 use crate::actor::Actor;
 use crate::actor::EventHandler;

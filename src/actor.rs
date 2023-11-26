@@ -17,13 +17,11 @@ use std::time::Instant;
 
 use keyframe::{ease, functions::*};
 use stretch::{
-  geometry::Rect,
-  geometry::Size,
   node::{Node, Stretch},
   style::*,
 };
 
-use crate::actor::image::GenericImage;
+
 
 #[repr(i32)]
 #[derive(Copy, Clone, Debug, PartialEq)]

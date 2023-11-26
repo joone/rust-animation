@@ -8,7 +8,7 @@ use glfw::{Action, Context, Key};
 use stretch::{geometry::Rect, geometry::Size, node::Stretch, style::*};
 
 use rust_animation::actor::Actor;
-use rust_animation::actor::EasingFunction;
+
 use rust_animation::actor::Layout;
 use rust_animation::actor::LayoutMode;
 use rust_animation::play::Play;
@@ -20,7 +20,7 @@ pub struct FlexLayout {
 
 impl FlexLayout {
   pub fn new() -> Self {
-    let mut flex_layout = FlexLayout {
+    let flex_layout = FlexLayout {
       name: "flex_layout".to_string(),
     };
 

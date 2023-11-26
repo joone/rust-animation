@@ -133,8 +133,8 @@ impl Layout for ActorLayout {
   fn layout_sub_actors(
     &mut self,
     actor: &mut Actor,
-    parent_actor: Option<&Actor>,
-    stretch: &mut Option<Stretch>,
+    _parent_actor: Option<&Actor>,
+    _stretch: &mut Option<Stretch>,
   ) {
     println!("layout_sub_layer {}", self.name);
     let mut index: i32 = 0;
@@ -147,7 +147,7 @@ impl Layout for ActorLayout {
     }
   }
 
-  fn update_layout(&mut self, actor: &mut Actor, stretch: &mut Option<Stretch>) {
+  fn update_layout(&mut self, _actor: &mut Actor, _stretch: &mut Option<Stretch>) {
     println!("update_layout {}", self.name);
   }
 
@@ -166,7 +166,7 @@ pub struct PictureBrowser {
 }
 
 impl PictureBrowser {
-  pub fn new(w: u32, h: u32) -> Self {
+  pub fn new(_w: u32, _h: u32) -> Self {
     PictureBrowser {
       image_loaded: false,
       play: Play::new(
