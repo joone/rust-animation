@@ -110,27 +110,11 @@ impl Play {
     }
   }
 
-  pub fn set_stage_needs_layout(&mut self, stage_name: &String) {
-    match self.stage_map.get(stage_name) {
-      Some(&index) => {
-        self.stage_list[index].set_needs_layout(&mut self.stretch);
-        if let Some(stretch_obj) = &mut self.stretch {
-          stretch_obj
-            .compute_layout(self.stage_list[index].node.unwrap(), Size::undefined())
-            .unwrap();
-
-          //let layout = stretch_obj.layout(self.stage_actor.node.unwrap()).unwrap();
-          //println!("set_needs_layout {}, {}", layout.size.width, layout.size.height);
-        }
-      }
-      _ => println!("Can't find the stage with the given name: {}", stage_name),
-    }
-  }
-
   pub fn set_visible_stage(&mut self, name: &String, visible: bool) {
     match self.stage_map.get(name) {
       Some(&index) => {
         self.stage_list[index].set_visible(visible);
+        self.stage_list[index].needs_update = true;
       }
       _ => println!("Can't find the stage with the given name: {}", name),
     }
@@ -237,9 +221,23 @@ impl Play {
       gl::Clear(gl::COLOR_BUFFER_BIT);
 
       for stage in self.stage_list.iter_mut() {
+        if stage.needs_update {
+          stage.layout_sub_actors(None, &mut self.stretch);
+
+          if let Some(stretch_obj) = &mut self.stretch {
+            stretch_obj
+              .compute_layout(stage.node.unwrap(), Size::undefined())
+              .unwrap();
+  
+            //let layout = stretch_obj.layout(self.stage_actor.node.unwrap()).unwrap();
+            //println!("set_needs_layout {}, {}", layout.size.width, layout.size.height);
+          }
+
+          stage.update_layout(&mut self.stretch);
+          stage.needs_update = false;
+        }
 
         stage.animate();
-        stage.update_stretch_layout(&mut self.stretch);
         stage.render(self.shader_program, None, &self.projection);
       }
     }

@@ -125,9 +125,9 @@ pub struct Actor {
   layout: Option<Box<dyn Layout>>,
   focused_sub_actor: usize,
   focused: bool,
-  needs_update: bool,
-  pub node: Option<Node>,
-  style: Option<Style>,
+  pub needs_update: bool,
+  pub node: Option<Node>, // for stretch only
+  pub style: Option<Style>, // for stretch only
 }
 
 pub trait EventHandler {
@@ -137,7 +137,9 @@ pub trait EventHandler {
 }
 
 pub trait Layout {
-  fn layout_sub_actors(&mut self, actor: &mut Vec<Actor>);
+  fn layout_sub_actors(&mut self, actor: &mut Actor, parent_actor: Option<&Actor>,  stretch: &mut Option<Stretch>);
+  fn update_layout(&mut self, actor: &mut Actor, stretch: &mut Option<Stretch>);
+  fn finalize(&mut self);
 }
 
 impl Actor {
@@ -195,7 +197,7 @@ impl Actor {
       layout: None,
       focused_sub_actor: 0,
       focused: false,
-      needs_update: false,
+      needs_update: true,
       node: None,
       style: None,
     };
@@ -359,11 +361,6 @@ impl Actor {
     }
   }
   pub fn animate(&mut self) {
-    if self.needs_update {
-      self.layout_sub_actors();
-      self.needs_update = false;
-    }
-
     if self.translation_x_animation_running == true {
       if self.translation_x_animation_starting_time == 0 {
         self.translation_x_animation_starting_time =
@@ -588,73 +585,40 @@ impl Actor {
     }
   }
 
-  // Marks the layer’s contents as needing to be updated.
-  pub fn set_needs_layout(&mut self, stretch: &mut Option<Stretch>) {
-    self.needs_update = true;
-
-    if let Some(stretch_obj) = stretch {
-      if let Some(style_obj) = self.style {
-        self.node = Some(stretch_obj.new_node(style_obj, vec![]).unwrap());
-      } else {
-        //println!("default style: {}: {},{}", self.name, self.width, self.height);
-        self.node = Some(
-          stretch_obj
-            .new_node(
-              Style {
-                size: Size {
-                  width: Dimension::Points(self.width as f32),
-                  height: Dimension::Points(self.height as f32),
-                },
-                margin: Rect {
-                  start: Dimension::Points(2.0),
-                  end: Dimension::Points(2.0),
-                  top: Dimension::Points(2.0),
-                  bottom: Dimension::Points(2.0),
-                  ..Default::default()
-                },
-                ..Default::default()
-              },
-              vec![],
-            )
-            .unwrap(),
-        );
-      }
+  pub fn layout_sub_actors(&mut self, parent_actor: Option<&Actor>,
+       stretch: &mut Option<Stretch>) {
+    if let Some(mut layout) = self.layout.take() {
+        layout.layout_sub_actors(self, parent_actor, stretch);
+        self.layout = Some(layout); // Put back the layout
     }
+
+    // Replace the sub_actor_list with an empty vector and take the original vector out
+    let mut sub_actor_list = std::mem::replace(&mut self.sub_actor_list, Vec::new());
+
+    // Iterate over the vector outside of the self structure
+    for sub_actor in &mut sub_actor_list {
+        // As we are outside of the self structure, we can now borrow self as immutable
+        sub_actor.layout_sub_actors(Some(self), stretch);
+    }
+
+    // Put back the original sub_actor_list
+    self.sub_actor_list = sub_actor_list;
+  }
+
+  pub fn update_layout(&mut self, stretch: &mut Option<Stretch>) {
+    if let Some(mut layout) = self.layout.take() {
+      layout.update_layout(self, stretch);
+      self.layout = Some(layout); // Put back the layout
+    }
+
     for sub_actor in self.sub_actor_list.iter_mut() {
-      sub_actor.set_needs_layout(stretch);
-      if !self.node.is_none() {
-        match stretch
-          .as_mut()
-          .unwrap()
-          .add_child(self.node.unwrap(), sub_actor.node.unwrap())
-        {
-          Ok(()) => {
-            println!(" stretch node  is added {} {}", self.name, sub_actor.name)
-          }
-          Err(..) => {}
-        }
-      }
+      sub_actor.update_layout(stretch);
     }
   }
 
-  // layout sub-actors.
-  pub fn layout_sub_actors(&mut self) {
+  pub fn finalize_layout(&mut self) {
     if let Some(ref mut layout) = self.layout {
-      layout.layout_sub_actors(&mut self.sub_actor_list);
-    }
-  }
-
-  pub fn update_stretch_layout(&mut self, stretch: &mut Option<Stretch>) {
-    // If Stretch's node is set, Stretch does a layout job.
-    if let Some(stretch_obj) = stretch {
-      let layout = stretch_obj.layout(self.node.unwrap()).unwrap();
-      self.x = layout.location.x as i32;
-      self.y = layout.location.y as i32;
-      //println!("node: {:#?}", stretch_obj.layout(self.node.unwrap()));
-
-      for sub_actor in self.sub_actor_list.iter_mut() {
-        sub_actor.update_stretch_layout(stretch);
-      }
+      layout.finalize();
     }
   }
 
@@ -690,7 +654,7 @@ impl Actor {
   }
 
   pub fn render(
-    &self,
+    &mut self,
     shader_program: GLuint,
     parent_model_matrix: Option<&Matrix4<f32>>,
     projection: &Matrix4<f32>,
@@ -698,6 +662,7 @@ impl Actor {
     if !self.visible {
       return;
     }
+
     let mut transform: Matrix4<f32> = self.model_matrix();
     if let Some(parent_model_matrix) = parent_model_matrix {
       transform = transform * parent_model_matrix;
@@ -725,7 +690,7 @@ impl Actor {
       gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
     }
 
-    for sub_actor in self.sub_actor_list.iter() {
+    for sub_actor in self.sub_actor_list.iter_mut() {
       if sub_actor.focused == false {
         sub_actor.render(shader_program, Some(&transform), projection);
       }

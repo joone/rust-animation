@@ -5,6 +5,7 @@
 extern crate glfw;
 
 use glfw::{Action, Context, Key};
+use stretch::{node::Stretch};
 
 use reqwest::Error;
 use serde_json::Value;
@@ -129,16 +130,25 @@ impl ActorLayout {
 }
 
 impl Layout for ActorLayout {
-  fn layout_sub_actors(&mut self, sub_actor_list: &mut Vec<Actor>) {
+  fn layout_sub_actors(&mut self, actor: &mut Actor, parent_actor: Option<&Actor>,
+    stretch: &mut Option<Stretch>) {
     println!("layout_sub_layer {}", self.name);
     let mut index: i32 = 0;
-    for sub_actor in sub_actor_list.iter_mut() {
+    for sub_actor in actor.sub_actor_list.iter_mut() {
       self.cur_x += sub_actor.width as i32;
       sub_actor.x = index % 5 * IMAGE_WIDTH as i32;
       let col = index / 5;
       sub_actor.y = col * IMAGE_HEIGHT as i32;
       index += 1;
     }
+  }
+
+  fn update_layout(&mut self, actor: &mut Actor, stretch: &mut Option<Stretch>) {
+    println!("update_layout {}", self.name);
+  }
+
+  fn finalize(&mut self) {
+    println!("finalize {}", self.name);
   }
 }
 
@@ -220,7 +230,7 @@ impl PictureBrowser {
       self.cur_file_index += 1;
     } else {
       self.image_loaded = true;
-      self.play.set_stage_needs_layout(&self.main_stage_name);
+      println!("load all textures");
     }
   }
 
