@@ -13,15 +13,13 @@ use std::mem;
 use std::os::raw::c_void;
 use std::path::Path;
 use std::ptr;
-use std::time::Instant;
 
-use keyframe::{ease, functions::*};
 use stretch::{
   node::{Node, Stretch},
   style::*,
 };
 
-
+use crate::animation::Animation;
 
 #[repr(i32)]
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -35,27 +33,6 @@ pub enum Key {
   Left = 263,
   Down = 264,
   Up = 265,
-}
-
-#[derive(Copy, Clone, Debug)]
-pub enum EasingFunction {
-  EaseIn,
-  EaseInCubic,
-  EaseInOut,
-  EaseInOutCubic,
-  EaseInOutQuad,
-  EaseInOutQuart,
-  EaseInOutQuint,
-  EaseInQuad,
-  EaseInQuart,
-  EaseInQuint,
-  EaseOut,
-  EaseOutCubic,
-  EaseOutQuad,
-  EaseOutQuart,
-  EaseOutQuint,
-  Linear,
-  Step,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -89,36 +66,7 @@ pub struct Actor {
   vertex_array_obj: gl::types::GLuint,
   texture: gl::types::GLuint,
   pub animated: bool,
-  animation_time_instance: Instant,
-
-  translation_x_animation_running: bool,
-  translation_x_animation_starting_time: u128,
-  translation_x_animation_time_duration: f32,
-  translation_x_animation_from_value: i32,
-  translation_x_animation_to_value: i32,
-  translation_x_animation_ease: EasingFunction,
-
-  translation_y_animation_running: bool,
-  translation_y_animation_starting_time: u128,
-  translation_y_animation_time_duration: f32,
-  translation_y_animation_from_value: i32,
-  translation_y_animation_to_value: i32,
-  translation_y_animation_ease: EasingFunction,
-
-  scale_animation_running: bool,
-  scale_animation_starting_time: u128,
-  scale_animation_time_duration: f32,
-  scale_animation_from_value: f32,
-  scale_animation_to_value: f32,
-  scale_animation_ease: EasingFunction,
-
-  rotation_animation_running: bool,
-  rotation_animation_starting_time: u128,
-  rotation_animation_time_duration: f32,
-  rotation_animation_from_value: i32,
-  rotation_animation_to_value: i32,
-  rotation_animation_ease: EasingFunction,
-
+  pub animation: Option<Animation>,
   event_handler: Option<Box<dyn EventHandler>>,
   layout: Option<Box<dyn Layout>>,
   focused_sub_actor: usize,
@@ -166,31 +114,7 @@ impl Actor {
       vertex_array_obj: gl::types::GLuint::default(),
       texture: gl::types::GLuint::default(),
       animated: false,
-      animation_time_instance: Instant::now(),
-      translation_x_animation_running: false,
-      translation_x_animation_starting_time: 0,
-      translation_x_animation_time_duration: 0.0,
-      translation_x_animation_from_value: 0,
-      translation_x_animation_ease: EasingFunction::Linear,
-      translation_x_animation_to_value: 0,
-      translation_y_animation_running: false,
-      translation_y_animation_starting_time: 0,
-      translation_y_animation_time_duration: 0.0,
-      translation_y_animation_from_value: 0,
-      translation_y_animation_to_value: 0,
-      translation_y_animation_ease: EasingFunction::Linear,
-      scale_animation_running: false,
-      scale_animation_starting_time: 0,
-      scale_animation_time_duration: 0.0,
-      scale_animation_from_value: 0.0,
-      scale_animation_to_value: 0.0,
-      scale_animation_ease: EasingFunction::Linear,
-      rotation_animation_running: false,
-      rotation_animation_starting_time: 0,
-      rotation_animation_time_duration: 0.0,
-      rotation_animation_from_value: 0,
-      rotation_animation_to_value: 0,
-      rotation_animation_ease: EasingFunction::Linear,
+      animation: None,
       event_handler: event_handler,
       layout: None,
       focused_sub_actor: 0,
@@ -324,6 +248,10 @@ impl Actor {
     self.layout = layout;
   }
 
+  pub fn set_animation(&mut self, animation: Option<Animation>) {
+    self.animation = animation;
+  }
+
   pub fn set_style(&mut self, style: Style) {
     self.style = Some(style);
   }
@@ -337,197 +265,16 @@ impl Actor {
     self.sub_actor_list.sort_by(|a, b| a.z.partial_cmp(&b.z).unwrap());
   }*/
 
-  fn easing_function(easing: EasingFunction, from: f32, to: f32, duration: f32) -> f32 {
-    match easing {
-      EasingFunction::EaseIn => ease(EaseIn, from, to, duration),
-      EasingFunction::EaseInCubic => ease(EaseInCubic, from, to, duration),
-      EasingFunction::EaseInOut => ease(EaseInOut, from, to, duration),
-      EasingFunction::EaseInOutCubic => ease(EaseInOutCubic, from, to, duration),
-      EasingFunction::EaseInOutQuad => ease(EaseInOutQuad, from, to, duration),
-      EasingFunction::EaseInOutQuart => ease(EaseInOutQuart, from, to, duration),
-      EasingFunction::EaseInOutQuint => ease(EaseInOutQuint, from, to, duration),
-      EasingFunction::EaseInQuad => ease(EaseInQuad, from, to, duration),
-      EasingFunction::EaseInQuart => ease(EaseInQuart, from, to, duration),
-      EasingFunction::EaseInQuint => ease(EaseInQuint, from, to, duration),
-      EasingFunction::EaseOut => ease(EaseOut, from, to, duration),
-      EasingFunction::EaseOutCubic => ease(EaseOutCubic, from, to, duration),
-      EasingFunction::EaseOutQuad => ease(EaseOutQuad, from, to, duration),
-      EasingFunction::EaseOutQuart => ease(EaseOutQuart, from, to, duration),
-      EasingFunction::EaseOutQuint => ease(EaseOutQuint, from, to, duration),
-      EasingFunction::Linear => ease(Linear, from, to, duration),
-      EasingFunction::Step => ease(Step, from, to, duration),
-    }
-  }
   pub fn animate(&mut self) {
-    if self.translation_x_animation_running == true {
-      if self.translation_x_animation_starting_time == 0 {
-        self.translation_x_animation_starting_time =
-          self.animation_time_instance.elapsed().as_millis();
-      }
-      let cur_time = (self.animation_time_instance.elapsed().as_millis()
-        - self.translation_x_animation_starting_time) as f32
-        / self.translation_x_animation_time_duration;
-      if cur_time <= 1.0 {
-        self.x = Actor::easing_function(
-          self.translation_x_animation_ease,
-          self.translation_x_animation_from_value as f32,
-          self.translation_x_animation_to_value as f32,
-          cur_time,
-        ) as i32;
-      } else {
-        self.translation_x_animation_running = false;
-        self.translation_x_animation_starting_time = 0;
-        self.x = self.translation_x_animation_to_value;
-      }
-    }
-
-    if self.translation_y_animation_running == true {
-      if self.translation_y_animation_starting_time == 0 {
-        self.translation_y_animation_starting_time =
-          self.animation_time_instance.elapsed().as_millis();
-      }
-      let cur_time = (self.animation_time_instance.elapsed().as_millis()
-        - self.translation_y_animation_starting_time) as f32
-        / self.translation_y_animation_time_duration;
-      if cur_time <= 1.0 {
-        self.y = Actor::easing_function(
-          self.translation_y_animation_ease,
-          self.translation_y_animation_from_value as f32,
-          self.translation_y_animation_to_value as f32,
-          cur_time,
-        ) as i32;
-      } else {
-        self.translation_y_animation_running = false;
-        self.translation_y_animation_starting_time = 0;
-        self.y = self.translation_y_animation_to_value;
-      }
-    }
-
-    if self.rotation_animation_running == true {
-      if self.rotation_animation_starting_time == 0 {
-        self.rotation_animation_starting_time = self.animation_time_instance.elapsed().as_millis();
-      }
-
-      let cur_time = (self.animation_time_instance.elapsed().as_millis()
-        - self.rotation_animation_starting_time) as f32
-        / self.rotation_animation_time_duration as f32;
-      if cur_time <= 1.0 {
-        self.rotation = Actor::easing_function(
-          self.rotation_animation_ease,
-          self.rotation_animation_from_value as f32,
-          self.rotation_animation_to_value as f32,
-          cur_time,
-        ) as i32;
-      } else {
-        self.rotation_animation_running = false;
-        self.rotation_animation_starting_time = 0;
-        self.rotation = self.rotation_animation_to_value;
-      }
-    }
-
-    if self.scale_animation_running == true {
-      if self.scale_animation_starting_time == 0 {
-        self.scale_animation_starting_time = self.animation_time_instance.elapsed().as_millis();
-      }
-
-      let cur_time = (self.animation_time_instance.elapsed().as_millis()
-        - self.scale_animation_starting_time) as f32
-        / self.scale_animation_time_duration as f32;
-      if cur_time <= 1.0 {
-        self.scale_x = Actor::easing_function(
-          self.scale_animation_ease,
-          self.scale_animation_from_value,
-          self.scale_animation_to_value,
-          cur_time,
-        ) as f32;
-        self.scale_y = Actor::easing_function(
-          self.scale_animation_ease,
-          self.scale_animation_from_value,
-          self.scale_animation_to_value,
-          cur_time,
-        ) as f32;
-      } else {
-        self.scale_animation_running = false;
-        self.scale_animation_starting_time = 0;
-        self.scale_x = self.scale_animation_to_value;
-        self.scale_y = self.scale_animation_to_value;
-      }
-    }
-
-    if self.translation_x_animation_running == true
-      || self.translation_y_animation_running == true
-      || self.rotation_animation_running == true
-      || self.scale_animation_running == true
-    {
-      self.animated = true;
-    } else {
-      self.animated = false;
-    }
+    println!("animate: {}", self.name);
+      if let Some(mut animation) = self.animation.take() {
+       animation.run(self);
+       self.animation = Some(animation);
+     }
 
     for sub_actor in self.sub_actor_list.iter_mut() {
       sub_actor.animate();
     }
-  }
-
-  pub fn apply_translation_x_animation(
-    &mut self,
-    from_value: i32,
-    to_value: i32,
-    time: f32,
-    easing: EasingFunction,
-  ) {
-    self.translation_x_animation_running = true;
-    self.translation_x_animation_ease = easing;
-    self.translation_x_animation_from_value = from_value;
-    self.translation_x_animation_to_value = to_value;
-    self.translation_x_animation_time_duration = time * 1000.0; // msec.
-    self.x = self.translation_x_animation_from_value;
-  }
-
-  pub fn apply_translation_y_animation(
-    &mut self,
-    from_value: i32,
-    to_value: i32,
-    time: f32,
-    easing: EasingFunction,
-  ) {
-    self.translation_y_animation_running = true;
-    self.translation_y_animation_ease = easing;
-    self.translation_y_animation_from_value = from_value;
-    self.translation_y_animation_to_value = to_value;
-    self.translation_y_animation_time_duration = time * 1000.0; // msec.
-    self.x = self.translation_y_animation_from_value;
-  }
-
-  pub fn apply_rotation_animation(
-    &mut self,
-    from_value: i32,
-    to_value: i32,
-    time: f32,
-    easing: EasingFunction,
-  ) {
-    self.rotation_animation_running = true;
-    self.rotation_animation_ease = easing;
-    self.rotation_animation_from_value = from_value;
-    self.rotation_animation_to_value = to_value;
-    self.rotation_animation_time_duration = time * 1000.0; // msec.
-    self.rotation = self.rotation_animation_from_value;
-  }
-
-  pub fn apply_scale_animation(
-    &mut self,
-    from_value: f32,
-    to_value: f32,
-    time: f32,
-    easing: EasingFunction,
-  ) {
-    self.scale_animation_running = true;
-    self.scale_animation_ease = easing;
-    self.scale_animation_from_value = from_value;
-    self.scale_animation_to_value = to_value;
-    self.scale_animation_time_duration = time * 1000.0; // msec.
-    self.scale_x = self.scale_animation_from_value;
-    self.scale_y = self.scale_animation_from_value;
   }
 
   pub fn select_next_sub_actor(&mut self) {

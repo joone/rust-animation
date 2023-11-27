@@ -8,7 +8,6 @@ use glfw::{Action, Context, Key};
 use stretch::{geometry::Rect, geometry::Size, node::Stretch, style::*};
 
 use rust_animation::actor::Actor;
-
 use rust_animation::actor::Layout;
 use rust_animation::actor::LayoutMode;
 use rust_animation::play::Play;

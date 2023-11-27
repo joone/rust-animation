@@ -7,9 +7,10 @@ extern crate glfw;
 use glfw::{Action, Context, Key};
 
 use rust_animation::actor::Actor;
-use rust_animation::actor::EasingFunction;
 use rust_animation::actor::LayoutMode;
 use rust_animation::play::Play;
+use rust_animation::animation::Animation;
+use rust_animation::animation::EasingFunction;
 use std::sync::mpsc::Receiver;
 
 fn main() {
@@ -45,12 +46,15 @@ fn main() {
   actor_1.y = 100;
   actor_1.set_image("examples/splash.png".to_string());
 
+  let mut animation_1 = Animation::new();
+
   // 1X -> 2X for 5 sec.
   let time = 5.0;
-  actor_1.apply_scale_animation(1.0, 2.0, time, EasingFunction::Linear);
-  actor_1.apply_translation_x_animation(100, 1000, time, EasingFunction::EaseInOut);
-  actor_1.apply_translation_y_animation(100, 300, time, EasingFunction::EaseInOut);
-  actor_1.apply_rotation_animation(0, 360, time, EasingFunction::EaseInOut);
+  animation_1.apply_scale(1.0, 2.0, time, EasingFunction::Linear);
+  animation_1.apply_translation_x(100, 1000, time, EasingFunction::EaseInOut);
+  animation_1.apply_translation_y(100, 300, time, EasingFunction::EaseInOut);
+  animation_1.apply_rotation(0, 360, time, EasingFunction::EaseInOut);
+  actor_1.set_animation(Some(animation_1));
 
   let mut actor_2 = Play::new_actor("actor_2".to_string(), 120, 120, None);
   actor_2.x = 100;
@@ -59,7 +63,10 @@ fn main() {
   actor_2.scale_y = 1.5;
   actor_2.set_color(0.0, 0.0, 1.0);
   // 0 degree -> 360 degree for 5 sec
-  actor_2.apply_rotation_animation(0, 360, 5.0, EasingFunction::EaseInOut);
+
+  let mut animation_2 = Animation::new();
+  animation_2.apply_rotation(0, 360, 5.0, EasingFunction::EaseInOut);
+  actor_2.set_animation(Some(animation_2));
 
   let mut actor_3 = Play::new_actor("actor_3".to_string(), 50, 50, None);
   actor_3.x = 10;

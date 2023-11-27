@@ -17,7 +17,8 @@ use std::sync::mpsc;
 use std::thread;
 
 use rust_animation::actor::Actor;
-use rust_animation::actor::EasingFunction;
+use rust_animation::animation::Animation;
+use rust_animation::animation::EasingFunction;
 use rust_animation::actor::EventHandler;
 use rust_animation::actor::Layout;
 use rust_animation::actor::LayoutMode;
@@ -93,7 +94,9 @@ impl ActorEvent {
 impl EventHandler for ActorEvent {
   fn key_focus_in(&mut self, actor: &mut Actor) {
     println!("key_focus_in: {} {}", self.name, actor.name);
-    actor.apply_scale_animation(1.0, 1.1, 0.3, EasingFunction::EaseInOut);
+    let mut animation = Animation::new();
+    animation.apply_scale(1.0, 1.1, 0.3, EasingFunction::EaseInOut);
+    actor.set_animation(Some(animation));
   }
 
   fn key_focus_out(&mut self, actor: &mut Actor) {

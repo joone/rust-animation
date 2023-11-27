@@ -7,7 +7,8 @@ extern crate glfw;
 use glfw::{Action, Context, Key};
 
 use rust_animation::actor::Actor;
-use rust_animation::actor::EasingFunction;
+use rust_animation::animation::Animation;
+use rust_animation::animation::EasingFunction;
 use rust_animation::actor::LayoutMode;
 use rust_animation::play::Play;
 use std::sync::mpsc::Receiver;
@@ -75,8 +76,11 @@ fn main() {
     actor.y = y;
     y += height as i32;
     actor.set_color(i as f32 / 18.0, i as f32 / 18.0, i as f32 / 18.0);
-    actor.apply_translation_x_animation(0, (1920 - width) as i32, time, easing_functions[i]);
-    actor.apply_rotation_animation(0, 360, time, EasingFunction::Linear);
+
+    let mut animation = Animation::new();
+    animation.apply_translation_x(0, (1920 - width) as i32, time, easing_functions[i]);
+    animation.apply_rotation(0, 360, time, EasingFunction::Linear);
+    actor.set_animation(Some(animation));
     stage.add_sub_actor(actor);
   }
   play.add_stage(stage);
