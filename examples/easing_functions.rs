@@ -7,9 +7,9 @@ extern crate glfw;
 use glfw::{Action, Context, Key};
 
 use rust_animation::actor::Actor;
+use rust_animation::actor::LayoutMode;
 use rust_animation::animation::Animation;
 use rust_animation::animation::EasingFunction;
-use rust_animation::actor::LayoutMode;
 use rust_animation::play::Play;
 use std::sync::mpsc::Receiver;
 

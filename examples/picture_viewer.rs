@@ -17,11 +17,11 @@ use std::sync::mpsc;
 use std::thread;
 
 use rust_animation::actor::Actor;
-use rust_animation::animation::Animation;
-use rust_animation::animation::EasingFunction;
 use rust_animation::actor::EventHandler;
 use rust_animation::actor::Layout;
 use rust_animation::actor::LayoutMode;
+use rust_animation::animation::Animation;
+use rust_animation::animation::EasingFunction;
 use rust_animation::play::Play;
 
 type ResultUrl<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;

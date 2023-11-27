@@ -266,10 +266,10 @@ impl Actor {
   }*/
 
   pub fn animate(&mut self) {
-      if let Some(mut animation) = self.animation.take() {
-       animation.run(self);
-       self.animation = Some(animation);
-     }
+    if let Some(mut animation) = self.animation.take() {
+      animation.run(self);
+      self.animation = Some(animation);
+    }
 
     for sub_actor in self.sub_actor_list.iter_mut() {
       sub_actor.animate();

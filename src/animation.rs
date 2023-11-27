@@ -1,6 +1,6 @@
+use crate::actor::Actor;
 use keyframe::{ease, functions::*};
 use std::time::Instant;
-use crate::actor::Actor;
 
 #[derive(Copy, Clone, Debug)]
 pub enum EasingFunction {
@@ -53,7 +53,6 @@ pub struct Animation {
   rotation_to_value: i32,
   rotation_ease: EasingFunction,
 }
-
 
 impl Animation {
   pub fn new() -> Animation {
@@ -153,13 +152,7 @@ impl Animation {
     self.rotation_time_duration = time * 1000.0; // msec.
   }
 
-  pub fn apply_scale(
-    &mut self,
-    from_value: f32,
-    to_value: f32,
-    time: f32,
-    easing: EasingFunction,
-  ) {
+  pub fn apply_scale(&mut self, from_value: f32, to_value: f32, time: f32, easing: EasingFunction) {
     self.scale_running = true;
     self.scale_ease = easing;
     self.scale_from_value = from_value;
@@ -170,8 +163,7 @@ impl Animation {
   pub fn run(&mut self, actor: &mut Actor) {
     if self.translation_x_running == true {
       if self.translation_x_starting_time == 0 {
-         self.translation_x_starting_time =
-           self.animation_time_instance.elapsed().as_millis();
+        self.translation_x_starting_time = self.animation_time_instance.elapsed().as_millis();
       }
       let cur_time = (self.animation_time_instance.elapsed().as_millis()
         - self.translation_x_starting_time) as f32
@@ -192,8 +184,7 @@ impl Animation {
 
     if self.translation_y_running == true {
       if self.translation_y_starting_time == 0 {
-        self.translation_y_starting_time =
-          self.animation_time_instance.elapsed().as_millis();
+        self.translation_y_starting_time = self.animation_time_instance.elapsed().as_millis();
       }
       let cur_time = (self.animation_time_instance.elapsed().as_millis()
         - self.translation_y_starting_time) as f32
@@ -239,8 +230,8 @@ impl Animation {
         self.scale_starting_time = self.animation_time_instance.elapsed().as_millis();
       }
 
-      let cur_time = (self.animation_time_instance.elapsed().as_millis()
-        - self.scale_starting_time) as f32
+      let cur_time = (self.animation_time_instance.elapsed().as_millis() - self.scale_starting_time)
+        as f32
         / self.scale_time_duration as f32;
       if cur_time <= 1.0 {
         actor.scale_x = Animation::easing_function(

@@ -3,5 +3,5 @@
 // found in the LICENSE file.
 
 pub mod actor;
-pub mod play;
 pub mod animation;
+pub mod play;
