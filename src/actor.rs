@@ -266,7 +266,6 @@ impl Actor {
   }*/
 
   pub fn animate(&mut self) {
-    println!("animate: {}", self.name);
       if let Some(mut animation) = self.animation.take() {
        animation.run(self);
        self.animation = Some(animation);

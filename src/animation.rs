@@ -168,7 +168,6 @@ impl Animation {
   }
 
   pub fn run(&mut self, actor: &mut Actor) {
-    println!("animation::run");
     if self.translation_x_running == true {
       if self.translation_x_starting_time == 0 {
          self.translation_x_starting_time =
