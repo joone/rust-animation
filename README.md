@@ -41,8 +41,6 @@ $ cargo build --example easing_functions
 $ target/debug/examples/easing_functions
 ```
 ```rust
-let mut play = Play::new("Easing functions demo".to_string());
-  play.initialize();
   let mut play = Play::new(
     "Easing functions demo".to_string(),
     1920,
@@ -53,48 +51,54 @@ let mut play = Play::new("Easing functions demo".to_string());
   stage.set_visible(true);
 
   let easing_functions = vec![
-      EasingFunction::EaseIn,
-      EasingFunction::EaseInCubic,
-      EasingFunction::EaseInOut,
-      EasingFunction::EaseInOutCubic,
-      EasingFunction::EaseInOutQuad,
-      EasingFunction::EaseInOutQuart,
-      EasingFunction::EaseInOutQuint,
-      EasingFunction::EaseInQuad,
-      EasingFunction::EaseInQuart,
-      EasingFunction::EaseInQuint,
-      EasingFunction::EaseOut,
-      EasingFunction::EaseOutCubic,
-      EasingFunction::EaseOutQuad,
-      EasingFunction::EaseOutQuart,
-      EasingFunction::EaseOutQuint,
-      EasingFunction::Linear,
-      EasingFunction::Step
+    EasingFunction::EaseIn,
+    EasingFunction::EaseInCubic,
+    EasingFunction::EaseInOut,
+    EasingFunction::EaseInOutCubic,
+    EasingFunction::EaseInOutQuad,
+    EasingFunction::EaseInOutQuart,
+    EasingFunction::EaseInOutQuint,
+    EasingFunction::EaseInQuad,
+    EasingFunction::EaseInQuart,
+    EasingFunction::EaseInQuint,
+    EasingFunction::EaseOut,
+    EasingFunction::EaseOutCubic,
+    EasingFunction::EaseOutQuad,
+    EasingFunction::EaseOutQuart,
+    EasingFunction::EaseOutQuint,
+    EasingFunction::Linear,
+    EasingFunction::Step,
   ];
   let mut y = 0;
   let time = 5.0;
-  let width  = 63;
+  let width = 63;
   let height = width;
   for i in 0..17 {
-    let actor_name = format!("actor_{}", i+1);
+    let actor_name = format!("actor_{}", i + 1);
     let mut actor = Actor::new(actor_name.to_string(), width, height, None);
     actor.x = 0;
     actor.y = y;
     y += height as i32;
     actor.set_color(i as f32 / 18.0, i as f32 / 18.0, i as f32 / 18.0);
-    actor.apply_translation_x_animation(0, (1920 - width) as i32, time, easing_functions[i]);
-    actor.apply_rotation_animation(0, 360, time, EasingFunction::Linear);
+
+    let mut animation = Animation::new();
+    animation.apply_translation_x(0, (1920 - width) as i32, time, easing_functions[i]);
+    animation.apply_rotation(0, 360, time, EasingFunction::Linear);
+    actor.set_animation(Some(animation));
     stage.add_sub_actor(actor);
   }
   play.add_stage(stage);
 
   while !window.should_close() {
+    // events
     process_events(&mut window, &events);
+
     play.render();
+
+    // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
     window.swap_buffers();
     glfw.poll_events();
   }
-}
 ```
 ## flex_ui.rs
 ![alt flex_ui](https://github.com/joone/rust-animation/blob/main/examples/flex_ui.png?raw=true)
@@ -328,12 +332,15 @@ This example shows the basic animation features.
   actor_1.y = 100;
   actor_1.set_image("examples/splash.png".to_string());
 
+  let mut animation_1 = Animation::new();
+
   // 1X -> 2X for 5 sec.
   let time = 5.0;
-  actor_1.apply_scale_animation(1.0, 2.0, time, EasingFunction::Linear);
-  actor_1.apply_translation_x_animation(100, 1000, time, EasingFunction::EaseInOut);
-  actor_1.apply_translation_y_animation(100, 300, time, EasingFunction::EaseInOut);
-  actor_1.apply_rotation_animation(0, 360, time, EasingFunction::EaseInOut);
+  animation_1.apply_scale(1.0, 2.0, time, EasingFunction::Linear);
+  animation_1.apply_translation_x(100, 1000, time, EasingFunction::EaseInOut);
+  animation_1.apply_translation_y(100, 300, time, EasingFunction::EaseInOut);
+  animation_1.apply_rotation(0, 360, time, EasingFunction::EaseInOut);
+  actor_1.set_animation(Some(animation_1));
 
   let mut actor_2 = Play::new_actor("actor_2".to_string(), 120, 120, None);
   actor_2.x = 100;
@@ -342,7 +349,10 @@ This example shows the basic animation features.
   actor_2.scale_y = 1.5;
   actor_2.set_color(0.0, 0.0, 1.0);
   // 0 degree -> 360 degree for 5 sec
-  actor_2.apply_rotation_animation(0, 360, 5.0, EasingFunction::EaseInOut);
+
+  let mut animation_2 = Animation::new();
+  animation_2.apply_rotation(0, 360, 5.0, EasingFunction::EaseInOut);
+  actor_2.set_animation(Some(animation_2));
 
   let mut actor_3 = Play::new_actor("actor_3".to_string(), 50, 50, None);
   actor_3.x = 10;
@@ -387,19 +397,17 @@ impl ActorEvent {
 
 impl EventHandler for ActorEvent {
   fn key_focus_in(&mut self, actor: &mut Actor) {
-    println!("key_focus_in: {} {}", self.name, actor.name);
-    actor.apply_scale_animation(1.0, 1.1, 0.3, EasingFunction::EaseInOut);
+    let mut animation = Animation::new();
+    animation.apply_scale(1.0, 1.1, 0.3, EasingFunction::EaseInOut);
+    actor.set_animation(Some(animation));
   }
 
   fn key_focus_out(&mut self, actor: &mut Actor) {
-    println!("key_focus_out: {} {}", self.name, actor.name);
     actor.scale_x = 1.0;
     actor.scale_y = 1.0;
   }
 
   fn key_down(&mut self, key: rust_animation::actor::Key, actor: &mut Actor) {
-    println!("key_down: {}  {:?}  {}", self.name, key, actor.name);
-
     if key == rust_animation::actor::Key::Right {
       // right cursor
       actor.select_next_sub_actor();
