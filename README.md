@@ -11,7 +11,7 @@ The library supports the following features:
 
 * 2D transforms: translate, scale, and rotate
 * Animations with easing functions
-* [Flex UI](https://css-tricks.com/snippets/css/a-guide-to-flexbox/)
+* [Flex Layout](https://css-tricks.com/snippets/css/a-guide-to-flexbox/)
 * Various examples
 
 Note that rust-animation is still in the early stages of development, so some features may be missing, and there may be bugs. Feel free to file any bugs.
