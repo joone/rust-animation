@@ -4,4 +4,5 @@
 
 pub mod actor;
 pub mod animation;
+pub mod font;
 pub mod play;

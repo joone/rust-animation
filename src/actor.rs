@@ -8,6 +8,7 @@ extern crate keyframe;
 
 use self::gl::types::*;
 use cgmath::{Deg, Matrix, Matrix4, SquareMatrix, Vector3};
+use image::{DynamicImage, ImageBuffer, Rgba};
 use std::ffi::CStr;
 use std::mem;
 use std::os::raw::c_void;
@@ -20,6 +21,7 @@ use stretch::{
 };
 
 use crate::animation::Animation;
+use crate::font::FontRenderer;
 
 #[repr(i32)]
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -192,6 +194,59 @@ impl Actor {
     self.color[0] = r;
     self.color[1] = g;
     self.color[2] = b;
+  }
+
+  pub fn set_text(&mut self, text: &str) {
+    let mut font_renderer: FontRenderer = FontRenderer::new("fonts/DejaVuSans.ttf".to_string());
+    let image = font_renderer.render(text);
+
+    //image.save("temp.png").unwrap();
+
+    self.image_path = "temp".to_string();
+    let stride = 5 * mem::size_of::<GLfloat>() as GLsizei;
+
+    unsafe {
+      // texture coord attribute
+      gl::VertexAttribPointer(
+        1,
+        2,
+        gl::FLOAT,
+        gl::FALSE,
+        stride,
+        (3 * mem::size_of::<GLfloat>()) as *const c_void,
+      );
+      gl::EnableVertexAttribArray(1);
+
+      // Create a texture
+      gl::GenTextures(1, &mut self.texture);
+      gl::BindTexture(gl::TEXTURE_2D, self.texture);
+      // set the texture wrapping parameters
+      gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
+      gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
+      // set texture filtering parameters
+      gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+      gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+
+      let width = image.width();
+      let height = image.height();
+
+      println!("width: {}, height: {}", width, height);
+
+      //   let data = image.into_raw();
+      //let data = to_rgba.into_vec();
+      gl::TexImage2D(
+        gl::TEXTURE_2D,
+        0,
+        gl::RGBA as i32,
+        width as i32,
+        height as i32,
+        0,
+        gl::RGBA,
+        gl::UNSIGNED_BYTE,
+        image.into_raw().as_ptr() as *const gl::types::GLvoid,
+      );
+      gl::GenerateMipmap(gl::TEXTURE_2D);
+    }
   }
 
   pub fn set_image(&mut self, path: String) {
