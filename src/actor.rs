@@ -199,8 +199,9 @@ impl Actor {
   pub fn set_text(&mut self, text: &str) {
     let mut font_renderer: FontRenderer = FontRenderer::new("fonts/DejaVuSans.ttf".to_string());
     let image = font_renderer.render(text);
+    let dynamic_image = DynamicImage::ImageRgba8(image);
 
-    //image.save("temp.png").unwrap();
+    dynamic_image.save("temp.png").unwrap();
 
     self.image_path = "temp".to_string();
     let stride = 5 * mem::size_of::<GLfloat>() as GLsizei;
@@ -227,25 +228,29 @@ impl Actor {
       gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
       gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
 
-      let width = image.width();
-      let height = image.height();
+      self.width = dynamic_image.width();
+      self.height = dynamic_image.height();
 
-      println!("width: {}, height: {}", width, height);
+      println!("width: {}, height: {}", self.width, self.height);
 
       //   let data = image.into_raw();
-      //let data = to_rgba.into_vec();
+      //let data = image.into_vec();
+      let to_rgba = dynamic_image.to_rgba8();
+      let data = to_rgba.into_raw();
       gl::TexImage2D(
         gl::TEXTURE_2D,
         0,
         gl::RGBA as i32,
-        width as i32,
-        height as i32,
+        self.width as i32,
+        self.height as i32,
         0,
         gl::RGBA,
         gl::UNSIGNED_BYTE,
-        image.into_raw().as_ptr() as *const gl::types::GLvoid,
+        data.as_ptr() as *const c_void,
       );
       gl::GenerateMipmap(gl::TEXTURE_2D);
+      // Unbind the texture
+      gl::BindTexture(gl::TEXTURE_2D, 0);
     }
   }
 
