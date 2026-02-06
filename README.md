@@ -2,44 +2,167 @@
 [Latest Version]: https://img.shields.io/crates/v/rust-animation.svg
 [crates.io]: https://crates.io/crates/rust-animation
 
-![alt easing_funcitions](https://github.com/joone/rust-animation/blob/main/examples/easing_functions.gif?raw=true)
+![easing_functions demo](https://github.com/joone/rust-animation/blob/main/examples/easing_functions.gif?raw=true)
 
-rust-animation is an OpenGL-based graphics library written in Rust for creating hardware-accelerated user interfaces.
-It is designed to implement a simple animated UI for embedded devices, inspired by [GNOME Clutter project](https://en.wikipedia.org/wiki/Clutter_(software)) and [Apple Core Animation](https://en.wikipedia.org/wiki/Core_Animation).
+**rust-animation** is an OpenGL-based graphics library written in Rust for creating hardware-accelerated user interfaces. It is designed to implement simple, animated UIs for embedded devices, inspired by the [GNOME Clutter project](https://en.wikipedia.org/wiki/Clutter_(software)) and [Apple Core Animation](https://en.wikipedia.org/wiki/Core_Animation).
 
-The library supports the following features:
+## Table of Contents
 
-* 2D transforms: translate, scale, and rotate
-* Animations with easing functions
-* [Flex Layout](https://css-tricks.com/snippets/css/a-guide-to-flexbox/)
-* Various examples
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Examples](#examples)
+  - [Easing Functions](#easing-functions)
+  - [Flex UI](#flex-ui)
+  - [Basic Animation](#basic-animation)
+  - [Picture Viewer](#picture-viewer)
+- [API Overview](#api-overview)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
 
-Note that rust-animation is still in the early stages of development, so some features may be missing, and there may be bugs. Feel free to file any bugs.
+## Features
 
-# Installation
-To use rust-animation, you need to install Rust first:
-* https://www.rust-lang.org/tools/install
+- **2D Transforms**: Apply translate, scale, and rotate transformations to actors
+- **Rich Animation System**: Support for multiple easing functions (Linear, EaseIn, EaseOut, EaseInOut, and various polynomial variants)
+- **Flex Layout**: CSS Flexbox-like layout system using the [Stretch](https://github.com/vislyhq/stretch) library
+- **Hardware Acceleration**: OpenGL-based rendering for high performance
+- **Actor Hierarchy**: Support for nested actors with parent-child relationships
+- **Event Handling**: Built-in event system for keyboard input and focus management
+- **Image Support**: Load and display images as textures
+- **Text Rendering**: Font rendering capabilities for displaying text
 
-If you're building rust-animation on Windows or Mac, you'll need to install cmake as well:
+> **Note**: rust-animation is in early development. Some features may be incomplete or have bugs. Please [report any issues](https://github.com/joone/rust-animation/issues) you encounter.
 
-For Max OSX,
+## Prerequisites
+
+Before using rust-animation, ensure you have the following installed:
+
+### Required
+- **Rust** (stable): Install from [rust-lang.org](https://www.rust-lang.org/tools/install)
+  ```bash
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+  ```
+
+### Platform-Specific Requirements
+
+#### Ubuntu/Debian
+```bash
+sudo apt-get update
+sudo apt-get install build-essential cmake pkg-config
 ```
-$ brew install cmake
-```
-Note: rust-animation has been tested on Ubuntu 20.04, Windows10, and Mac OSX.
 
-There are several examples so you can build them as follows:
+#### macOS
+```bash
+brew install cmake
+```
+
+#### Windows
+- Install [CMake](https://cmake.org/download/) from the official website
+- Ensure you have the Visual Studio Build Tools or Visual Studio installed
+
+### Tested Platforms
+- Ubuntu 20.04 and later
+- Windows 10 and later
+- macOS (Intel and Apple Silicon)
+
+## Installation
+
+### Using as a Library
+
+Add rust-animation to your `Cargo.toml`:
+
+```toml
+[dependencies]
+rust-animation = "0.2.7"
+```
+
+### Building from Source
+
+Clone the repository and build:
+
+```bash
+git clone https://github.com/joone/rust-animation.git
+cd rust-animation
+cargo build --release
+```
+
+## Quick Start
+
+Here's a minimal example to get started:
+
+```rust
+use rust_animation::{actor::Actor, animation::Animation, play::Play};
+use rust_animation::actor::LayoutMode;
+use keyframe::EasingFunction;
+
+fn main() {
+    // Initialize GLFW and create a window (see examples for full setup)
+    
+    // Create a Play (the main container)
+    let mut play = Play::new(
+        "My First Animation".to_string(),
+        800,
+        600,
+        LayoutMode::UserDefine,
+    );
+    
+    // Create a stage (the root actor)
+    let mut stage = Actor::new("stage".to_string(), 800, 600, None);
+    stage.set_visible(true);
+    
+    // Create an actor (a visual element)
+    let mut actor = Actor::new("my_actor".to_string(), 100, 100, None);
+    actor.set_position(50, 50);
+    actor.set_color(1.0, 0.0, 0.0); // Red
+    
+    // Create and apply an animation
+    let mut animation = Animation::new();
+    animation.apply_translation_x(50, 400, 2.0, EasingFunction::EaseInOut);
+    actor.set_animation(Some(animation));
+    
+    // Add actor to stage and stage to play
+    stage.add_sub_actor(actor);
+    play.add_stage(stage);
+    
+    // Render loop (see examples for full implementation)
+    // play.render();
+}
+```
+
+For complete working examples, see the [Examples](#examples) section below.
 
 
 # Examples
-rust-animation includes several examples to help you get started. To build and run them, you can use the following commands:
 
-## easing_functions.rs
-This example shows all the available easing functions.
+rust-animation includes several examples to demonstrate its capabilities. All examples can be run using `cargo`:
+
+```bash
+# General format
+cargo run --example <example_name>
 ```
-$ cargo build --example easing_functions
-$ target/debug/examples/easing_functions
+
+## Easing Functions
+
+**Example file:** `easing_functions.rs`
+
+Demonstrates all available easing functions with visual animations.
+
+**Run:**
+```bash
+cargo run --example easing_functions
 ```
+
+**What it does**: Creates 17 animated actors, each using a different easing function, moving horizontally across the screen while rotating.
+
+**Key concepts demonstrated:**
+- Multiple easing functions (Linear, EaseIn, EaseOut, EaseInOut, and polynomial variants)
+- Combining multiple animations (translation + rotation)
+- Actor positioning and coloring
+
+<details>
+<summary>Code snippet</summary>
 ```rust
   let mut play = Play::new(
     "Easing functions demo".to_string(),
@@ -100,18 +223,32 @@ $ target/debug/examples/easing_functions
     glfw.poll_events();
   }
 ```
-## flex_ui.rs
-![alt flex_ui](https://github.com/joone/rust-animation/blob/main/examples/flex_ui.png?raw=true)
-rust-animation is experimentally using [Stretch](https://github.com/vislyhq/stretch) to support Flex UI. You can apply a flex layout to actors using the Layout trait.
+</details>
 
-```
-$ cargo build --example flex_ui
-$ target/debug/examples/flex_ui
+## Flex UI
+
+**Example file:** `flex_ui.rs`
+
+![flex_ui demo](https://github.com/joone/rust-animation/blob/main/examples/flex_ui.png?raw=true)
+
+Demonstrates CSS Flexbox-like layout capabilities using the Stretch library.
+
+**Run:**
+```bash
+cargo run --example flex_ui
 ```
 
-This example shows how to use the Layout trait to implement the flex layout using Stretch.
+**What it does**: Creates a responsive layout with multiple containers, each demonstrating different flexbox alignment properties (FlexStart, FlexEnd, Center, SpaceBetween, SpaceAround, SpaceEvenly).
+
+**Key concepts demonstrated:**
+- Flex layout system
+- Custom layout implementation using the `Layout` trait
+- Justify content and align items properties
+- Nested actors with flex positioning
+
+<details>
+<summary>Code snippet</summary>
 ```rust
-
 pub struct FlexLayout {
   name: String,
 }
@@ -310,12 +447,29 @@ fn main() {
   }
 }
 ```
-## ani.rs
+</details>
+
+## Basic Animation
+
+**Example file:** `ani.rs`
+
+Demonstrates basic animation features including transforms and image loading.
+
+**Run:**
+```bash
+cargo run --example ani
 ```
-$ cargo build --example ani
-$ target/debug/examples/ani
-```
-This example shows the basic animation features.
+
+**What it does**: Shows multiple animations running simultaneously - scaling, translating, and rotating actors, including image-based actors and colored shapes with nested sub-actors.
+
+**Key concepts demonstrated:**
+- Multiple simultaneous animations (scale, translate, rotate)
+- Loading and animating images
+- Nested actor hierarchies
+- Different easing functions
+
+<details>
+<summary>Code snippet</summary>
 
 ```rust
   let mut play = Play::new(
@@ -372,17 +526,34 @@ This example shows the basic animation features.
     glfw.poll_events();
   }
 ```
+</details>
 
-## picture_viewer.rs
-This example is still work in progress. The thumbnail view only works.
+## Picture Viewer
+
+**Example file:** `picture_viewer.rs`
+
+Demonstrates event handling and custom user-defined layouts.
+
+**Run:**
+```bash
+cargo run --example picture_viewer
 ```
-$ cargo build --example picture_viewer
-$ target/debug/examples/picture_viewer
-```
-This example shows how to handle events and user-defined layout. More event handler methods would be added.
+
+**What it does**: Creates a thumbnail grid viewer with keyboard navigation and focus animations. Currently implements thumbnail view functionality.
+
+**Key concepts demonstrated:**
+- Custom event handlers (EventHandler trait)
+- Keyboard input handling (arrow keys for navigation)
+- Focus management (key_focus_in/out events)
+- Custom layout implementation (Layout trait)
+- Grid-based positioning
+
+> **Note**: This example is a work in progress. Currently, only the thumbnail view is fully functional.
+
+<details>
+<summary>Code snippet</summary>
 
 ```rust
-
 pub struct ActorEvent {
   name: String,
 }
@@ -459,3 +630,111 @@ impl Layout for ActorLayout {
   }
 }
 ```
+</details>
+
+## API Overview
+
+### Core Concepts
+
+**Play**: The main container and render manager
+- Manages the rendering loop
+- Holds one or more stages
+- Handles projection matrices and OpenGL setup
+
+**Actor**: Visual elements in the scene graph
+- Can have position (x, y, z), size (width, height)
+- Supports transforms: translate, scale, rotate
+- Can have colors or textures
+- Supports nested hierarchies (parent-child relationships)
+- Can have animations, event handlers, and custom layouts
+
+**Animation**: Defines time-based property changes
+- Apply transformations over time with easing functions
+- Supports: translation (x, y), scaling, rotation
+- Multiple animations can run simultaneously on one actor
+
+**Easing Functions**: Control animation timing curves
+- Linear, Step
+- EaseIn, EaseOut, EaseInOut (sine-based)
+- Quad, Cubic, Quart, Quint variants (polynomial-based)
+
+### Main APIs
+
+```rust
+// Create a Play (main container)
+let play = Play::new(name, width, height, layout_mode);
+
+// Create actors
+let mut actor = Actor::new(name, width, height, event_handler);
+actor.set_position(x, y);
+actor.set_color(r, g, b);
+actor.set_image(path);
+
+// Create animations
+let mut animation = Animation::new();
+animation.apply_translation_x(from, to, duration, easing);
+animation.apply_translation_y(from, to, duration, easing);
+animation.apply_scale(from, to, duration, easing);
+animation.apply_rotation(from_deg, to_deg, duration, easing);
+actor.set_animation(Some(animation));
+
+// Build scene graph
+parent_actor.add_sub_actor(child_actor);
+stage.add_sub_actor(actor);
+play.add_stage(stage);
+
+// Render
+play.render();
+```
+
+## Contributing
+
+Contributions are welcome! Here's how you can help:
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add some amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+### Development Guidelines
+
+- Run `cargo fmt` before committing to ensure consistent code style
+- Use the provided `run-check-style.sh` script for formatting
+- Write examples to demonstrate new features
+- Update documentation for API changes
+
+### Reporting Issues
+
+Found a bug or have a feature request? Please [open an issue](https://github.com/joone/rust-animation/issues) with:
+- Clear description of the problem/feature
+- Steps to reproduce (for bugs)
+- Expected vs. actual behavior
+- System information (OS, Rust version)
+
+## License
+
+This project is licensed under the BSD-3-Clause License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+This project was inspired by:
+- [GNOME Clutter](https://en.wikipedia.org/wiki/Clutter_(software)) - A GObject-based graphics library
+- [Apple Core Animation](https://en.wikipedia.org/wiki/Core_Animation) - Animation infrastructure for macOS and iOS
+
+### Dependencies
+
+rust-animation uses several excellent open-source libraries:
+- [cgmath](https://crates.io/crates/cgmath) - Linear algebra and mathematics for graphics
+- [gl](https://crates.io/crates/gl) - OpenGL bindings
+- [image](https://crates.io/crates/image) - Image encoding and decoding
+- [keyframe](https://crates.io/crates/keyframe) - Keyframe animation library
+- [stretch](https://crates.io/crates/stretch) - Flexbox layout engine
+- [ab_glyph](https://crates.io/crates/ab_glyph) - Font rendering
+- [glfw](https://crates.io/crates/glfw) - Window and OpenGL context creation (examples only)
+
+---
+
+**Author**: [Joone Hur](https://github.com/joone)
+
+**Repository**: [https://github.com/joone/rust-animation](https://github.com/joone/rust-animation)
