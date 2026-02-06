@@ -13,10 +13,10 @@
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Examples](#examples)
-  - [Easing Functions](#easing_functionsrs)
-  - [Flex UI](#flex_uirs)
-  - [Basic Animation](#anirs)
-  - [Picture Viewer](#picture_viewerrs)
+  - [Easing Functions](#easing-functions)
+  - [Flex UI](#flex-ui)
+  - [Basic Animation](#basic-animation)
+  - [Picture Viewer](#picture-viewer)
 - [API Overview](#api-overview)
 - [Contributing](#contributing)
 - [License](#license)
@@ -143,7 +143,9 @@ rust-animation includes several examples to demonstrate its capabilities. All ex
 cargo run --example <example_name>
 ```
 
-## easing_functions.rs
+## Easing Functions
+
+**Example file:** `easing_functions.rs`
 
 Demonstrates all available easing functions with visual animations.
 
@@ -223,7 +225,9 @@ cargo run --example easing_functions
 ```
 </details>
 
-## flex_ui.rs
+## Flex UI
+
+**Example file:** `flex_ui.rs`
 
 ![flex_ui demo](https://github.com/joone/rust-animation/blob/main/examples/flex_ui.png?raw=true)
 
@@ -445,7 +449,9 @@ fn main() {
 ```
 </details>
 
-## ani.rs
+## Basic Animation
+
+**Example file:** `ani.rs`
 
 Demonstrates basic animation features including transforms and image loading.
 
@@ -522,7 +528,9 @@ cargo run --example ani
 ```
 </details>
 
-## picture_viewer.rs
+## Picture Viewer
+
+**Example file:** `picture_viewer.rs`
 
 Demonstrates event handling and custom user-defined layouts.
 
