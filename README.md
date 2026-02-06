@@ -738,4 +738,3 @@ rust-animation uses several excellent open-source libraries:
 **Author**: [Joone Hur](https://github.com/joone)
 
 **Repository**: [https://github.com/joone/rust-animation](https://github.com/joone/rust-animation)
-```
