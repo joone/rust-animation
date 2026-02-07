@@ -370,7 +370,7 @@ impl RALayer {
     }
   }
 
-  pub fn select_prev_sub_actor(&mut self) {
+  pub fn select_prev_sub_layer(&mut self) {
     if self.sub_layer_list.is_empty() {
       return;
     }

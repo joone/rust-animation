@@ -113,7 +113,7 @@ fn main() {
     stage.set_visible(true);
     
     // Create a layer (a visual element)
-    let mut layer = RALayer::new("my_actor".to_string(), 100, 100, None);
+    let mut layer = RALayer::new("my_layer".to_string(), 100, 100, None);
     layer.x = 50;
     layer.y = 50;
     layer.set_color(1.0, 0.0, 0.0); // Red
@@ -197,7 +197,7 @@ cargo run --example easing_functions
   let width = 63;
   let height = width;
   for i in 0..17 {
-    let actor_name = format!("actor_{}", i + 1);
+    let layer_name = format!("layer_{}", i + 1);
     let mut layer = RALayer::new(actor_name.to_string(), width, height, None);
     layer.x = 0;
     layer.y = y;
@@ -390,7 +390,7 @@ fn main() {
   let width = 1500;
   let height = 108;
   for i in 0..6 {
-    let actor_name = format!("actor_{}", i + 1);
+    let layer_name = format!("layer_{}", i + 1);
     let mut layer = RALayer::new(actor_name.to_string(), width, height, None);
     layer.set_color(i as f32 / 6.0, i as f32 / 6.0, i as f32 / 6.0);
     layer.set_style(Style {
@@ -478,10 +478,10 @@ cargo run --example ani
   let mut stage = RALayer::new("stage".to_string(), 1920, 1080, None);
   stage.set_visible(true);
 
-  let mut actor_1 = RALayer::new("actor_1".to_string(), 400, 225, None);
-  actor_1.x = 100;
-  actor_1.y = 100;
-  actor_1.set_image("examples/splash.png".to_string());
+  let mut layer_1 = RALayer::new("layer_1".to_string(), 400, 225, None);
+  layer_1.x = 100;
+  layer_1.y = 100;
+  layer_1.set_image("examples/splash.png".to_string());
 
   let mut animation_1 = Animation::new();
 
@@ -491,7 +491,7 @@ cargo run --example ani
   animation_1.apply_translation_x(100, 1000, time, EasingFunction::EaseInOut);
   animation_1.apply_translation_y(100, 300, time, EasingFunction::EaseInOut);
   animation_1.apply_rotation(0, 360, time, EasingFunction::EaseInOut);
-  actor_1.set_animation(Some(animation_1));
+  layer_1.set_animation(Some(animation_1));
 
   let mut actor_2 = Play::new_actor("actor_2".to_string(), 120, 120, None);
   actor_2.x = 100;
@@ -505,13 +505,13 @@ cargo run --example ani
   animation_2.apply_rotation(0, 360, 5.0, EasingFunction::EaseInOut);
   actor_2.set_animation(Some(animation_2));
 
-  let mut actor_3 = Play::new_actor("actor_3".to_string(), 50, 50, None);
-  actor_3.x = 10;
-  actor_3.y = 10;
-  actor_3.set_color(1.0, 0.0, 0.0);
-  actor_2.add_sub_actor(actor_3);
+  let mut layer_3 = Play::new_actor("layer_3".to_string(), 50, 50, None);
+  layer_3.x = 10;
+  layer_3.y = 10;
+  layer_3.set_color(1.0, 0.0, 0.0);
+  actor_2.add_sub_actor(layer_3);
 
-  stage.add_sub_actor(actor_1);
+  stage.add_sub_actor(layer_1);
   stage.add_sub_actor(actor_2);
 
   play.add_stage(stage);
