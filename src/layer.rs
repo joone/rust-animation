@@ -273,7 +273,13 @@ impl Layer {
   /// Load image with wgpu context
   pub fn load_image_texture(&mut self, device: &wgpu::Device, queue: &wgpu::Queue) {
     if !self.image_path.is_empty() {
-      match image::open(&Path::new(&self.image_path)) {
+      // Use format auto-detection to handle images with incorrect extensions
+      let img_result = image::ImageReader::open(&Path::new(&self.image_path))
+        .and_then(|reader| reader.with_guessed_format())
+        .map_err(image::ImageError::IoError)
+        .and_then(|reader| reader.decode());
+      
+      match img_result {
         Ok(img) => {
           let rgba = img.to_rgba8();
           let dimensions = rgba.dimensions();
