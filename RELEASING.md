@@ -26,7 +26,37 @@ The project uses GitHub Actions to fully automate releases, including:
 
 Use the included `bump-version.sh` script to automate version management:
 
-1. **Run the version bump script**:
+#### Option A: Fully Automatic (One Command)
+
+Run the version bump script with the `--auto` flag to handle everything automatically:
+
+```bash
+# Bump patch version (0.2.8 -> 0.2.9) and trigger release
+./bump-version.sh patch --auto
+
+# Bump minor version (0.2.8 -> 0.3.0) and trigger release
+./bump-version.sh minor --auto
+
+# Bump major version (0.2.8 -> 1.0.0) and trigger release
+./bump-version.sh major --auto
+
+# Set specific version and trigger release
+./bump-version.sh 0.3.5 --auto
+```
+
+The script will:
+1. Update version in `Cargo.toml`
+2. Create a new version section in `CHANGELOG.md`
+3. Commit the changes with message "Bump version to X.Y.Z"
+4. Push to the main branch
+5. Create and push a git tag `vX.Y.Z`
+6. Trigger the automated release workflow
+
+**Important:** Make sure to update the `[Unreleased]` section in CHANGELOG.md with your changes *before* running the script with `--auto`. The script will commit immediately, so you won't have a chance to review the generated version section before it's committed. If you want to review the CHANGELOG changes before committing, use Option B (Semi-Automatic) instead.
+
+#### Option B: Semi-Automatic (Review Before Release)
+
+1. **Run the version bump script** (without --auto):
    ```bash
    # Bump patch version (0.2.8 -> 0.2.9)
    ./bump-version.sh patch

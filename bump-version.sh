@@ -1,11 +1,12 @@
 #!/bin/bash
 # Version bump script for rust-animation
-# Usage: ./bump-version.sh [major|minor|patch|VERSION]
+# Usage: ./bump-version.sh [major|minor|patch|VERSION] [--auto|--push]
 # Examples:
-#   ./bump-version.sh patch    # 0.2.8 -> 0.2.9
-#   ./bump-version.sh minor    # 0.2.8 -> 0.3.0
-#   ./bump-version.sh major    # 0.2.8 -> 1.0.0
-#   ./bump-version.sh 0.3.5    # Set to specific version
+#   ./bump-version.sh patch           # 0.2.8 -> 0.2.9 (manual workflow)
+#   ./bump-version.sh patch --auto    # 0.2.8 -> 0.2.9 (automatic commit, push, and tag)
+#   ./bump-version.sh minor --push    # 0.2.8 -> 0.3.0 (automatic commit, push, and tag)
+#   ./bump-version.sh major           # 0.2.8 -> 1.0.0 (manual workflow)
+#   ./bump-version.sh 0.3.5 --auto    # Set to specific version (automatic workflow)
 
 set -e
 
@@ -31,19 +32,38 @@ MAJOR="${VERSION_PARTS[0]}"
 MINOR="${VERSION_PARTS[1]}"
 PATCH="${VERSION_PARTS[2]}"
 
+# Parse command line arguments
+AUTO_MODE=false
+VERSION_ARG=""
+
+for arg in "$@"; do
+    case "$arg" in
+        --auto|--push)  # --push is an alias for --auto for convenience
+            AUTO_MODE=true
+            ;;
+        *)
+            if [ -z "$VERSION_ARG" ]; then
+                VERSION_ARG="$arg"
+            fi
+            ;;
+    esac
+done
+
 # Determine new version based on argument
-if [ $# -eq 0 ]; then
-    echo "Usage: $0 [major|minor|patch|VERSION]"
+if [ -z "$VERSION_ARG" ]; then
+    echo "Usage: $0 [major|minor|patch|VERSION] [--auto|--push]"
     echo ""
     echo "Examples:"
-    echo "  $0 patch    # $CURRENT_VERSION -> $MAJOR.$MINOR.$((PATCH + 1))"
-    echo "  $0 minor    # $CURRENT_VERSION -> $MAJOR.$((MINOR + 1)).0"
-    echo "  $0 major    # $CURRENT_VERSION -> $((MAJOR + 1)).0.0"
-    echo "  $0 0.3.5    # $CURRENT_VERSION -> 0.3.5"
+    echo "  $0 patch           # $CURRENT_VERSION -> $MAJOR.$MINOR.$((PATCH + 1)) (manual)"
+    echo "  $0 minor           # $CURRENT_VERSION -> $MAJOR.$((MINOR + 1)).0 (manual)"
+    echo "  $0 major           # $CURRENT_VERSION -> $((MAJOR + 1)).0.0 (manual)"
+    echo "  $0 0.3.5           # $CURRENT_VERSION -> 0.3.5 (manual)"
+    echo "  $0 patch --auto    # Automatically commit, push, and tag"
+    echo "  $0 minor --push    # Same as --auto"
     exit 1
 fi
 
-case "$1" in
+case "$VERSION_ARG" in
     major)
         NEW_VERSION="$((MAJOR + 1)).0.0"
         ;;
@@ -55,11 +75,11 @@ case "$1" in
         ;;
     *)
         # Assume it's a specific version number
-        if [[ ! "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        if [[ ! "$VERSION_ARG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo -e "${RED}Error: Invalid version format. Use X.Y.Z format${NC}"
             exit 1
         fi
-        NEW_VERSION="$1"
+        NEW_VERSION="$VERSION_ARG"
         ;;
 esac
 
@@ -120,15 +140,81 @@ if [ -f "CHANGELOG.md" ]; then
 fi
 
 echo ""
-echo -e "${YELLOW}Next steps:${NC}"
-echo "  1. Review and update CHANGELOG.md with changes for this release"
-echo "  2. Commit the changes:"
-echo "     git add Cargo.toml CHANGELOG.md"
-echo "     git commit -m \"Bump version to $NEW_VERSION\""
-echo "     git push origin main"
-echo "  3. Create a release:"
-echo "     Option A - Create tag locally:"
-echo "       git tag v$NEW_VERSION"
-echo "       git push origin v$NEW_VERSION"
-echo "     Option B - Use GitHub Actions (go to Actions → Create Release → Run workflow)"
-echo ""
+
+# Execute automatic workflow if --auto flag is provided
+if [ "$AUTO_MODE" = true ]; then
+    echo -e "${GREEN}=== Automatic Release Workflow ===${NC}"
+    echo ""
+    
+    # Check if we're on main branch
+    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    if [ "$CURRENT_BRANCH" != "main" ]; then
+        echo -e "${YELLOW}Warning: You are on branch '$CURRENT_BRANCH', not 'main'${NC}"
+        read -p "Continue with release on branch '$CURRENT_BRANCH'? (y/N) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Aborted."
+            exit 0
+        fi
+    fi
+    
+    echo -e "${YELLOW}This will:${NC}"
+    echo "  1. Commit Cargo.toml and CHANGELOG.md"
+    echo "  2. Push to origin/$CURRENT_BRANCH"
+    echo "  3. Create and push tag v$NEW_VERSION"
+    echo "  4. Trigger automated release workflow"
+    echo ""
+    read -p "Proceed with automatic release? (y/N) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Aborted. Changes have been made but not committed."
+        echo "Run 'git status' to see the changes."
+        exit 0
+    fi
+    
+    echo ""
+    echo -e "${GREEN}Step 1: Committing changes${NC}"
+    git add Cargo.toml CHANGELOG.md
+    git commit -m "Bump version to $NEW_VERSION"
+    echo -e "${GREEN}✓ Changes committed${NC}"
+    
+    echo ""
+    echo -e "${GREEN}Step 2: Pushing to origin/$CURRENT_BRANCH${NC}"
+    git push origin "$CURRENT_BRANCH"
+    echo -e "${GREEN}✓ Changes pushed${NC}"
+    
+    echo ""
+    echo -e "${GREEN}Step 3: Creating and pushing tag v$NEW_VERSION${NC}"
+    git tag "v$NEW_VERSION"
+    git push origin "v$NEW_VERSION"
+    echo -e "${GREEN}✓ Tag v$NEW_VERSION created and pushed${NC}"
+    
+    echo ""
+    echo -e "${GREEN}=== Release Workflow Complete! ===${NC}"
+    echo ""
+    echo -e "${YELLOW}Next steps:${NC}"
+    echo "  1. Monitor the GitHub Actions workflow:"
+    echo "     https://github.com/joone/rust-animation/actions"
+    echo "  2. The workflow will automatically:"
+    echo "     - Run tests and build the project"
+    echo "     - Create a GitHub Release"
+    echo "     - Publish to crates.io"
+    echo "     - Build example binaries for multiple platforms"
+    echo ""
+    echo -e "${GREEN}Release process initiated successfully!${NC}"
+else
+    echo -e "${YELLOW}Next steps (Manual Workflow):${NC}"
+    echo "  1. Review and update CHANGELOG.md with changes for this release"
+    echo "  2. Commit the changes:"
+    echo "     git add Cargo.toml CHANGELOG.md"
+    echo "     git commit -m \"Bump version to $NEW_VERSION\""
+    echo "     git push origin main"
+    echo "  3. Create a release:"
+    echo "     Option A - Create tag locally:"
+    echo "       git tag v$NEW_VERSION"
+    echo "       git push origin v$NEW_VERSION"
+    echo "     Option B - Use GitHub Actions (go to Actions → Create Release → Run workflow)"
+    echo "     Option C - Use automatic workflow:"
+    echo "       ./bump-version.sh $VERSION_ARG --auto"
+    echo ""
+fi
