@@ -68,6 +68,9 @@ pub struct Play {
   projection: Matrix4<f32>,
   pub stretch: Option<Stretch>,
   pub wgpu_context: Option<WgpuContext>,
+  render_pipeline: Option<wgpu::RenderPipeline>,
+  bind_group_layout: Option<wgpu::BindGroupLayout>,
+  texture_bind_group_layout: Option<wgpu::BindGroupLayout>,
 }
 
 impl Play {
@@ -94,6 +97,9 @@ impl Play {
       projection: Matrix4::identity(),
       stretch: stretch,
       wgpu_context: None,
+      render_pipeline: None,
+      bind_group_layout: None,
+      texture_bind_group_layout: None,
     };
 
     // Apply orthographic projection matrix: left, right, bottom, top, near, far
@@ -125,6 +131,120 @@ impl Play {
     self.wgpu_context = Some(pollster::block_on(WgpuContext::new_with_surface(
       window, width, height,
     )));
+    
+    // Set up the render pipeline after wgpu context is created
+    self.setup_render_pipeline();
+  }
+
+  /// Set up the render pipeline for drawing
+  fn setup_render_pipeline(&mut self) {
+    let Some(ref context) = self.wgpu_context else {
+      return;
+    };
+
+    let device = &context.device;
+
+    // Create shader module
+    let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+      label: Some("Shader"),
+      source: wgpu::ShaderSource::Wgsl(SHADER_SOURCE.into()),
+    });
+
+    // Create bind group layout for uniforms
+    let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+      label: Some("Uniform Bind Group Layout"),
+      entries: &[wgpu::BindGroupLayoutEntry {
+        binding: 0,
+        visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
+        ty: wgpu::BindingType::Buffer {
+          ty: wgpu::BufferBindingType::Uniform,
+          has_dynamic_offset: false,
+          min_binding_size: None,
+        },
+        count: None,
+      }],
+    });
+
+    // Create bind group layout for texture
+    let texture_bind_group_layout =
+      device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        label: Some("Texture Bind Group Layout"),
+        entries: &[
+          wgpu::BindGroupLayoutEntry {
+            binding: 0,
+            visibility: wgpu::ShaderStages::FRAGMENT,
+            ty: wgpu::BindingType::Texture {
+              multisampled: false,
+              view_dimension: wgpu::TextureViewDimension::D2,
+              sample_type: wgpu::TextureSampleType::Float { filterable: true },
+            },
+            count: None,
+          },
+          wgpu::BindGroupLayoutEntry {
+            binding: 1,
+            visibility: wgpu::ShaderStages::FRAGMENT,
+            ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+            count: None,
+          },
+        ],
+      });
+
+    // Create pipeline layout
+    let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+      label: Some("Render Pipeline Layout"),
+      bind_group_layouts: &[&bind_group_layout, &texture_bind_group_layout],
+      push_constant_ranges: &[],
+    });
+
+    // Get surface format
+    let surface_format = context
+      .surface_config
+      .as_ref()
+      .map(|c| c.format)
+      .unwrap_or(wgpu::TextureFormat::Bgra8UnormSrgb);
+
+    // Create render pipeline
+    let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+      label: Some("Render Pipeline"),
+      layout: Some(&render_pipeline_layout),
+      vertex: wgpu::VertexState {
+        module: &shader,
+        entry_point: "vs_main",
+        buffers: &[crate::layer::Vertex::desc()],
+        compilation_options: wgpu::PipelineCompilationOptions::default(),
+      },
+      fragment: Some(wgpu::FragmentState {
+        module: &shader,
+        entry_point: "fs_main",
+        targets: &[Some(wgpu::ColorTargetState {
+          format: surface_format,
+          blend: Some(wgpu::BlendState::ALPHA_BLENDING),
+          write_mask: wgpu::ColorWrites::ALL,
+        })],
+        compilation_options: wgpu::PipelineCompilationOptions::default(),
+      }),
+      primitive: wgpu::PrimitiveState {
+        topology: wgpu::PrimitiveTopology::TriangleList,
+        strip_index_format: None,
+        front_face: wgpu::FrontFace::Ccw,
+        cull_mode: Some(wgpu::Face::Back),
+        polygon_mode: wgpu::PolygonMode::Fill,
+        unclipped_depth: false,
+        conservative: false,
+      },
+      depth_stencil: None,
+      multisample: wgpu::MultisampleState {
+        count: 1,
+        mask: !0,
+        alpha_to_coverage_enabled: false,
+      },
+      multiview: None,
+      cache: None,
+    });
+
+    self.render_pipeline = Some(render_pipeline);
+    self.bind_group_layout = Some(bind_group_layout);
+    self.texture_bind_group_layout = Some(texture_bind_group_layout);
   }
 
   /// Resize the rendering surface
