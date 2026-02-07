@@ -218,8 +218,10 @@ fn main() {
           } => elwt.exit(),
           WindowEvent::Resized(new_size) => {
             // Update wgpu surface and projection when window is resized
-            // Note: Flex layout stage dimensions are not updated on resize,
-            // so the layout will remain at the initial window size
+            // Note: Flex layout stage dimensions are not dynamically updated on resize.
+            // The layout will remain at the initial window size, so resizing may cause
+            // visual misalignment. Full flex layout resizing would require updating
+            // the stage's Style dimensions and recomputing the layout.
             play.resize(new_size.width, new_size.height);
           }
           WindowEvent::RedrawRequested => {

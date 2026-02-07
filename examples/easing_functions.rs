@@ -75,6 +75,8 @@ fn main() {
     layer.set_color(i as f32 / 18.0, i as f32 / 18.0, i as f32 / 18.0);
 
     let mut animation = Animation::new();
+    // Animate from left edge (0) to right edge of window (width - width_layer)
+    // This adapts to the actual window size, which may differ from 1920 due to DPI scaling
     animation.apply_translation_x(0, (width - width_layer) as i32, time, easing_functions[i]);
     animation.apply_rotation(0, 360, time, EasingFunction::Linear);
     layer.set_animation(Some(animation));
