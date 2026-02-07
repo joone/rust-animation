@@ -133,8 +133,7 @@ fn main() {
 
 For complete working examples, see the [Examples](#examples) section below.
 
-
-# Examples
+## Examples
 
 rust-animation includes several examples to demonstrate its capabilities. All examples can be run using `cargo`:
 
