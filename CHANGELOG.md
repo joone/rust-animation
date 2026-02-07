@@ -23,12 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automated GitHub workflows for CI, releases, and crates.io publishing
 - Version management script (bump-version.sh) for automated releases
 
-## [0.2.9] - 2026-02-07
-
-### Added
-- Automated GitHub release process with workflow_dispatch trigger
-- CHANGELOG.md for tracking release notes
-
 ## [0.2.8] - 2024-XX-XX
 
 ### Changed
@@ -51,5 +45,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]: https://github.com/joone/rust-animation/compare/v0.2.10...HEAD
 [0.2.10]: https://github.com/joone/rust-animation/releases/tag/v0.2.10
-[0.2.9]: https://github.com/joone/rust-animation/releases/tag/v0.2.9
 [0.2.8]: https://github.com/joone/rust-animation/releases/tag/v0.2.8
