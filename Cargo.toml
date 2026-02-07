@@ -1,10 +1,10 @@
 [package]
 name = "rust-animation"
-description = "OpenGL based Animation Toolkit written in Rust"
+description = "wgpu based Animation Toolkit written in Rust"
 version = "0.2.8"
 edition = "2021"
 repository = "https://github.com/joone/rust-animation"
-keywords = ["bsd", "opengl", "animation", "api"]
+keywords = ["bsd", "wgpu", "animation", "api"]
 license = "BSD-3-Clause"
 authors= ["Joone Hur <joone.hur@gmail.com>"]
 exclude = [".gitignore", ".github"]
@@ -13,11 +13,13 @@ exclude = [".gitignore", ".github"]
 
 [dependencies]
 cgmath = "0.18.0"
-gl = "0.14.0"
+wgpu = "22.1.0"
 image = "0.25.9"
 keyframe = "1.1.1"
 stretch = "0.3.2"
 ab_glyph = "0.2.32"
+pollster = "0.3.0"
+bytemuck = { version = "1.25.0", features = ["derive"] }
 
 [dev-dependencies]
 glfw = "0.50.0"
