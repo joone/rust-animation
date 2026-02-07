@@ -2,18 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-extern crate gl;
 extern crate image;
 extern crate keyframe;
 
-use self::gl::types::*;
-use cgmath::{Deg, Matrix, Matrix4, SquareMatrix, Vector3};
+use cgmath::{Deg, Matrix4, SquareMatrix, Vector3};
 use image::DynamicImage;
-use std::ffi::CStr;
-use std::mem;
-use std::os::raw::c_void;
 use std::path::Path;
-use std::ptr;
 
 use stretch::{
   node::{Node, Stretch},
@@ -43,10 +37,32 @@ pub enum LayoutMode {
   Flex,
 }
 
-macro_rules! c_str {
-  ($literal:expr) => {
-    CStr::from_bytes_with_nul_unchecked(concat!($literal, "\0").as_bytes())
-  };
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct Vertex {
+    pub position: [f32; 3],
+    pub tex_coords: [f32; 2],
+}
+
+impl Vertex {
+    pub fn desc() -> wgpu::VertexBufferLayout<'static> {
+        wgpu::VertexBufferLayout {
+            array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
+            step_mode: wgpu::VertexStepMode::Vertex,
+            attributes: &[
+                wgpu::VertexAttribute {
+                    offset: 0,
+                    shader_location: 0,
+                    format: wgpu::VertexFormat::Float32x3,
+                },
+                wgpu::VertexAttribute {
+                    offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+                    shader_location: 1,
+                    format: wgpu::VertexFormat::Float32x2,
+                },
+            ],
+        }
+    }
 }
 
 pub struct RALayer {
@@ -66,8 +82,10 @@ pub struct RALayer {
   pub opacity: f32, // CoreAnimation-style property
   pub image_path: String,
   pub sub_layer_list: Vec<RALayer>,
-  vertex_array_obj: gl::types::GLuint,
-  texture: gl::types::GLuint,
+  vertex_buffer: Option<wgpu::Buffer>,
+  index_buffer: Option<wgpu::Buffer>,
+  texture: Option<wgpu::Texture>,
+  texture_view: Option<wgpu::TextureView>,
   pub animated: bool,
   pub animation: Option<Animation>,
   animations: std::collections::HashMap<String, Animation>, // CoreAnimation-style animations by key
@@ -99,7 +117,7 @@ pub trait Layout {
 
 impl RALayer {
   pub fn new(name: String, w: u32, h: u32, event_handler: Option<Box<dyn EventHandler>>) -> Self {
-    let mut layer = RALayer {
+    let layer = RALayer {
       name: name,
       x: 0,
       y: 0,
@@ -116,8 +134,10 @@ impl RALayer {
       opacity: 1.0,
       image_path: "".to_string(),
       sub_layer_list: Vec::new(),
-      vertex_array_obj: gl::types::GLuint::default(),
-      texture: gl::types::GLuint::default(),
+      vertex_buffer: None,
+      index_buffer: None,
+      texture: None,
+      texture_view: None,
       animated: false,
       animation: None,
       animations: std::collections::HashMap::new(),
@@ -129,75 +149,52 @@ impl RALayer {
       node: None,
       style: None,
     };
-    layer.init_gl();
 
     layer
   }
 
-  pub fn init_gl(&mut self) {
-    // Skip OpenGL initialization during tests
+  pub fn init_buffers(&mut self, device: &wgpu::Device) {
+    // Skip buffer initialization during tests
     #[cfg(test)]
     {
       return;
     }
     
     #[cfg(not(test))]
-    unsafe {
-      let (mut vertex_array_buffer, mut elem_array_buffer) = (0, 0);
-      let vertices: [f32; 20] = [
-        // positions                   texture coords
-        self.width as f32,
-        self.height as f32,
-        0.0,
-        1.0,
-        1.0, // top right
-        self.width as f32,
-        0.0,
-        0.0,
-        1.0,
-        0.0, // bottom right
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0, // bottom left
-        0.0,
-        self.height as f32,
-        0.0,
-        0.0,
-        1.0, // top left
-      ];
-      let indices = [
-        0, 1, 3, // first Triangle
-        1, 2, 3, // second Triangle
+    {
+      let vertices = [
+        Vertex {
+          position: [self.width as f32, self.height as f32, 0.0],
+          tex_coords: [1.0, 1.0],
+        }, // top right
+        Vertex {
+          position: [self.width as f32, 0.0, 0.0],
+          tex_coords: [1.0, 0.0],
+        }, // bottom right
+        Vertex {
+          position: [0.0, 0.0, 0.0],
+          tex_coords: [0.0, 0.0],
+        }, // bottom left
+        Vertex {
+          position: [0.0, self.height as f32, 0.0],
+          tex_coords: [0.0, 1.0],
+        }, // top left
       ];
 
-      gl::GenVertexArrays(1, &mut self.vertex_array_obj);
-      gl::BindVertexArray(self.vertex_array_obj);
+      let indices: [u16; 6] = [0, 1, 3, 1, 2, 3];
 
-      // position data
-      gl::GenBuffers(1, &mut vertex_array_buffer);
-      gl::BindBuffer(gl::ARRAY_BUFFER, vertex_array_buffer);
-      gl::BufferData(
-        gl::ARRAY_BUFFER,
-        (vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-        &vertices[0] as *const f32 as *const c_void,
-        gl::STATIC_DRAW,
-      );
-      // index data
-      gl::GenBuffers(1, &mut elem_array_buffer);
-      gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, elem_array_buffer);
-      gl::BufferData(
-        gl::ELEMENT_ARRAY_BUFFER,
-        (indices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-        &indices[0] as *const i32 as *const c_void,
-        gl::STATIC_DRAW,
-      );
+      use wgpu::util::DeviceExt;
+      self.vertex_buffer = Some(device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: Some("Vertex Buffer"),
+        contents: bytemuck::cast_slice(&vertices),
+        usage: wgpu::BufferUsages::VERTEX,
+      }));
 
-      let stride = 5 * mem::size_of::<GLfloat>() as GLsizei;
-      // position attribute
-      gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
-      gl::EnableVertexAttribArray(0);
+      self.index_buffer = Some(device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: Some("Index Buffer"),
+        contents: bytemuck::cast_slice(&indices),
+        usage: wgpu::BufferUsages::INDEX,
+      }));
     }
   }
 
@@ -207,7 +204,7 @@ impl RALayer {
     self.color[2] = b;
   }
 
-  pub fn set_text(&mut self, text: &str) {
+  pub fn set_text(&mut self, text: &str, device: &wgpu::Device, queue: &wgpu::Queue) {
     let mut font_renderer: FontRenderer = FontRenderer::new("fonts/DejaVuSans.ttf".to_string());
     let image = font_renderer.render(text);
     let dynamic_image = DynamicImage::ImageRgba8(image);
@@ -215,102 +212,103 @@ impl RALayer {
     dynamic_image.save("temp.png").unwrap();
 
     self.image_path = "temp".to_string();
-    let stride = 5 * mem::size_of::<GLfloat>() as GLsizei;
+    self.width = dynamic_image.width();
+    self.height = dynamic_image.height();
 
-    unsafe {
-      // texture coord attribute
-      gl::VertexAttribPointer(
-        1,
-        2,
-        gl::FLOAT,
-        gl::FALSE,
-        stride,
-        (3 * mem::size_of::<GLfloat>()) as *const c_void,
-      );
-      gl::EnableVertexAttribArray(1);
+    println!("width: {}, height: {}", self.width, self.height);
 
-      // Create a texture
-      gl::GenTextures(1, &mut self.texture);
-      gl::BindTexture(gl::TEXTURE_2D, self.texture);
-      // set the texture wrapping parameters
-      gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
-      gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
-      // set texture filtering parameters
-      gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-      gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+    let rgba = dynamic_image.to_rgba8();
+    let dimensions = rgba.dimensions();
 
-      self.width = dynamic_image.width();
-      self.height = dynamic_image.height();
+    let texture_size = wgpu::Extent3d {
+      width: dimensions.0,
+      height: dimensions.1,
+      depth_or_array_layers: 1,
+    };
 
-      println!("width: {}, height: {}", self.width, self.height);
+    let texture = device.create_texture(&wgpu::TextureDescriptor {
+      label: Some("Text Texture"),
+      size: texture_size,
+      mip_level_count: 1,
+      sample_count: 1,
+      dimension: wgpu::TextureDimension::D2,
+      format: wgpu::TextureFormat::Rgba8UnormSrgb,
+      usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+      view_formats: &[],
+    });
 
-      //   let data = image.into_raw();
-      //let data = image.into_vec();
-      let to_rgba = dynamic_image.to_rgba8();
-      let data = to_rgba.into_raw();
-      gl::TexImage2D(
-        gl::TEXTURE_2D,
-        0,
-        gl::RGBA as i32,
-        self.width as i32,
-        self.height as i32,
-        0,
-        gl::RGBA,
-        gl::UNSIGNED_BYTE,
-        data.as_ptr() as *const c_void,
-      );
-      gl::GenerateMipmap(gl::TEXTURE_2D);
-      // Unbind the texture
-      gl::BindTexture(gl::TEXTURE_2D, 0);
-    }
+    queue.write_texture(
+      wgpu::ImageCopyTexture {
+        texture: &texture,
+        mip_level: 0,
+        origin: wgpu::Origin3d::ZERO,
+        aspect: wgpu::TextureAspect::All,
+      },
+      &rgba,
+      wgpu::ImageDataLayout {
+        offset: 0,
+        bytes_per_row: Some(4 * dimensions.0),
+        rows_per_image: Some(dimensions.1),
+      },
+      texture_size,
+    );
+
+    let texture_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+    self.texture = Some(texture);
+    self.texture_view = Some(texture_view);
   }
 
+  /// Set image path (for backward compatibility - actual texture loading requires wgpu context)
   pub fn set_image(&mut self, path: String) {
     self.image_path = path;
+  }
 
+  /// Load image with wgpu context
+  pub fn load_image_texture(&mut self, device: &wgpu::Device, queue: &wgpu::Queue) {
     if !self.image_path.is_empty() {
-      let stride = 5 * mem::size_of::<GLfloat>() as GLsizei;
-      unsafe {
-        // texture coord attribute
-        gl::VertexAttribPointer(
-          1,
-          2,
-          gl::FLOAT,
-          gl::FALSE,
-          stride,
-          (3 * mem::size_of::<GLfloat>()) as *const c_void,
-        );
-        gl::EnableVertexAttribArray(1);
+      match image::open(&Path::new(&self.image_path)) {
+        Ok(img) => {
+          let rgba = img.to_rgba8();
+          let dimensions = rgba.dimensions();
 
-        // Create a texture
-        gl::GenTextures(1, &mut self.texture);
-        gl::BindTexture(gl::TEXTURE_2D, self.texture);
-        // set the texture wrapping parameters
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
-        // set texture filtering parameters
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+          let texture_size = wgpu::Extent3d {
+            width: dimensions.0,
+            height: dimensions.1,
+            depth_or_array_layers: 1,
+          };
 
-        match image::open(&Path::new(&self.image_path)) {
-          Ok(img) => {
-            let to_rgba = img.to_rgba8();
-            let data = to_rgba.into_vec();
-            gl::TexImage2D(
-              gl::TEXTURE_2D,
-              0,
-              gl::RGB as i32,
-              img.width() as i32,
-              img.height() as i32,
-              0,
-              gl::RGBA,
-              gl::UNSIGNED_BYTE,
-              &data[0] as *const u8 as *const c_void,
-            );
-            gl::GenerateMipmap(gl::TEXTURE_2D);
-          }
-          Err(err) => println!("Fail to load a image {:?}", err),
+          let texture = device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("Image Texture"),
+            size: texture_size,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba8UnormSrgb,
+            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+            view_formats: &[],
+          });
+
+          queue.write_texture(
+            wgpu::ImageCopyTexture {
+              texture: &texture,
+              mip_level: 0,
+              origin: wgpu::Origin3d::ZERO,
+              aspect: wgpu::TextureAspect::All,
+            },
+            &rgba,
+            wgpu::ImageDataLayout {
+              offset: 0,
+              bytes_per_row: Some(4 * dimensions.0),
+              rows_per_image: Some(dimensions.1),
+            },
+            texture_size,
+          );
+
+          let texture_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+          self.texture = Some(texture);
+          self.texture_view = Some(texture_view);
         }
+        Err(err) => println!("Fail to load a image {:?}", err),
       }
     }
   }
@@ -479,7 +477,6 @@ impl RALayer {
 
   pub fn render(
     &mut self,
-    shader_program: GLuint,
     parent_model_matrix: Option<&Matrix4<f32>>,
     projection: &Matrix4<f32>,
   ) {
@@ -492,38 +489,18 @@ impl RALayer {
       transform = transform * parent_model_matrix;
     }
 
-    unsafe {
-      gl::UseProgram(shader_program);
-      let loc_color = gl::GetUniformLocation(shader_program, c_str!("color").as_ptr());
-      let loc_transform = gl::GetUniformLocation(shader_program, c_str!("transform").as_ptr());
-      let loc_projection = gl::GetUniformLocation(shader_program, c_str!("projection").as_ptr());
-      let loc_use_texture = gl::GetUniformLocation(shader_program, c_str!("useTexture").as_ptr());
-
-      gl::Uniform4f(loc_color, self.color[0], self.color[1], self.color[2], self.opacity);
-      gl::UniformMatrix4fv(loc_transform, 1, gl::FALSE, transform.as_ptr());
-      gl::UniformMatrix4fv(loc_projection, 1, gl::FALSE, projection.as_ptr());
-
-      if !self.image_path.is_empty() {
-        gl::BindTexture(gl::TEXTURE_2D, self.texture);
-        gl::Uniform1i(loc_use_texture, 1);
-      } else {
-        gl::Uniform1i(loc_use_texture, 0);
-      }
-
-      gl::BindVertexArray(self.vertex_array_obj);
-      gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
-    }
+    // Rendering will be handled by the Play struct with wgpu
+    // This method now just updates the transform hierarchy
 
     for sub_layer in self.sub_layer_list.iter_mut() {
       if sub_layer.focused == false {
-        sub_layer.render(shader_program, Some(&transform), projection);
+        sub_layer.render(Some(&transform), projection);
       }
     }
 
     // render the focused sub_layer at the end.
     if !self.sub_layer_list.is_empty() {
       self.sub_layer_list[self.focused_sub_layer].render(
-        shader_program,
         Some(&transform),
         projection,
       );

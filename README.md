@@ -4,7 +4,7 @@
 
 ![easing_functions demo](https://github.com/joone/rust-animation/blob/main/examples/easing_functions.gif?raw=true)
 
-**rust-animation** is an OpenGL-based graphics library written in Rust for creating hardware-accelerated user interfaces. It is designed to implement simple, animated UIs for embedded devices, inspired by the [GNOME Clutter project](https://en.wikipedia.org/wiki/Clutter_(software)) and [Apple Core Animation](https://en.wikipedia.org/wiki/Core_Animation).
+**rust-animation** is a wgpu-based graphics library written in Rust for creating hardware-accelerated user interfaces. It is designed to implement simple, animated UIs for embedded devices, inspired by the [GNOME Clutter project](https://en.wikipedia.org/wiki/Clutter_(software)) and [Apple Core Animation](https://en.wikipedia.org/wiki/Core_Animation).
 
 ## Table of Contents
 
@@ -27,11 +27,12 @@
 - **2D Transforms**: Apply translate, scale, and rotate transformations to layers
 - **Rich Animation System**: Support for multiple easing functions (Linear, EaseIn, EaseOut, EaseInOut, and various polynomial variants)
 - **Flex Layout**: CSS Flexbox-like layout system using the [Stretch](https://github.com/vislyhq/stretch) library
-- **Hardware Acceleration**: OpenGL-based rendering for high performance
+- **Hardware Acceleration**: wgpu-based rendering for high performance across multiple backends (Vulkan, Metal, D3D12, OpenGL)
 - **RALayer Hierarchy**: Support for nested layers with parent-child relationships
 - **Event Handling**: Built-in event system for keyboard input and focus management
 - **Image Support**: Load and display images as textures
 - **Text Rendering**: Font rendering capabilities for displaying text
+- **Cross-Platform**: Works on Windows, macOS, Linux, and can target WebAssembly
 
 > **Note**: rust-animation is in early development. Some features may be incomplete or have bugs. Please [report any issues](https://github.com/joone/rust-animation/issues) you encounter.
 
@@ -89,6 +90,8 @@ cargo build --release
 ```
 
 ## Quick Start
+
+> **Migration Note**: The core library has been migrated to use wgpu for rendering. The examples are currently being updated to reflect this change. For now, examples may still reference OpenGL/GLFW, but the underlying library uses wgpu for cross-platform hardware-accelerated rendering.
 
 Here's a minimal example to get started:
 

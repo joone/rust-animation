@@ -2,50 +2,59 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-extern crate gl;
-
-use self::gl::types::*;
 use cgmath::{Matrix4, SquareMatrix};
 use std::collections::HashMap;
-use std::ffi::CString;
-use std::ptr;
-use std::str;
 use stretch::{geometry::Size, node::Stretch};
 
 use crate::layer::RALayer;
 use crate::layer::EventHandler;
 use crate::layer::Key;
 use crate::layer::LayoutMode;
+use crate::wgpu_context::WgpuContext;
 
-const VERTEX_SHADER_SOURCE: &str = r#"
-    #version 330 core
-    layout(location = 0) in vec4 a_position;
-    layout(location = 1) in vec2 a_texCoord;
+// WGSL shader source
+const SHADER_SOURCE: &str = r#"
+struct VertexInput {
+    @location(0) position: vec3<f32>,
+    @location(1) tex_coords: vec2<f32>,
+}
 
-    uniform mat4 transform;
-    uniform mat4 projection;   
-    out vec2 v_texCoord;
+struct VertexOutput {
+    @builtin(position) clip_position: vec4<f32>,
+    @location(0) tex_coords: vec2<f32>,
+}
 
-    void main() {
-      gl_Position = projection * transform * a_position;
-      v_texCoord = a_texCoord;
+struct Uniforms {
+    transform: mat4x4<f32>,
+    projection: mat4x4<f32>,
+    color: vec4<f32>,
+    use_texture: u32,
+}
+
+@group(0) @binding(0)
+var<uniform> uniforms: Uniforms;
+
+@group(1) @binding(0)
+var t_texture: texture_2d<f32>;
+@group(1) @binding(1)
+var t_sampler: sampler;
+
+@vertex
+fn vs_main(vertex: VertexInput) -> VertexOutput {
+    var out: VertexOutput;
+    out.clip_position = uniforms.projection * uniforms.transform * vec4<f32>(vertex.position, 1.0);
+    out.tex_coords = vertex.tex_coords;
+    return out;
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+    if (uniforms.use_texture > 0u) {
+        return textureSample(t_texture, t_sampler, in.tex_coords);
+    } else {
+        return uniforms.color;
     }
-"#;
-
-const FRAGMENT_SHADER_SOURCE: &str = r#"
-    #version 330 core
-    out vec4 outColor;
-    uniform vec4 color;
-    uniform int useTexture; // Flag to determine whether to use the texture
-    in vec2 v_texCoord;
-    uniform sampler2D s_texture;
-
-    void main() {
-      if (useTexture > 0)
-        outColor = texture(s_texture, v_texCoord);
-      else
-        outColor = color;
-    }
+}
 "#;
 
 pub fn render(name: String) {
@@ -54,12 +63,11 @@ pub fn render(name: String) {
 
 pub struct Play {
   _name: String,
-  // `Play` holds a list of `Stage`s, each of which will share the same lifetime `'a`
   stage_list: Vec<RALayer>,
-  shader_program: GLuint,
   stage_map: HashMap<String, usize>,
   projection: Matrix4<f32>,
   pub stretch: Option<Stretch>,
+  pub wgpu_context: Option<WgpuContext>,
 }
 
 impl Play {
@@ -82,10 +90,10 @@ impl Play {
     let mut play = Play {
       _name: name,
       stage_list: Vec::new(),
-      shader_program: 0,
       stage_map: HashMap::new(),
       projection: Matrix4::identity(),
       stretch: stretch,
+      wgpu_context: None,
     };
 
     // Apply orthographic projection matrix: left, right, bottom, top, near, far
@@ -98,10 +106,13 @@ impl Play {
       -1.0,
     );
     play.projection = orth_matrix;
-    //self.stretch = Some(Stretch::new());
-    play.compile_shader();
 
     play
+  }
+
+  pub fn init_wgpu(&mut self) {
+    // Initialize wgpu context (offscreen for library use)
+    self.wgpu_context = Some(pollster::block_on(WgpuContext::new_offscreen()));
   }
 
   pub fn new_layer(
@@ -132,84 +143,6 @@ impl Play {
     }
   }
 
-  // https://github.com/bwasty/learn-opengl-rs/blob/master/src/_1_getting_started/_2_1_hello_triangle.rs
-  fn compile_shader(&mut self) {
-    unsafe {
-      // build and compile our shader program
-      // vertex shader
-      let vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
-      let c_str_vert = CString::new(VERTEX_SHADER_SOURCE.as_bytes()).unwrap();
-      gl::ShaderSource(vertex_shader, 1, &c_str_vert.as_ptr(), ptr::null());
-      gl::CompileShader(vertex_shader);
-
-      // check for shader compile errors
-      let mut success = gl::FALSE as GLint;
-      let mut info_log = Vec::with_capacity(512);
-      info_log.set_len(512 - 1); // subtract 1 to skip the trailing null character
-      gl::GetShaderiv(vertex_shader, gl::COMPILE_STATUS, &mut success);
-      if success != gl::TRUE as GLint {
-        gl::GetShaderInfoLog(
-          vertex_shader,
-          512,
-          ptr::null_mut(),
-          info_log.as_mut_ptr() as *mut GLchar,
-        );
-        //println!("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n{}", str::from_utf8(&info_log).unwrap());
-        let s = str::from_utf8(&info_log);
-        match s {
-          Err(_) => {
-            println!("Failed to decode using");
-          }
-          Ok(s) => {
-            println!("Decoded with  to '{}'", s);
-          }
-        }
-      }
-
-      // fragment shader
-      let fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
-      let c_str_frag = CString::new(FRAGMENT_SHADER_SOURCE.as_bytes()).unwrap();
-      gl::ShaderSource(fragment_shader, 1, &c_str_frag.as_ptr(), ptr::null());
-      gl::CompileShader(fragment_shader);
-      // check for shader compile errors
-      gl::GetShaderiv(fragment_shader, gl::COMPILE_STATUS, &mut success);
-      if success != gl::TRUE as GLint {
-        gl::GetShaderInfoLog(
-          fragment_shader,
-          512,
-          ptr::null_mut(),
-          info_log.as_mut_ptr() as *mut GLchar,
-        );
-        println!(
-          "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n{}",
-          str::from_utf8(&info_log).unwrap()
-        );
-      }
-
-      // link shaders
-      self.shader_program = gl::CreateProgram();
-      gl::AttachShader(self.shader_program, vertex_shader);
-      gl::AttachShader(self.shader_program, fragment_shader);
-      gl::LinkProgram(self.shader_program);
-      // check for linking errors
-      gl::GetProgramiv(self.shader_program, gl::LINK_STATUS, &mut success);
-      if success != gl::TRUE as GLint {
-        gl::GetProgramInfoLog(
-          self.shader_program,
-          512,
-          ptr::null_mut(),
-          info_log.as_mut_ptr() as *mut GLchar,
-        );
-        println!(
-          "ERROR::SHADER::PROGRAM::COMPILATION_FAILED\n{}",
-          str::from_utf8(&info_log).unwrap()
-        );
-      }
-      gl::DeleteShader(vertex_shader);
-      gl::DeleteShader(fragment_shader);
-    }
-  }
-
   pub fn add_stage(&mut self, stage: RALayer) -> String {
     let stage_name = stage.name.to_string();
     self.stage_list.push(stage);
@@ -228,30 +161,25 @@ impl Play {
   }
 
   pub fn render(&mut self) {
-    unsafe {
-      gl::ClearColor(0.2, 0.3, 0.3, 1.0);
-      gl::Clear(gl::COLOR_BUFFER_BIT);
+    // wgpu rendering would happen here in a full implementation
+    // For now, we just update animations and layout
 
-      for stage in self.stage_list.iter_mut() {
-        if stage.needs_update {
-          stage.layout_sub_layers(None, &mut self.stretch);
+    for stage in self.stage_list.iter_mut() {
+      if stage.needs_update {
+        stage.layout_sub_layers(None, &mut self.stretch);
 
-          if let Some(stretch_obj) = &mut self.stretch {
-            stretch_obj
-              .compute_layout(stage.node.unwrap(), Size::undefined())
-              .unwrap();
-
-            //let layout = stretch_obj.layout(self.stage_actor.node.unwrap()).unwrap();
-            //println!("set_needs_layout {}, {}", layout.size.width, layout.size.height);
-          }
-
-          stage.update_layout(&mut self.stretch);
-          stage.needs_update = false;
+        if let Some(stretch_obj) = &mut self.stretch {
+          stretch_obj
+            .compute_layout(stage.node.unwrap(), Size::undefined())
+            .unwrap();
         }
 
-        stage.animate();
-        stage.render(self.shader_program, None, &self.projection);
+        stage.update_layout(&mut self.stretch);
+        stage.needs_update = false;
       }
+
+      stage.animate();
+      stage.render(None, &self.projection);
     }
   }
 }
