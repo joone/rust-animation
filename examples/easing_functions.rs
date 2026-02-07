@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+use std::sync::Arc;
 use winit::{
   event::{Event, KeyEvent, WindowEvent},
   event_loop::{ControlFlow, EventLoop},
@@ -17,11 +18,13 @@ use rust_animation::play::Play;
 
 fn main() {
   let event_loop = EventLoop::new().unwrap();
-  let window = WindowBuilder::new()
-    .with_title("Easing functions demo")
-    .with_inner_size(winit::dpi::LogicalSize::new(1920, 1080))
-    .build(&event_loop)
-    .unwrap();
+  let window = Arc::new(
+    WindowBuilder::new()
+      .with_title("Easing functions demo")
+      .with_inner_size(winit::dpi::LogicalSize::new(1920, 1080))
+      .build(&event_loop)
+      .unwrap(),
+  );
 
   let mut play = Play::new(
     "Easing functions demo".to_string(),
@@ -30,8 +33,8 @@ fn main() {
     LayoutMode::UserDefine,
   );
 
-  // Initialize wgpu context
-  play.init_wgpu();
+  // Initialize wgpu context with surface
+  play.init_wgpu_with_surface(window.clone(), 1920, 1080);
 
   let mut stage = RALayer::new("stage".to_string(), 1920, 1080, None);
   stage.set_visible(true);
