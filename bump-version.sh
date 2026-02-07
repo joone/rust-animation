@@ -38,7 +38,7 @@ VERSION_ARG=""
 
 for arg in "$@"; do
     case "$arg" in
-        --auto|--push)
+        --auto|--push)  # --push is an alias for --auto for convenience
             AUTO_MODE=true
             ;;
         *)

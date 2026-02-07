@@ -108,13 +108,6 @@ The script will:
    - Watch the "Create Release" workflow
    - Check the Releases page once complete
 
-**Alternative:** After steps 1-3, you can use the `--auto` flag to automatically create and push the tag:
-   ```bash
-   # Since Cargo.toml is already updated, just create and push the tag
-   git tag v0.2.9
-   git push origin v0.2.9
-   ```
-
 ### Method 2: Manual Trigger via GitHub UI (With Button!)
 
 You can trigger a release directly from GitHub's UI without creating a tag locally:
