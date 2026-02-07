@@ -70,6 +70,29 @@ If publishing fails:
 - Check the workflow logs for specific error messages
 - Ensure all tests pass: `cargo test --lib`
 
+### Tag Points to Wrong Commit
+
+If the workflow doesn't trigger or you need to move a tag to a different commit:
+
+```bash
+# Delete the tag locally
+git tag -d v0.2.8
+
+# Delete the tag from remote
+git push origin :refs/tags/v0.2.8
+
+# Create a new tag on the correct commit
+git tag v0.2.8 <commit-sha>
+
+# Or tag the current commit
+git tag v0.2.8
+
+# Push the new tag
+git push origin v0.2.8
+```
+
+**Note**: Moving tags can cause confusion if others have already pulled the old tag. Only do this if necessary, and communicate with your team.
+
 ### Manual Publishing (Fallback)
 
 If automated publishing fails, you can publish manually:
