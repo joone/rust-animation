@@ -258,9 +258,13 @@ impl RALayer {
     self.texture_view = Some(texture_view);
   }
 
-  pub fn set_image(&mut self, path: String, device: &wgpu::Device, queue: &wgpu::Queue) {
-    self.image_path = path.clone();
+  /// Set image path (for backward compatibility - actual texture loading requires wgpu context)
+  pub fn set_image(&mut self, path: String) {
+    self.image_path = path;
+  }
 
+  /// Load image with wgpu context
+  pub fn load_image_texture(&mut self, device: &wgpu::Device, queue: &wgpu::Queue) {
     if !self.image_path.is_empty() {
       match image::open(&Path::new(&self.image_path)) {
         Ok(img) => {
