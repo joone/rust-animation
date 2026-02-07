@@ -1,0 +1,204 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+\.[0-9]+\.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.2.9)'
+        required: true
+        type: string
+      create_tag:
+        description: 'Create and push git tag'
+        required: false
+        type: boolean
+        default: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required for creating releases and tags
+    
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # Fetch all history for changelog generation
+    
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+    
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y cmake libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libx11-dev libxext-dev
+    
+    - name: Get version
+      id: get_version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          VERSION="${{ inputs.version }}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "TAG_NAME=v$VERSION" >> $GITHUB_OUTPUT
+          echo "Manual release for version: $VERSION"
+        else
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG_NAME#v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "Tag-triggered release: $TAG_NAME"
+        fi
+    
+    - name: Verify Cargo.toml version matches
+      run: |
+        CARGO_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "rust-animation") | .version')
+        RELEASE_VERSION="${{ steps.get_version.outputs.VERSION }}"
+        echo "Cargo.toml version: $CARGO_VERSION"
+        echo "Release version: $RELEASE_VERSION"
+        if [ "$CARGO_VERSION" != "$RELEASE_VERSION" ]; then
+          echo "::error::Version mismatch! Cargo.toml has $CARGO_VERSION but release version is $RELEASE_VERSION"
+          echo "Please update Cargo.toml version to $RELEASE_VERSION before creating a release"
+          exit 1
+        fi
+    
+    - name: Create and push tag (manual trigger only)
+      if: github.event_name == 'workflow_dispatch' && inputs.create_tag
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git tag -a "${{ steps.get_version.outputs.TAG_NAME }}" -m "Release ${{ steps.get_version.outputs.TAG_NAME }}"
+        git push origin "${{ steps.get_version.outputs.TAG_NAME }}"
+    
+    - name: Run tests
+      run: cargo test --lib --verbose
+    
+    - name: Build
+      run: cargo build --release --verbose
+    
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        # Extract changelog for this version
+        VERSION="${{ steps.get_version.outputs.VERSION }}"
+        
+        # Try to extract from CHANGELOG.md
+        if [ -f CHANGELOG.md ]; then
+          # Extract section for this version
+          NOTES=$(sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '$d' | tail -n +2)
+          
+          if [ -z "$NOTES" ]; then
+            echo "No specific changelog entry found for version $VERSION"
+            NOTES="Release version $VERSION
+
+See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details."
+          fi
+        else
+          # Generate basic release notes from recent commits
+          NOTES="Release version $VERSION
+
+## Changes in this release
+
+$(git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || git rev-list --max-parents=0 HEAD)..HEAD 2>/dev/null || git log --pretty=format:"- %s" -10)
+
+---
+*See full changelog at [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)*"
+        fi
+        
+        # Save to file for multiline output
+        echo "$NOTES" > release_notes.txt
+        echo "Generated release notes"
+    
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.get_version.outputs.TAG_NAME }}
+        release_name: Release ${{ steps.get_version.outputs.TAG_NAME }}
+        body_path: release_notes.txt
+        draft: false
+        prerelease: false
+    
+    - name: Publish to crates.io
+      env:
+        CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+      run: cargo publish
+
+  build-examples:
+    needs: create-release
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            artifact_name: rust-animation-examples-linux
+            build_deps: sudo apt-get update && sudo apt-get install -y cmake libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libx11-dev libxext-dev
+          - os: windows-latest
+            artifact_name: rust-animation-examples-windows
+            build_deps: ""
+          - os: macos-latest
+            artifact_name: rust-animation-examples-macos
+            build_deps: ""
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+    
+    - name: Install dependencies
+      if: matrix.build_deps != ''
+      run: ${{ matrix.build_deps }}
+    
+    - name: Build examples
+      run: cargo build --examples --release
+    
+    - name: Package examples (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        mkdir -p artifacts
+        cp target/release/examples/* artifacts/ 2>/dev/null || true
+        cd artifacts
+        tar -czf ../${{ matrix.artifact_name }}.tar.gz * || true
+    
+    - name: Package examples (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        mkdir artifacts
+        Copy-Item target\release\examples\*.exe artifacts\ -ErrorAction SilentlyContinue
+        Compress-Archive -Path artifacts\* -DestinationPath ${{ matrix.artifact_name }}.zip
+    
+    - name: Upload Release Asset (Unix)
+      if: runner.os != 'Windows'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./${{ matrix.artifact_name }}.tar.gz
+        asset_name: ${{ matrix.artifact_name }}.tar.gz
+        asset_content_type: application/gzip
+      continue-on-error: true
+    
+    - name: Upload Release Asset (Windows)
+      if: runner.os == 'Windows'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./${{ matrix.artifact_name }}.zip
+        asset_name: ${{ matrix.artifact_name }}.zip
+        asset_content_type: application/zip
+      continue-on-error: true
