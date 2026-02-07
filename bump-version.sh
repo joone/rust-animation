@@ -150,7 +150,7 @@ if [ "$AUTO_MODE" = true ]; then
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
     if [ "$CURRENT_BRANCH" != "main" ]; then
         echo -e "${YELLOW}Warning: You are on branch '$CURRENT_BRANCH', not 'main'${NC}"
-        read -p "Continue anyway? (y/N) " -n 1 -r
+        read -p "Continue with release on branch '$CURRENT_BRANCH'? (y/N) " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
             echo "Aborted."

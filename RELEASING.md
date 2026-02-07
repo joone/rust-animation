@@ -52,7 +52,7 @@ The script will:
 5. Create and push a git tag `vX.Y.Z`
 6. Trigger the automated release workflow
 
-**Note:** You should still update the `[Unreleased]` section in CHANGELOG.md with your changes before running the script, or manually update the generated version section after the script runs but before it commits.
+**Important:** Make sure to update the `[Unreleased]` section in CHANGELOG.md with your changes *before* running the script with `--auto`. The script will commit immediately, so you won't have a chance to review the generated version section before it's committed. If you want to review the CHANGELOG changes before committing, use Option B (Semi-Automatic) instead.
 
 #### Option B: Semi-Automatic (Review Before Release)
 
