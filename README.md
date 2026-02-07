@@ -143,6 +143,60 @@ rust-animation includes several examples to demonstrate its capabilities. All ex
 cargo run --example <example_name>
 ```
 
+## CoreAnimation API Demo
+
+**Example file:** `coreanimation_api.rs`
+
+Demonstrates the CoreAnimation-style API for animations.
+
+**Run:**
+```bash
+cargo run --example coreanimation_api
+```
+
+**What it does**: Shows how to use the CoreAnimation-style API with multiple layers, each demonstrating different animation types (position, opacity, scale, rotation, and multiple animations).
+
+**Key concepts demonstrated:**
+- CoreAnimation-style API usage (`with_key_path`, `duration`, `timing_function`)
+- Position animations using `set_from_value_position_x` / `set_to_value_position_x`
+- Opacity animations
+- Scale and rotation animations
+- Multiple animations on a single layer
+- Sublayers (nested layers)
+- Adding animations with keys
+
+<details>
+<summary>Code snippet</summary>
+
+```rust
+// Create a layer (actor) using CoreAnimation-style API
+let mut layer = Actor::new("layer1".to_string(), 100, 100, None);
+layer.set_position(100, 100);
+layer.set_background_color(1.0, 0.0, 0.0); // Red
+layer.set_opacity(1.0);
+
+// Create a CoreAnimation-style animation
+let mut position_animation = Animation::with_key_path("position.x");
+position_animation.duration = 3.0;
+position_animation.timing_function = Some(EasingFunction::EaseInOut);
+position_animation.set_from_value_position_x(100);
+position_animation.set_to_value_position_x(800);
+
+// Add animation with a key (like CALayer.add(_:forKey:))
+layer.add_animation(position_animation, Some("moveX".to_string()));
+
+// Add sublayer (CoreAnimation-style)
+parent_layer.add_sublayer(child_layer);
+
+// Multiple animations on one layer
+let mut opacity_animation = Animation::with_key_path("opacity");
+opacity_animation.duration = 2.5;
+opacity_animation.set_from_value_opacity(1.0);
+opacity_animation.set_to_value_opacity(0.2);
+layer.add_animation(opacity_animation, Some("fadeOut".to_string()));
+```
+</details>
+
 ## Easing Functions
 
 **Example file:** `easing_functions.rs`
@@ -641,24 +695,28 @@ impl Layout for ActorLayout {
 - Holds one or more stages
 - Handles projection matrices and OpenGL setup
 
-**Actor**: Visual elements in the scene graph
+**Actor**: Visual elements in the scene graph (similar to CALayer in CoreAnimation)
 - Can have position (x, y, z), size (width, height)
 - Supports transforms: translate, scale, rotate
 - Can have colors or textures
 - Supports nested hierarchies (parent-child relationships)
 - Can have animations, event handlers, and custom layouts
+- **CoreAnimation-style API**: Use `position()`, `bounds()`, `opacity`, `background_color()`, `add_sublayer()`, etc.
 
-**Animation**: Defines time-based property changes
+**Animation**: Defines time-based property changes (similar to CABasicAnimation in CoreAnimation)
 - Apply transformations over time with easing functions
-- Supports: translation (x, y), scaling, rotation
+- Supports: translation (x, y), scaling, rotation, opacity
 - Multiple animations can run simultaneously on one actor
+- **CoreAnimation-style API**: Use `with_key_path()`, `duration`, `timing_function`, `set_from_value_*()`, `set_to_value_*()`
 
-**Easing Functions**: Control animation timing curves
+**Easing Functions**: Control animation timing curves (similar to CAMediaTimingFunction)
 - Linear, Step
 - EaseIn, EaseOut, EaseInOut (sine-based)
 - Quad, Cubic, Quart, Quint variants (polynomial-based)
 
 ### Main APIs
+
+#### Traditional API
 
 ```rust
 // Create a Play (main container)
@@ -686,6 +744,70 @@ play.add_stage(stage);
 // Render
 play.render();
 ```
+
+#### CoreAnimation-Style API
+
+```rust
+// Create a layer (actor)
+let mut layer = Actor::new("myLayer".to_string(), 100, 100, None);
+layer.set_position(50, 50);
+layer.set_background_color(1.0, 0.0, 0.0); // Red
+layer.set_opacity(1.0);
+
+// Create a CoreAnimation-style animation
+let mut animation = Animation::with_key_path("position.x");
+animation.duration = 2.0;
+animation.timing_function = Some(EasingFunction::EaseInOut);
+animation.set_from_value_position_x(50);
+animation.set_to_value_position_x(400);
+
+// Add animation with a key (like CALayer.add(_:forKey:))
+layer.add_animation(animation, Some("moveX".to_string()));
+
+// Add sublayers (like CALayer.addSublayer())
+parent_layer.add_sublayer(child_layer);
+
+// Remove animations
+layer.remove_animation("moveX");  // Remove specific animation
+layer.remove_all_animations();    // Remove all animations
+
+// Access properties (CoreAnimation-style)
+let (x, y) = layer.position();
+let (w, h) = layer.bounds();
+let (r, g, b) = layer.background_color();
+let sublayers = layer.sublayers();
+```
+
+### CoreAnimation API Compatibility
+
+This library provides CoreAnimation-style API for familiar developers:
+
+| CoreAnimation | rust-animation | Description |
+|---------------|----------------|-------------|
+| `CALayer` | `Actor` | Visual layer |
+| `position` | `set_position()` / `position()` | Layer position |
+| `bounds` | `set_bounds()` / `bounds()` | Layer size |
+| `opacity` | `set_opacity()` / `opacity` | Layer opacity (0.0-1.0) |
+| `backgroundColor` | `set_background_color()` / `background_color()` | Layer color |
+| `addSublayer()` | `add_sublayer()` | Add child layer |
+| `sublayers` | `sublayers()` / `sublayers_mut()` | Get child layers |
+| `add(_:forKey:)` | `add_animation(animation, key)` | Add animation |
+| `removeAllAnimations()` | `remove_all_animations()` | Remove all animations |
+| `removeAnimation(forKey:)` | `remove_animation(key)` | Remove specific animation |
+| `CABasicAnimation` | `Animation::with_key_path()` | Create animation |
+| `duration` | `animation.duration` | Animation duration |
+| `timingFunction` | `animation.timing_function` | Easing function |
+| `fromValue` | `set_from_value_*()` | Start value |
+| `toValue` | `set_to_value_*()` | End value |
+
+Supported animation key paths:
+- `"position.x"` - Animate X position
+- `"position.y"` - Animate Y position
+- `"opacity"` - Animate opacity
+- `"transform.scale"` - Animate scale
+- `"transform.rotation"` - Animate rotation
+
+
 
 ## Contributing
 
