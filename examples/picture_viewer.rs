@@ -110,10 +110,10 @@ impl EventHandler for RALayerEvent {
 
     if key == rust_animation::layer::Key::Right {
       // right cursor
-      layer.select_next_sub_actor();
+      layer.select_next_sub_layer();
     } else if key == rust_animation::layer::Key::Left {
       // left cursor
-      layer.select_prev_sub_actor();
+      layer.select_prev_sub_layer();
     }
   }
 }
@@ -133,7 +133,7 @@ impl ActorLayout {
 }
 
 impl Layout for ActorLayout {
-  fn layout_sub_actors(
+  fn layout_sub_layers(
     &mut self,
     layer: &mut RALayer,
     _parent_layer: Option<&RALayer>,

@@ -30,7 +30,7 @@ impl FlexLayout {
 }
 
 impl Layout for FlexLayout {
-  fn layout_sub_actors(
+  fn layout_sub_layers(
     &mut self,
     layer: &mut RALayer,
     parent_layer: Option<&RALayer>,

@@ -265,10 +265,10 @@ impl FlexLayout {
 }
 
 impl Layout for FlexLayout {
-  fn layout_sub_actors(
+  fn layout_sub_layers(
     &mut self,
     layer: &mut RALayer,
-    parent_actor: Option<&RALayer>,
+    parent_layer: Option<&RALayer>,
     stretch: &mut Option<Stretch>,
   ) {
     println!("run layout_sub_layer for FlexLayout {}", self.name);
@@ -302,13 +302,13 @@ impl Layout for FlexLayout {
 
       println!("layer name {}", layer.name);
 
-      if let Some(parent_actor) = parent_actor {
-        if !parent_actor.node.is_none() && !layer.node.is_none() {
-          match stretch_obj.add_child(parent_actor.node.unwrap(), layer.node.unwrap()) {
+      if let Some(parent_layer) = parent_layer {
+        if !parent_layer.node.is_none() && !layer.node.is_none() {
+          match stretch_obj.add_child(parent_layer.node.unwrap(), layer.node.unwrap()) {
             Ok(()) => {
               println!(
                 " stretch node  is added {} {}",
-                parent_actor.name, layer.name
+                parent_layer.name, layer.name
               )
             }
             Err(..) => {}
@@ -556,7 +556,7 @@ pub struct RALayerEvent {
 impl RALayerEvent {
   pub fn new() -> Self {
     RALayerEvent {
-      name: "actor_event".to_string(),
+      name: "layer_event".to_string(),
     }
   }
 }
@@ -599,10 +599,10 @@ impl ActorLayout {
 }
 
 impl Layout for ActorLayout {
-  fn layout_sub_actors(
+  fn layout_sub_layers(
     &mut self,
     layer: &mut RALayer,
-    parent_actor: Option<&RALayer>,
+    parent_layer: Option<&RALayer>,
     stretch: &mut Option<Stretch>,
   ) {
     println!("layout_sub_layer {}", self.name);
@@ -674,7 +674,7 @@ animation.apply_rotation(from_deg, to_deg, duration, easing);
 layer.set_animation(Some(animation));
 
 // Build scene graph
-parent_actor.add_sub_actor(child_actor);
+parent_layer.add_sub_actor(child_actor);
 stage.add_sub_actor(layer);
 play.add_stage(stage);
 
