@@ -699,6 +699,10 @@ Contributions are welcome! Here's how you can help:
 - Write examples to demonstrate new features
 - Update documentation for API changes
 
+### Releasing
+
+For information about publishing new versions to crates.io, see [RELEASING.md](RELEASING.md).
+
 ### Reporting Issues
 
 Found a bug or have a feature request? Please [open an issue](https://github.com/joone/rust-animation/issues) with:
