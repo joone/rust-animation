@@ -30,7 +30,7 @@ jobs:
     
     - name: Verify Cargo.toml version matches tag
       run: |
-        CARGO_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
+        CARGO_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "rust-animation") | .version')
         TAG_VERSION=${{ steps.extract_version.outputs.VERSION }}
         echo "Cargo.toml version: $CARGO_VERSION"
         echo "Git tag version: $TAG_VERSION"
