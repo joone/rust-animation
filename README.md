@@ -112,7 +112,7 @@ fn main() {
     let mut stage = RALayer::new("stage".to_string(), 800, 600, None);
     stage.set_visible(true);
     
-    // Create an layer (a visual element)
+    // Create a layer (a visual element)
     let mut layer = RALayer::new("my_actor".to_string(), 100, 100, None);
     layer.x = 50;
     layer.y = 50;

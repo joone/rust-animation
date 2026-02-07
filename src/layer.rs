@@ -617,7 +617,7 @@ mod tests {
 
   #[test]
   fn test_position_api() {
-    let mut actor = RALayer::new("test".to_string(), 100, 100, None);
+    let mut layer = RALayer::new("test".to_string(), 100, 100, None);
     layer.set_position(50, 75);
     let (x, y) = layer.position();
     assert_eq!(x, 50);
@@ -626,7 +626,7 @@ mod tests {
 
   #[test]
   fn test_bounds_api() {
-    let mut actor = RALayer::new("test".to_string(), 100, 100, None);
+    let mut layer = RALayer::new("test".to_string(), 100, 100, None);
     layer.set_bounds(200, 150);
     let (w, h) = layer.bounds();
     assert_eq!(w, 200);
@@ -635,7 +635,7 @@ mod tests {
 
   #[test]
   fn test_opacity_api() {
-    let mut actor = RALayer::new("test".to_string(), 100, 100, None);
+    let mut layer = RALayer::new("test".to_string(), 100, 100, None);
     assert_eq!(layer.opacity, 1.0);
     
     layer.set_opacity(0.5);
@@ -651,7 +651,7 @@ mod tests {
 
   #[test]
   fn test_background_color_api() {
-    let mut actor = RALayer::new("test".to_string(), 100, 100, None);
+    let mut layer = RALayer::new("test".to_string(), 100, 100, None);
     layer.set_background_color(0.5, 0.6, 0.7);
     let (r, g, b) = layer.background_color();
     assert_eq!(r, 0.5);
@@ -661,7 +661,7 @@ mod tests {
 
   #[test]
   fn test_add_animation_with_key() {
-    let mut actor = RALayer::new("test".to_string(), 100, 100, None);
+    let mut layer = RALayer::new("test".to_string(), 100, 100, None);
     let mut animation = Animation::with_key_path("position.x");
     animation.duration = 2.0;
     animation.timing_function = Some(EasingFunction::Linear);
@@ -673,7 +673,7 @@ mod tests {
 
   #[test]
   fn test_remove_animation() {
-    let mut actor = RALayer::new("test".to_string(), 100, 100, None);
+    let mut layer = RALayer::new("test".to_string(), 100, 100, None);
     let animation1 = Animation::with_key_path("position.x");
     let animation2 = Animation::with_key_path("opacity");
     
@@ -689,7 +689,7 @@ mod tests {
 
   #[test]
   fn test_remove_all_animations() {
-    let mut actor = RALayer::new("test".to_string(), 100, 100, None);
+    let mut layer = RALayer::new("test".to_string(), 100, 100, None);
     let animation1 = Animation::with_key_path("position.x");
     let animation2 = Animation::with_key_path("opacity");
     let animation3 = Animation::new();
@@ -723,7 +723,7 @@ mod tests {
 
   #[test]
   fn test_backward_compatibility() {
-    let mut actor = RALayer::new("test".to_string(), 100, 100, None);
+    let mut layer = RALayer::new("test".to_string(), 100, 100, None);
     
     // Old way of setting position
     layer.x = 50;
