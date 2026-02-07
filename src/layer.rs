@@ -65,7 +65,7 @@ impl Vertex {
   }
 }
 
-pub struct RALayer {
+pub struct Layer {
   pub name: String,
   pub x: i32,
   pub y: i32,
@@ -81,7 +81,7 @@ pub struct RALayer {
   color: [f32; 3],
   pub opacity: f32, // CoreAnimation-style property
   pub image_path: String,
-  pub sub_layer_list: Vec<RALayer>,
+  pub sub_layer_list: Vec<Layer>,
   pub(crate) vertex_buffer: Option<wgpu::Buffer>,
   pub(crate) index_buffer: Option<wgpu::Buffer>,
   pub(crate) texture: Option<wgpu::Texture>,
@@ -100,25 +100,25 @@ pub struct RALayer {
 }
 
 pub trait EventHandler {
-  fn key_focus_in(&mut self, layer: &mut RALayer);
-  fn key_focus_out(&mut self, layer: &mut RALayer);
-  fn key_down(&mut self, key: Key, layer: &mut RALayer);
+  fn key_focus_in(&mut self, layer: &mut Layer);
+  fn key_focus_out(&mut self, layer: &mut Layer);
+  fn key_down(&mut self, key: Key, layer: &mut Layer);
 }
 
 pub trait Layout {
   fn layout_sub_layers(
     &mut self,
-    layer: &mut RALayer,
-    parent_layer: Option<&RALayer>,
+    layer: &mut Layer,
+    parent_layer: Option<&Layer>,
     stretch: &mut Option<Stretch>,
   );
-  fn update_layout(&mut self, layer: &mut RALayer, stretch: &mut Option<Stretch>);
+  fn update_layout(&mut self, layer: &mut Layer, stretch: &mut Option<Stretch>);
   fn finalize(&mut self);
 }
 
-impl RALayer {
+impl Layer {
   pub fn new(name: String, w: u32, h: u32, event_handler: Option<Box<dyn EventHandler>>) -> Self {
-    let layer = RALayer {
+    let layer = Layer {
       name: name,
       x: 0,
       y: 0,
@@ -417,7 +417,7 @@ impl RALayer {
 
   pub fn layout_sub_layers(
     &mut self,
-    parent_layer: Option<&RALayer>,
+    parent_layer: Option<&Layer>,
     stretch: &mut Option<Stretch>,
   ) {
     if let Some(mut layout) = self.layout.take() {
@@ -511,7 +511,7 @@ impl RALayer {
     }
   }
 
-  pub fn add_sub_layer(&mut self, layer: RALayer) {
+  pub fn add_sub_layer(&mut self, layer: Layer) {
     self.sub_layer_list.push(layer);
   }
 
@@ -576,17 +576,17 @@ impl RALayer {
   }
 
   /// Add a sublayer (CoreAnimation-style API, alias for add_sub_layer)
-  pub fn add_sublayer(&mut self, layer: RALayer) {
+  pub fn add_sublayer(&mut self, layer: Layer) {
     self.add_sub_layer(layer);
   }
 
   /// Get sublayers (CoreAnimation-style API)
-  pub fn sublayers(&self) -> &Vec<RALayer> {
+  pub fn sublayers(&self) -> &Vec<Layer> {
     &self.sub_layer_list
   }
 
   /// Get mutable sublayers (CoreAnimation-style API)
-  pub fn sublayers_mut(&mut self) -> &mut Vec<RALayer> {
+  pub fn sublayers_mut(&mut self) -> &mut Vec<Layer> {
     &mut self.sub_layer_list
   }
 
@@ -664,7 +664,7 @@ mod tests {
 
   #[test]
   fn test_position_api() {
-    let mut layer = RALayer::new("test".to_string(), 100, 100, None);
+    let mut layer = Layer::new("test".to_string(), 100, 100, None);
     layer.set_position(50, 75);
     let (x, y) = layer.position();
     assert_eq!(x, 50);
@@ -673,7 +673,7 @@ mod tests {
 
   #[test]
   fn test_bounds_api() {
-    let mut layer = RALayer::new("test".to_string(), 100, 100, None);
+    let mut layer = Layer::new("test".to_string(), 100, 100, None);
     layer.set_bounds(200, 150);
     let (w, h) = layer.bounds();
     assert_eq!(w, 200);
@@ -682,7 +682,7 @@ mod tests {
 
   #[test]
   fn test_opacity_api() {
-    let mut layer = RALayer::new("test".to_string(), 100, 100, None);
+    let mut layer = Layer::new("test".to_string(), 100, 100, None);
     assert_eq!(layer.opacity, 1.0);
 
     layer.set_opacity(0.5);
@@ -698,7 +698,7 @@ mod tests {
 
   #[test]
   fn test_background_color_api() {
-    let mut layer = RALayer::new("test".to_string(), 100, 100, None);
+    let mut layer = Layer::new("test".to_string(), 100, 100, None);
     layer.set_background_color(0.5, 0.6, 0.7);
     let (r, g, b) = layer.background_color();
     assert_eq!(r, 0.5);
@@ -708,7 +708,7 @@ mod tests {
 
   #[test]
   fn test_add_animation_with_key() {
-    let mut layer = RALayer::new("test".to_string(), 100, 100, None);
+    let mut layer = Layer::new("test".to_string(), 100, 100, None);
     let mut animation = Animation::with_key_path("position.x");
     animation.duration = 2.0;
     animation.timing_function = Some(EasingFunction::Linear);
@@ -720,7 +720,7 @@ mod tests {
 
   #[test]
   fn test_remove_animation() {
-    let mut layer = RALayer::new("test".to_string(), 100, 100, None);
+    let mut layer = Layer::new("test".to_string(), 100, 100, None);
     let animation1 = Animation::with_key_path("position.x");
     let animation2 = Animation::with_key_path("opacity");
 
@@ -736,7 +736,7 @@ mod tests {
 
   #[test]
   fn test_remove_all_animations() {
-    let mut layer = RALayer::new("test".to_string(), 100, 100, None);
+    let mut layer = Layer::new("test".to_string(), 100, 100, None);
     let animation1 = Animation::with_key_path("position.x");
     let animation2 = Animation::with_key_path("opacity");
     let animation3 = Animation::new();
@@ -755,9 +755,9 @@ mod tests {
 
   #[test]
   fn test_sublayers_api() {
-    let mut parent = RALayer::new("parent".to_string(), 200, 200, None);
-    let child1 = RALayer::new("child1".to_string(), 50, 50, None);
-    let child2 = RALayer::new("child2".to_string(), 50, 50, None);
+    let mut parent = Layer::new("parent".to_string(), 200, 200, None);
+    let child1 = Layer::new("child1".to_string(), 50, 50, None);
+    let child2 = Layer::new("child2".to_string(), 50, 50, None);
 
     parent.add_sublayer(child1);
     parent.add_sublayer(child2);
@@ -770,7 +770,7 @@ mod tests {
 
   #[test]
   fn test_backward_compatibility() {
-    let mut layer = RALayer::new("test".to_string(), 100, 100, None);
+    let mut layer = Layer::new("test".to_string(), 100, 100, None);
 
     // Old way of setting position
     layer.x = 50;

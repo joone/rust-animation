@@ -1,4 +1,4 @@
-use crate::layer::RALayer;
+use crate::layer::Layer;
 use keyframe::{ease, functions::*};
 use std::time::Instant;
 
@@ -290,7 +290,7 @@ impl Animation {
     self.rotation_time_duration = self.duration * 1000.0;
   }
 
-  pub fn run(&mut self, layer: &mut RALayer) {
+  pub fn run(&mut self, layer: &mut Layer) {
     if self.translation_x_running {
       if self.translation_x_starting_time == 0 {
         self.translation_x_starting_time = self.animation_time_instance.elapsed().as_millis();

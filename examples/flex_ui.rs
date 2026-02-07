@@ -13,7 +13,7 @@ use winit::{
 
 use rust_animation::layer::Layout;
 use rust_animation::layer::LayoutMode;
-use rust_animation::layer::RALayer;
+use rust_animation::layer::Layer;
 use rust_animation::play::Play;
 
 pub struct FlexLayout {
@@ -35,8 +35,8 @@ impl FlexLayout {
 impl Layout for FlexLayout {
   fn layout_sub_layers(
     &mut self,
-    layer: &mut RALayer,
-    parent_layer: Option<&RALayer>,
+    layer: &mut Layer,
+    parent_layer: Option<&Layer>,
     stretch: &mut Option<Stretch>,
   ) {
     println!("run layout_sub_layer for FlexLayout {}", self.name);
@@ -88,7 +88,7 @@ impl Layout for FlexLayout {
     //self.update_layout(layer, stretch);
   }
 
-  fn update_layout(&mut self, layer: &mut RALayer, stretch: &mut Option<Stretch>) {
+  fn update_layout(&mut self, layer: &mut Layer, stretch: &mut Option<Stretch>) {
     if let Some(stretch_obj) = stretch {
       if !layer.node.is_none() {
         let layout = stretch_obj.layout(layer.node.unwrap()).unwrap();
@@ -122,7 +122,7 @@ fn main() {
   // Initialize wgpu context with surface
   play.init_wgpu_with_surface(window.clone(), 1920, 1080);
 
-  let mut stage = RALayer::new("stage".to_string(), 1920, 1080, None);
+  let mut stage = Layer::new("stage".to_string(), 1920, 1080, None);
   stage.set_style(Style {
     size: Size {
       width: Dimension::Points(1920.0),
@@ -154,7 +154,7 @@ fn main() {
   let height = 108;
   for i in 0..6 {
     let layer_name = format!("layer_{}", i + 1);
-    let mut layer = RALayer::new(layer_name.to_string(), width, height, None);
+    let mut layer = Layer::new(layer_name.to_string(), width, height, None);
     layer.set_color(i as f32 / 6.0, i as f32 / 6.0, i as f32 / 6.0);
     layer.set_style(Style {
       size: Size {
@@ -178,7 +178,7 @@ fn main() {
       ..Default::default()
     });
     for j in 0..10 {
-      let mut sub_layer = RALayer::new(
+      let mut sub_layer = Layer::new(
         format!("layer_{}_{}", i + 1, j + 1).to_string(),
         100,
         100,

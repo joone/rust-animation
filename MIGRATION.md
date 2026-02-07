@@ -8,7 +8,7 @@ Version 0.3.0 migrates rust-animation from OpenGL to wgpu for improved cross-pla
 
 ### API Changes
 
-#### `RALayer::set_text()`
+#### `Layer::set_text()`
 **Before (OpenGL):**
 ```rust
 layer.set_text("Hello World");
@@ -21,7 +21,7 @@ let wgpu_context = WgpuContext::new_offscreen().await;
 layer.set_text("Hello World", &wgpu_context.device, &wgpu_context.queue);
 ```
 
-#### `RALayer::set_image()` 
+#### `Layer::set_image()` 
 The method signature remains the same for backward compatibility, but texture loading is now deferred:
 
 **Before (OpenGL):**
@@ -69,7 +69,7 @@ play.init_wgpu();
 
 ### Rendering Changes
 
-The `RALayer::render()` method signature has changed:
+The `Layer::render()` method signature has changed:
 
 **Before (OpenGL):**
 ```rust

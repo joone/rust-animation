@@ -28,7 +28,7 @@
 - **Rich Animation System**: Support for multiple easing functions (Linear, EaseIn, EaseOut, EaseInOut, and various polynomial variants)
 - **Flex Layout**: CSS Flexbox-like layout system using the [Stretch](https://github.com/vislyhq/stretch) library
 - **Hardware Acceleration**: wgpu-based rendering for high performance across multiple backends (Vulkan, Metal, D3D12, OpenGL)
-- **RALayer Hierarchy**: Support for nested layers with parent-child relationships
+- **Layer Hierarchy**: Support for nested layers with parent-child relationships
 - **Event Handling**: Built-in event system for keyboard input and focus management
 - **Image Support**: Load and display images as textures
 - **Text Rendering**: Font rendering capabilities for displaying text
@@ -100,7 +100,7 @@ use winit::{
     keyboard::{KeyCode, PhysicalKey},
     window::WindowBuilder,
 };
-use rust_animation::{layer::RALayer, animation::Animation, play::Play};
+use rust_animation::{layer::Layer, animation::Animation, play::Play};
 use rust_animation::layer::LayoutMode;
 use rust_animation::animation::EasingFunction;
 
@@ -125,11 +125,11 @@ fn main() {
     play.init_wgpu();
     
     // Create a stage (the root layer)
-    let mut stage = RALayer::new("stage".to_string(), 800, 600, None);
+    let mut stage = Layer::new("stage".to_string(), 800, 600, None);
     stage.set_visible(true);
     
     // Create a layer (a visual element)
-    let mut layer = RALayer::new("my_layer".to_string(), 100, 100, None);
+    let mut layer = Layer::new("my_layer".to_string(), 100, 100, None);
     layer.x = 50;
     layer.y = 50;
     layer.set_color(1.0, 0.0, 0.0); // Red
@@ -199,7 +199,7 @@ cargo run --example easing_functions
 **Key concepts demonstrated:**
 - Multiple easing functions (Linear, EaseIn, EaseOut, EaseInOut, and polynomial variants)
 - Combining multiple animations (translation + rotation)
-- RALayer positioning and coloring
+- Layer positioning and coloring
 
 **Code snippet:**
 
@@ -214,7 +214,7 @@ cargo run --example easing_functions
   // Initialize wgpu context
   play.init_wgpu();
   
-  let mut stage = RALayer::new("stage".to_string(), 1920, 1080, None);
+  let mut stage = Layer::new("stage".to_string(), 1920, 1080, None);
   stage.set_visible(true);
 
   let easing_functions = vec![
@@ -242,7 +242,7 @@ cargo run --example easing_functions
   let height = width;
   for i in 0..17 {
     let layer_name = format!("layer_{}", i + 1);
-    let mut layer = RALayer::new(layer_name.to_string(), width, height, None);
+    let mut layer = Layer::new(layer_name.to_string(), width, height, None);
     layer.x = 0;
     layer.y = y;
     y += height as i32;
@@ -314,10 +314,10 @@ cargo run --example ani
   // Initialize wgpu context
   play.init_wgpu();
   
-  let mut stage = RALayer::new("stage".to_string(), 1920, 1080, None);
+  let mut stage = Layer::new("stage".to_string(), 1920, 1080, None);
   stage.set_visible(true);
 
-  let mut layer_1 = RALayer::new("layer_1".to_string(), 400, 225, None);
+  let mut layer_1 = Layer::new("layer_1".to_string(), 400, 225, None);
   layer_1.x = 100;
   layer_1.y = 100;
   layer_1.set_image("examples/splash.png".to_string());
@@ -382,31 +382,31 @@ cargo run --example picture_viewer
 **Code snippet:**
 
 ```rust
-pub struct RALayerEvent {
+pub struct LayerEvent {
   name: String,
 }
 
-impl RALayerEvent {
+impl LayerEvent {
   pub fn new() -> Self {
-    RALayerEvent {
+    LayerEvent {
       name: "layer_event".to_string(),
     }
   }
 }
 
-impl EventHandler for RALayerEvent {
-  fn key_focus_in(&mut self, layer: &mut RALayer) {
+impl EventHandler for LayerEvent {
+  fn key_focus_in(&mut self, layer: &mut Layer) {
     let mut animation = Animation::new();
     animation.apply_scale(1.0, 1.1, 0.3, EasingFunction::EaseInOut);
     layer.set_animation(Some(animation));
   }
 
-  fn key_focus_out(&mut self, layer: &mut RALayer) {
+  fn key_focus_out(&mut self, layer: &mut Layer) {
     layer.scale_x = 1.0;
     layer.scale_y = 1.0;
   }
 
-  fn key_down(&mut self, key: rust_animation::layer::Key, layer: &mut RALayer) {
+  fn key_down(&mut self, key: rust_animation::layer::Key, layer: &mut Layer) {
     if key == rust_animation::layer::Key::Right {
       // right cursor
       layer.select_next_sub_actor();
@@ -434,8 +434,8 @@ impl ActorLayout {
 impl Layout for ActorLayout {
   fn layout_sub_layers(
     &mut self,
-    layer: &mut RALayer,
-    parent_layer: Option<&RALayer>,
+    layer: &mut Layer,
+    parent_layer: Option<&Layer>,
     stretch: &mut Option<Stretch>,
   ) {
     println!("layout_sub_layer {}", self.name);
@@ -449,7 +449,7 @@ impl Layout for ActorLayout {
     }
   }
 
-  fn update_layout(&mut self, layer: &mut RALayer, stretch: &mut Option<Stretch>) {
+  fn update_layout(&mut self, layer: &mut Layer, stretch: &mut Option<Stretch>) {
     println!("update_layout {}", self.name);
   }
 
@@ -468,7 +468,7 @@ impl Layout for ActorLayout {
 - Holds one or more stages
 - Handles projection matrices and OpenGL setup
 
-**RALayer**: Visual elements in the scene graph
+**Layer**: Visual elements in the scene graph
 - Can have position (x, y, z), size (width, height)
 - Supports transforms: translate, scale, rotate
 - Can have colors or textures
@@ -492,7 +492,7 @@ impl Layout for ActorLayout {
 let play = Play::new(name, width, height, layout_mode);
 
 // Create layers
-let mut layer = RALayer::new(name, width, height, event_handler);
+let mut layer = Layer::new(name, width, height, event_handler);
 layer.x = x;
 layer.y = y;
 layer.set_color(r, g, b);

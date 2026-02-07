@@ -9,7 +9,7 @@ use stretch::{geometry::Size, node::Stretch};
 use crate::layer::EventHandler;
 use crate::layer::Key;
 use crate::layer::LayoutMode;
-use crate::layer::RALayer;
+use crate::layer::Layer;
 use crate::wgpu_context::WgpuContext;
 
 // WGSL shader source
@@ -63,7 +63,7 @@ pub fn render(name: String) {
 
 pub struct Play {
   _name: String,
-  stage_list: Vec<RALayer>,
+  stage_list: Vec<Layer>,
   stage_map: HashMap<String, usize>,
   projection: Matrix4<f32>,
   pub stretch: Option<Stretch>,
@@ -322,7 +322,7 @@ impl Play {
 
   /// Recursively render a layer and its sublayers
   fn render_layer(
-    layer: &mut RALayer,
+    layer: &mut Layer,
     render_pass: &mut wgpu::RenderPass,
     parent_transform: Option<&Matrix4<f32>>,
     context: &WgpuContext,
@@ -430,11 +430,11 @@ impl Play {
     w: u32,
     h: u32,
     event_handler: Option<Box<dyn EventHandler>>,
-  ) -> RALayer {
-    RALayer::new(name, w, h, event_handler)
+  ) -> Layer {
+    Layer::new(name, w, h, event_handler)
   }
 
-  pub fn add_new_layer_to_stage(&mut self, stage_name: &String, layer: RALayer) {
+  pub fn add_new_layer_to_stage(&mut self, stage_name: &String, layer: Layer) {
     match self.stage_map.get(stage_name) {
       Some(&index) => {
         self.stage_list[index].add_sub_layer(layer);
@@ -453,7 +453,7 @@ impl Play {
     }
   }
 
-  pub fn add_stage(&mut self, stage: RALayer) -> String {
+  pub fn add_stage(&mut self, stage: Layer) -> String {
     let stage_name = stage.name.to_string();
     self.stage_list.push(stage);
     self
