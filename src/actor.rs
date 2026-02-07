@@ -261,7 +261,7 @@ impl Actor {
   pub fn set_image(&mut self, path: String) {
     self.image_path = path;
 
-    if self.image_path.len() > 0 {
+    if !self.image_path.is_empty() {
       let stride = 5 * mem::size_of::<GLfloat>() as GLsizei;
       unsafe {
         // texture coord attribute
@@ -351,7 +351,7 @@ impl Actor {
   }
 
   pub fn select_next_sub_actor(&mut self) {
-    if self.sub_actor_list.len() <= 0 {
+    if self.sub_actor_list.is_empty() {
       return;
     }
     // no more next actor.
@@ -364,7 +364,7 @@ impl Actor {
   }
 
   pub fn select_prev_sub_actor(&mut self) {
-    if self.sub_actor_list.len() <= 0 {
+    if self.sub_actor_list.is_empty() {
       return;
     }
     // ne more previous actor.
@@ -496,7 +496,7 @@ impl Actor {
       gl::UniformMatrix4fv(loc_transform, 1, gl::FALSE, transform.as_ptr());
       gl::UniformMatrix4fv(loc_projection, 1, gl::FALSE, projection.as_ptr());
 
-      if self.image_path.len() > 0 {
+      if !self.image_path.is_empty() {
         gl::BindTexture(gl::TEXTURE_2D, self.texture);
         gl::Uniform1i(loc_use_texture, 1);
       } else {
@@ -514,7 +514,7 @@ impl Actor {
     }
 
     // render the focused sub_actor at the end.
-    if self.sub_actor_list.len() > 0 {
+    if !self.sub_actor_list.is_empty() {
       self.sub_actor_list[self.focused_sub_actor].render(
         shader_program,
         Some(&transform),
