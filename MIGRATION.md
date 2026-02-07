@@ -94,7 +94,12 @@ The migration to wgpu provides:
 
 ## Examples
 
-Examples are being updated to work with wgpu. For now, they may still reference OpenGL patterns. Check the latest examples in the repository for wgpu-based usage.
+All examples have been updated to use wgpu with winit for modern, cross-platform windowing. Check the [examples](../examples/) directory for complete, working implementations using the new wgpu-based API.
+
+Examples now use:
+- **winit** for window creation and event handling (instead of GLFW)
+- **wgpu** context initialization via `play.init_wgpu()`
+- Modern event loop patterns compatible with wgpu
 
 ## Need Help?
 

@@ -2,10 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-extern crate glfw;
-
-use glfw::{Action, Context, Key};
 use stretch::node::Stretch;
+use winit::{
+  event::{ElementState, Event, KeyEvent, WindowEvent},
+  event_loop::{ControlFlow, EventLoop},
+  keyboard::{KeyCode, PhysicalKey},
+  window::WindowBuilder,
+};
 
 use reqwest::Error;
 use serde_json::Value;
@@ -16,12 +19,13 @@ use std::path::Path;
 use std::sync::mpsc;
 use std::thread;
 
-use rust_animation::layer::RALayer;
-use rust_animation::layer::EventHandler;
-use rust_animation::layer::Layout;
-use rust_animation::layer::LayoutMode;
 use rust_animation::animation::Animation;
 use rust_animation::animation::EasingFunction;
+use rust_animation::layer::EventHandler;
+use rust_animation::layer::Key as AnimKey;
+use rust_animation::layer::Layout;
+use rust_animation::layer::LayoutMode;
+use rust_animation::layer::RALayer;
 use rust_animation::play::Play;
 
 type ResultUrl<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
@@ -185,6 +189,9 @@ impl PictureBrowser {
     }
   }
   pub fn initialize(&mut self) {
+    // Initialize wgpu context
+    self.play.init_wgpu();
+
     let mut splash_stage = RALayer::new("splash_stage".to_string(), 1920, 1080, None);
     splash_stage.set_image("examples/splash.png".to_string());
     // splash_stage.set_visible(true);
@@ -245,10 +252,8 @@ impl PictureBrowser {
     self.play.render();
   }
 
-  pub fn handle_input(&mut self, key: glfw::Key) {
-    self
-      .play
-      .handle_input(unsafe { ::std::mem::transmute(key) });
+  pub fn handle_input(&mut self, key: AnimKey) {
+    self.play.handle_input(key);
   }
 
   pub fn render_splash_screen(&mut self) {
@@ -262,23 +267,12 @@ impl PictureBrowser {
 }
 
 fn main() {
-  let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
-  glfw.window_hint(glfw::WindowHint::ContextVersion(3, 3));
-  glfw.window_hint(glfw::WindowHint::OpenGlProfile(
-    glfw::OpenGlProfileHint::Core,
-  ));
-  #[cfg(target_os = "macos")]
-  glfw.window_hint(glfw::WindowHint::OpenGlForwardCompat(true));
-
-  let (mut window, events) = glfw
-    .create_window(1920, 1080, "Image Viewer", glfw::WindowMode::Windowed)
-    .expect("Failed to create GLFW window.");
-
-  window.set_key_polling(true);
-  window.make_current();
-  window.set_framebuffer_size_polling(true);
-
-  gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
+  let event_loop = EventLoop::new().unwrap();
+  let window = WindowBuilder::new()
+    .with_title("Image Viewer")
+    .with_inner_size(winit::dpi::LogicalSize::new(1920, 1080))
+    .build(&event_loop)
+    .unwrap();
 
   let (tx, rx) = mpsc::channel();
   thread::spawn(move || match download_images() {
@@ -291,52 +285,52 @@ fn main() {
   let mut picture_browser = PictureBrowser::new(1920, 1080);
   picture_browser.initialize();
 
-  while !window.should_close() {
-    for event in glfw::flush_messages(&events) {
-      handle_window_event(&mut window, event, &mut picture_browser);
-    }
+  event_loop
+    .run(move |event, elwt| {
+      elwt.set_control_flow(ControlFlow::Poll);
 
-    picture_browser.render_splash_screen();
+      match event {
+        Event::WindowEvent { event, .. } => match event {
+          WindowEvent::CloseRequested => elwt.exit(),
+          WindowEvent::KeyboardInput {
+            event:
+              KeyEvent {
+                physical_key: PhysicalKey::Code(key_code),
+                state: ElementState::Pressed,
+                ..
+              },
+            ..
+          } => match key_code {
+            KeyCode::Escape => elwt.exit(),
+            KeyCode::ArrowUp => picture_browser.handle_input(AnimKey::Up),
+            KeyCode::ArrowDown => picture_browser.handle_input(AnimKey::Down),
+            KeyCode::ArrowLeft => picture_browser.handle_input(AnimKey::Left),
+            KeyCode::ArrowRight => picture_browser.handle_input(AnimKey::Right),
+            KeyCode::Enter => picture_browser.handle_input(AnimKey::Enter),
+            KeyCode::Space => picture_browser.handle_input(AnimKey::Space),
+            _ => {}
+          },
+          WindowEvent::RedrawRequested => {
+            picture_browser.render_splash_screen();
 
-    match rx.try_recv() {
-      Ok(true) => {
-        picture_browser.load_image_list();
-      }
-      Ok(false) => {}
-      Err(..) => {}
-    }
+            match rx.try_recv() {
+              Ok(true) => {
+                picture_browser.load_image_list();
+              }
+              Ok(false) => {}
+              Err(..) => {}
+            }
 
-    picture_browser.render();
-
-    // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-    window.swap_buffers();
-    glfw.poll_events();
-  }
-}
-
-fn handle_window_event(
-  window: &mut glfw::Window,
-  (_time, event): (f64, glfw::WindowEvent),
-  browser: &mut PictureBrowser,
-) {
-  match event {
-    glfw::WindowEvent::FramebufferSize(w, h) => unsafe { gl::Viewport(0, 0, w, h) },
-    glfw::WindowEvent::Key(key, scancode, action, mods) => {
-      println!(
-        "Time: {:?}, Key: {:?}, ScanCode: {:?}, Action: {:?}, Modifiers: [{:?}]",
-        _time, key, scancode, action, mods
-      );
-      match (key, action) {
-        (Key::Escape, Action::Press) => window.set_should_close(true),
-        (Key::Up, Action::Press) => browser.handle_input(Key::Up),
-        (Key::Down, Action::Press) => browser.handle_input(Key::Down),
-        (Key::Left, Action::Press) => browser.handle_input(Key::Left),
-        (Key::Right, Action::Press) => browser.handle_input(Key::Right),
-        (Key::Enter, Action::Press) => browser.handle_input(Key::Enter),
-        (Key::Space, Action::Press) => browser.handle_input(Key::Space),
+            picture_browser.render();
+            window.request_redraw();
+          }
+          _ => {}
+        },
+        Event::AboutToWait => {
+          window.request_redraw();
+        }
         _ => {}
       }
-    }
-    _ => {}
-  }
+    })
+    .unwrap();
 }

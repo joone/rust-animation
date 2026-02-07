@@ -91,17 +91,27 @@ cargo build --release
 
 ## Quick Start
 
-> **Migration Note**: The core library has been migrated to use wgpu for rendering. The examples are currently being updated to reflect this change. For now, examples may still reference OpenGL/GLFW, but the underlying library uses wgpu for cross-platform hardware-accelerated rendering.
-
 Here's a minimal example to get started:
 
 ```rust
+use winit::{
+    event::{Event, WindowEvent, KeyEvent},
+    event_loop::{ControlFlow, EventLoop},
+    keyboard::{KeyCode, PhysicalKey},
+    window::WindowBuilder,
+};
 use rust_animation::{layer::RALayer, animation::Animation, play::Play};
 use rust_animation::layer::LayoutMode;
-use keyframe::EasingFunction;
+use rust_animation::animation::EasingFunction;
 
 fn main() {
-    // Initialize GLFW and create a window (see examples for full setup)
+    // Create event loop and window
+    let event_loop = EventLoop::new().unwrap();
+    let window = WindowBuilder::new()
+        .with_title("My First Animation")
+        .with_inner_size(winit::dpi::LogicalSize::new(800, 600))
+        .build(&event_loop)
+        .unwrap();
     
     // Create a Play (the main container)
     let mut play = Play::new(
@@ -110,6 +120,9 @@ fn main() {
         600,
         LayoutMode::UserDefine,
     );
+    
+    // Initialize wgpu context
+    play.init_wgpu();
     
     // Create a stage (the root layer)
     let mut stage = RALayer::new("stage".to_string(), 800, 600, None);
@@ -127,11 +140,35 @@ fn main() {
     layer.set_animation(Some(animation));
     
     // Add layer to stage and stage to play
-    stage.add_sub_actor(layer);
+    stage.add_sub_layer(layer);
     play.add_stage(stage);
     
-    // Render loop (see examples for full implementation)
-    // play.render();
+    // Event loop
+    event_loop.run(move |event, elwt| {
+        elwt.set_control_flow(ControlFlow::Poll);
+        
+        match event {
+            Event::WindowEvent { event, .. } => match event {
+                WindowEvent::CloseRequested => elwt.exit(),
+                WindowEvent::KeyboardInput {
+                    event: KeyEvent {
+                        physical_key: PhysicalKey::Code(KeyCode::Escape),
+                        ..
+                    },
+                    ..
+                } => elwt.exit(),
+                WindowEvent::RedrawRequested => {
+                    play.render();
+                    window.request_redraw();
+                }
+                _ => {}
+            },
+            Event::AboutToWait => {
+                window.request_redraw();
+            }
+            _ => {}
+        }
+    }).unwrap();
 }
 ```
 
@@ -173,6 +210,10 @@ cargo run --example easing_functions
     1080,
     LayoutMode::UserDefine,
   );
+  
+  // Initialize wgpu context
+  play.init_wgpu();
+  
   let mut stage = RALayer::new("stage".to_string(), 1920, 1080, None);
   stage.set_visible(true);
 
@@ -201,7 +242,7 @@ cargo run --example easing_functions
   let height = width;
   for i in 0..17 {
     let layer_name = format!("layer_{}", i + 1);
-    let mut layer = RALayer::new(actor_name.to_string(), width, height, None);
+    let mut layer = RALayer::new(layer_name.to_string(), width, height, None);
     layer.x = 0;
     layer.y = y;
     y += height as i32;
@@ -211,20 +252,11 @@ cargo run --example easing_functions
     animation.apply_translation_x(0, (1920 - width) as i32, time, easing_functions[i]);
     animation.apply_rotation(0, 360, time, EasingFunction::Linear);
     layer.set_animation(Some(animation));
-    stage.add_sub_actor(layer);
+    stage.add_sub_layer(layer);
   }
   play.add_stage(stage);
 
-  while !window.should_close() {
-    // events
-    process_events(&mut window, &events);
-
-    play.render();
-
-    // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-    window.swap_buffers();
-    glfw.poll_events();
-  }
+  // Event loop with winit (see full example for complete implementation)
 ```
 
 ## Flex UI
@@ -248,207 +280,7 @@ cargo run --example flex_ui
 - Justify content and align items properties
 - Nested layers with flex positioning
 
-**Code snippet:**
-
-```rust
-pub struct FlexLayout {
-  name: String,
-}
-
-impl FlexLayout {
-  pub fn new() -> Self {
-    let mut flex_layout = FlexLayout {
-      name: "flex_layout".to_string(),
-    };
-
-    println!("new FlexLayout {}", flex_layout.name);
-
-    flex_layout
-  }
-}
-
-impl Layout for FlexLayout {
-  fn layout_sub_layers(
-    &mut self,
-    layer: &mut RALayer,
-    parent_layer: Option<&RALayer>,
-    stretch: &mut Option<Stretch>,
-  ) {
-    println!("run layout_sub_layer for FlexLayout {}", self.name);
-    if let Some(stretch_obj) = stretch {
-      if let Some(style_obj) = layer.style {
-        layer.node = Some(stretch_obj.new_node(style_obj, vec![]).unwrap());
-      } else {
-        //println!("default style: {}: {},{}", self.name, self.width, self.height);
-        layer.node = Some(
-          stretch_obj
-            .new_node(
-              Style {
-                size: Size {
-                  width: Dimension::Points(layer.width as f32),
-                  height: Dimension::Points(layer.height as f32),
-                },
-                margin: Rect {
-                  start: Dimension::Points(2.0),
-                  end: Dimension::Points(2.0),
-                  top: Dimension::Points(2.0),
-                  bottom: Dimension::Points(2.0),
-                  ..Default::default()
-                },
-                ..Default::default()
-              },
-              vec![],
-            )
-            .unwrap(),
-        );
-      }
-
-      println!("layer name {}", layer.name);
-
-      if let Some(parent_layer) = parent_layer {
-        if !parent_layer.node.is_none() && !layer.node.is_none() {
-          match stretch_obj.add_child(parent_layer.node.unwrap(), layer.node.unwrap()) {
-            Ok(()) => {
-              println!(
-                " stretch node  is added {} {}",
-                parent_layer.name, layer.name
-              )
-            }
-            Err(..) => {}
-          }
-        }
-      }
-    }
-
-    //self.update_layout(layer, stretch);
-  }
-
-  fn update_layout(&mut self, layer: &mut RALayer, stretch: &mut Option<Stretch>) {
-    if let Some(stretch_obj) = stretch {
-      if !layer.node.is_none() {
-        let layout = stretch_obj.layout(layer.node.unwrap()).unwrap();
-        layer.x = layout.location.x as i32;
-        layer.y = layout.location.y as i32;
-        println!(
-          "run update_layout for FlexLayout {} = {},{}",
-          layer.name, layer.x, layer.y
-        );
-      }
-    }
-  }
-
-  fn finalize(&mut self) {
-    println!("finalize {}", self.name);
-  }
-}
-
-fn main() {
-  let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
-  glfw.window_hint(glfw::WindowHint::ContextVersion(3, 3));
-  glfw.window_hint(glfw::WindowHint::OpenGlProfile(
-    glfw::OpenGlProfileHint::Core,
-  ));
-  #[cfg(target_os = "macos")]
-  glfw.window_hint(glfw::WindowHint::OpenGlForwardCompat(true));
-
-  let (mut window, events) = glfw
-    .create_window(1920, 1080, "Flex UI demo", glfw::WindowMode::Windowed)
-    .expect("Failed to create GLFW window.");
-
-  window.set_key_polling(true);
-  window.make_current();
-  window.set_framebuffer_size_polling(true);
-
-  gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
-
-  let mut play = Play::new("Flex UI test".to_string(), 1920, 1080, LayoutMode::Flex);
-  let mut stage = RALayer::new("stage".to_string(), 1920, 1080, None);
-  stage.set_style(Style {
-    size: Size {
-      width: Dimension::Points(1920.0),
-      height: Dimension::Points(1080.0),
-    },
-    justify_content: JustifyContent::Center,
-    flex_direction: FlexDirection::Column,
-    align_items: AlignItems::Center,
-    margin: Rect {
-      start: Dimension::Points(1.0),
-      end: Dimension::Points(1.0),
-      top: Dimension::Points(1.0),
-      bottom: Dimension::Points(1.0),
-      ..Default::default()
-    },
-    ..Default::default()
-  });
-  stage.set_visible(true);
-
-  let justify_content = vec![
-    JustifyContent::FlexStart,
-    JustifyContent::FlexEnd,
-    JustifyContent::Center,
-    JustifyContent::SpaceBetween,
-    JustifyContent::SpaceAround,
-    JustifyContent::SpaceEvenly,
-  ];
-  let width = 1500;
-  let height = 108;
-  for i in 0..6 {
-    let layer_name = format!("layer_{}", i + 1);
-    let mut layer = RALayer::new(actor_name.to_string(), width, height, None);
-    layer.set_color(i as f32 / 6.0, i as f32 / 6.0, i as f32 / 6.0);
-    layer.set_style(Style {
-      size: Size {
-        width: Dimension::Points(width as f32),
-        height: Dimension::Points(height as f32),
-      },
-      justify_content: justify_content[i],
-      align_items: AlignItems::Center,
-      margin: Rect {
-        start: Dimension::Points(1.0),
-        end: Dimension::Points(1.0),
-        top: Dimension::Points(1.0),
-        bottom: Dimension::Points(1.0),
-        ..Default::default()
-      },
-      padding: Rect {
-        start: Dimension::Points(2.0),
-        end: Dimension::Points(2.0),
-        ..Default::default()
-      },
-      ..Default::default()
-    });
-    for j in 0..10 {
-      let mut sub_actor = RALayer::new(
-        format!("actor_{}_{}", i + 1, j + 1).to_string(),
-        100,
-        100,
-        None,
-      );
-      sub_actor.set_color(1.0, j as f32 / 10.0, j as f32 / 10.0);
-      sub_actor.set_layout(Some(Box::new(FlexLayout::new())));
-      layer.add_sub_actor(sub_actor);
-    }
-    layer.set_layout(Some(Box::new(FlexLayout::new())));
-    stage.add_sub_actor(layer);
-  }
-
-  stage.set_layout(Some(Box::new(FlexLayout::new())));
-  play.add_stage(stage);
-
-  //play.set_stage_needs_layout(&"stage".to_string());
-
-  while !window.should_close() {
-    // events
-    process_events(&mut window, &events);
-
-    play.render();
-
-    // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-    window.swap_buffers();
-    glfw.poll_events();
-  }
-}
-```
+See the full implementation in `examples/flex_ui.rs`.
 
 ## Basic Animation
 
@@ -478,6 +310,10 @@ cargo run --example ani
     1080,
     LayoutMode::UserDefine,
   );
+  
+  // Initialize wgpu context
+  play.init_wgpu();
+  
   let mut stage = RALayer::new("stage".to_string(), 1920, 1080, None);
   stage.set_visible(true);
 
@@ -496,35 +332,29 @@ cargo run --example ani
   animation_1.apply_rotation(0, 360, time, EasingFunction::EaseInOut);
   layer_1.set_animation(Some(animation_1));
 
-  let mut actor_2 = Play::new_actor("actor_2".to_string(), 120, 120, None);
-  actor_2.x = 100;
-  actor_2.y = 100;
-  actor_2.scale_x = 1.5;
-  actor_2.scale_y = 1.5;
-  actor_2.set_color(0.0, 0.0, 1.0);
-  // 0 degree -> 360 degree for 5 sec
+  let mut layer_2 = Play::new_layer("layer_2".to_string(), 120, 120, None);
+  layer_2.x = 100;
+  layer_2.y = 100;
+  layer_2.scale_x = 1.5;
+  layer_2.scale_y = 1.5;
+  layer_2.set_color(0.0, 0.0, 1.0);
 
   let mut animation_2 = Animation::new();
   animation_2.apply_rotation(0, 360, 5.0, EasingFunction::EaseInOut);
-  actor_2.set_animation(Some(animation_2));
+  layer_2.set_animation(Some(animation_2));
 
-  let mut layer_3 = Play::new_actor("layer_3".to_string(), 50, 50, None);
+  let mut layer_3 = Play::new_layer("layer_3".to_string(), 50, 50, None);
   layer_3.x = 10;
   layer_3.y = 10;
   layer_3.set_color(1.0, 0.0, 0.0);
-  actor_2.add_sub_actor(layer_3);
+  layer_2.add_sub_layer(layer_3);
 
-  stage.add_sub_actor(layer_1);
-  stage.add_sub_actor(actor_2);
+  stage.add_sub_layer(layer_1);
+  stage.add_sub_layer(layer_2);
 
   play.add_stage(stage);
 
-  while !window.should_close() {
-    process_events(&mut window, &events);
-    play.render();
-    window.swap_buffers();
-    glfw.poll_events();
-  }
+  // Event loop with winit (see full example for complete implementation)
 ```
 
 ## Picture Viewer
