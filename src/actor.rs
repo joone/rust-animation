@@ -8,7 +8,7 @@ extern crate keyframe;
 
 use self::gl::types::*;
 use cgmath::{Deg, Matrix, Matrix4, SquareMatrix, Vector3};
-use image::{DynamicImage};
+use image::DynamicImage;
 use std::ffi::CStr;
 use std::mem;
 use std::os::raw::c_void;

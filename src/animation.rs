@@ -434,7 +434,7 @@ mod tests {
     
     assert_eq!(animation.duration, 3.5);
     assert_eq!(animation.repeat_count, 2.0);
-    assert_eq!(animation.autoreverses, true);
+    assert!(animation.autoreverses);
   }
 
   #[test]
