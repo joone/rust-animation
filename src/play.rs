@@ -115,6 +115,25 @@ impl Play {
     self.wgpu_context = Some(pollster::block_on(WgpuContext::new_offscreen()));
   }
 
+  /// Initialize wgpu with a window surface for rendering to screen
+  pub fn init_wgpu_with_surface(
+    &mut self,
+    window: impl Into<wgpu::SurfaceTarget<'static>>,
+    width: u32,
+    height: u32,
+  ) {
+    self.wgpu_context = Some(pollster::block_on(WgpuContext::new_with_surface(
+      window, width, height,
+    )));
+  }
+
+  /// Resize the rendering surface
+  pub fn resize(&mut self, width: u32, height: u32) {
+    if let Some(ref mut context) = self.wgpu_context {
+      context.resize(width, height);
+    }
+  }
+
   pub fn new_layer(
     name: String,
     w: u32,
@@ -161,9 +180,7 @@ impl Play {
   }
 
   pub fn render(&mut self) {
-    // wgpu rendering would happen here in a full implementation
-    // For now, we just update animations and layout
-
+    // Update animations and layout
     for stage in self.stage_list.iter_mut() {
       if stage.needs_update {
         stage.layout_sub_layers(None, &mut self.stretch);
@@ -180,6 +197,55 @@ impl Play {
 
       stage.animate();
       stage.render(None, &self.projection);
+    }
+
+    // Perform actual wgpu rendering if surface is available
+    if let Some(ref context) = self.wgpu_context {
+      if let Some(ref surface) = context.surface {
+        let output = match surface.get_current_texture() {
+          Ok(output) => output,
+          Err(e) => {
+            eprintln!("Failed to get current texture: {:?}", e);
+            return;
+          }
+        };
+
+        let view = output
+          .texture
+          .create_view(&wgpu::TextureViewDescriptor::default());
+
+        let mut encoder = context
+          .device
+          .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("Render Encoder"),
+          });
+
+        {
+          let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: Some("Render Pass"),
+            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+              view: &view,
+              resolve_target: None,
+              ops: wgpu::Operations {
+                load: wgpu::LoadOp::Clear(wgpu::Color {
+                  r: 0.1,
+                  g: 0.2,
+                  b: 0.3,
+                  a: 1.0,
+                }),
+                store: wgpu::StoreOp::Store,
+              },
+            })],
+            depth_stencil_attachment: None,
+            timestamp_writes: None,
+            occlusion_query_set: None,
+          });
+          // TODO: Actual layer rendering will go here
+        }
+
+        context.queue.submit(std::iter::once(encoder.finish()));
+        output.present();
+      }
     }
   }
 }

@@ -2,12 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+use std::sync::Arc;
 use stretch::node::Stretch;
 use winit::{
   event::{ElementState, Event, KeyEvent, WindowEvent},
   event_loop::{ControlFlow, EventLoop},
   keyboard::{KeyCode, PhysicalKey},
-  window::WindowBuilder,
+  window::{Window, WindowBuilder},
 };
 
 use reqwest::Error;
@@ -188,9 +189,9 @@ impl PictureBrowser {
       splash_stage_name: "".to_string(),
     }
   }
-  pub fn initialize(&mut self) {
-    // Initialize wgpu context
-    self.play.init_wgpu();
+  pub fn initialize(&mut self, window: Arc<Window>) {
+    // Initialize wgpu context with surface
+    self.play.init_wgpu_with_surface(window, 1920, 1080);
 
     let mut splash_stage = RALayer::new("splash_stage".to_string(), 1920, 1080, None);
     splash_stage.set_image("examples/splash.png".to_string());
@@ -268,11 +269,13 @@ impl PictureBrowser {
 
 fn main() {
   let event_loop = EventLoop::new().unwrap();
-  let window = WindowBuilder::new()
-    .with_title("Image Viewer")
-    .with_inner_size(winit::dpi::LogicalSize::new(1920, 1080))
-    .build(&event_loop)
-    .unwrap();
+  let window = Arc::new(
+    WindowBuilder::new()
+      .with_title("Image Viewer")
+      .with_inner_size(winit::dpi::LogicalSize::new(1920, 1080))
+      .build(&event_loop)
+      .unwrap(),
+  );
 
   let (tx, rx) = mpsc::channel();
   thread::spawn(move || match download_images() {
@@ -283,7 +286,7 @@ fn main() {
   });
 
   let mut picture_browser = PictureBrowser::new(1920, 1080);
-  picture_browser.initialize();
+  picture_browser.initialize(window.clone());
 
   event_loop
     .run(move |event, elwt| {
