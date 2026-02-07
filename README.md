@@ -1,4 +1,4 @@
-# rust-animation &emsp;  [![Latest Version]][crates.io] 
+# rust-animation [![Latest Version]][crates.io] 
 [Latest Version]: https://img.shields.io/crates/v/rust-animation.svg
 [crates.io]: https://crates.io/crates/rust-animation
 
