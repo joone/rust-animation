@@ -6,8 +6,8 @@ extern crate glfw;
 
 use glfw::{Action, Context, Key};
 
-use rust_animation::actor::Actor;
-use rust_animation::actor::LayoutMode;
+use rust_animation::layer::RALayer;
+use rust_animation::layer::LayoutMode;
 use rust_animation::animation::Animation;
 use rust_animation::animation::EasingFunction;
 use rust_animation::play::Play;
@@ -43,7 +43,7 @@ fn main() {
     1080,
     LayoutMode::UserDefine,
   );
-  let mut stage = Actor::new("stage".to_string(), 1920, 1080, None);
+  let mut stage = RALayer::new("stage".to_string(), 1920, 1080, None);
   stage.set_visible(true);
 
   let easing_functions = vec![
@@ -70,18 +70,18 @@ fn main() {
   let width = 63;
   let height = width;
   for i in 0..17 {
-    let actor_name = format!("actor_{}", i + 1);
-    let mut actor = Actor::new(actor_name.to_string(), width, height, None);
-    actor.x = 0;
-    actor.y = y;
+    let layer_name = format!("layer_{}", i + 1);
+    let mut layer = RALayer::new(layer_name.to_string(), width, height, None);
+    layer.x = 0;
+    layer.y = y;
     y += height as i32;
-    actor.set_color(i as f32 / 18.0, i as f32 / 18.0, i as f32 / 18.0);
+    layer.set_color(i as f32 / 18.0, i as f32 / 18.0, i as f32 / 18.0);
 
     let mut animation = Animation::new();
     animation.apply_translation_x(0, (1920 - width) as i32, time, easing_functions[i]);
     animation.apply_rotation(0, 360, time, EasingFunction::Linear);
-    actor.set_animation(Some(animation));
-    stage.add_sub_actor(actor);
+    layer.set_animation(Some(animation));
+    stage.add_sub_layer(layer);
   }
   play.add_stage(stage);
 

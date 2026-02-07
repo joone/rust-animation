@@ -16,10 +16,10 @@ use std::path::Path;
 use std::sync::mpsc;
 use std::thread;
 
-use rust_animation::actor::Actor;
-use rust_animation::actor::EventHandler;
-use rust_animation::actor::Layout;
-use rust_animation::actor::LayoutMode;
+use rust_animation::layer::RALayer;
+use rust_animation::layer::EventHandler;
+use rust_animation::layer::Layout;
+use rust_animation::layer::LayoutMode;
 use rust_animation::animation::Animation;
 use rust_animation::animation::EasingFunction;
 use rust_animation::play::Play;
@@ -79,41 +79,41 @@ fn download_images() -> Result<(), Error> {
 const IMAGE_WIDTH: u32 = 400;
 const IMAGE_HEIGHT: u32 = 225;
 
-pub struct ActorEvent {
+pub struct RALayerEvent {
   name: String,
 }
 
-impl ActorEvent {
+impl RALayerEvent {
   pub fn new() -> Self {
-    ActorEvent {
-      name: "actor_event".to_string(),
+    RALayerEvent {
+      name: "layer_event".to_string(),
     }
   }
 }
 
-impl EventHandler for ActorEvent {
-  fn key_focus_in(&mut self, actor: &mut Actor) {
-    println!("key_focus_in: {} {}", self.name, actor.name);
+impl EventHandler for RALayerEvent {
+  fn key_focus_in(&mut self, layer: &mut RALayer) {
+    println!("key_focus_in: {} {}", self.name, layer.name);
     let mut animation = Animation::new();
     animation.apply_scale(1.0, 1.1, 0.3, EasingFunction::EaseInOut);
-    actor.set_animation(Some(animation));
+    layer.set_animation(Some(animation));
   }
 
-  fn key_focus_out(&mut self, actor: &mut Actor) {
-    println!("key_focus_out: {} {}", self.name, actor.name);
-    actor.scale_x = 1.0;
-    actor.scale_y = 1.0;
+  fn key_focus_out(&mut self, layer: &mut RALayer) {
+    println!("key_focus_out: {} {}", self.name, layer.name);
+    layer.scale_x = 1.0;
+    layer.scale_y = 1.0;
   }
 
-  fn key_down(&mut self, key: rust_animation::actor::Key, actor: &mut Actor) {
-    println!("key_down: {}  {:?}  {}", self.name, key, actor.name);
+  fn key_down(&mut self, key: rust_animation::layer::Key, layer: &mut RALayer) {
+    println!("key_down: {}  {:?}  {}", self.name, key, layer.name);
 
-    if key == rust_animation::actor::Key::Right {
+    if key == rust_animation::layer::Key::Right {
       // right cursor
-      actor.select_next_sub_actor();
-    } else if key == rust_animation::actor::Key::Left {
+      layer.select_next_sub_layer();
+    } else if key == rust_animation::layer::Key::Left {
       // left cursor
-      actor.select_prev_sub_actor();
+      layer.select_prev_sub_layer();
     }
   }
 }
@@ -126,31 +126,31 @@ pub struct ActorLayout {
 impl ActorLayout {
   pub fn new() -> Self {
     ActorLayout {
-      name: "actor_layout".to_string(),
+      name: "layer_layout".to_string(),
       cur_x: 0,
     }
   }
 }
 
 impl Layout for ActorLayout {
-  fn layout_sub_actors(
+  fn layout_sub_layers(
     &mut self,
-    actor: &mut Actor,
-    _parent_actor: Option<&Actor>,
+    layer: &mut RALayer,
+    _parent_layer: Option<&RALayer>,
     _stretch: &mut Option<Stretch>,
   ) {
     println!("layout_sub_layer {}", self.name);
     let mut index: i32 = 0;
-    for sub_actor in actor.sub_actor_list.iter_mut() {
-      self.cur_x += sub_actor.width as i32;
-      sub_actor.x = index % 5 * IMAGE_WIDTH as i32;
+    for sub_layer in layer.sub_layer_list.iter_mut() {
+      self.cur_x += sub_layer.width as i32;
+      sub_layer.x = index % 5 * IMAGE_WIDTH as i32;
       let col = index / 5;
-      sub_actor.y = col * IMAGE_HEIGHT as i32;
+      sub_layer.y = col * IMAGE_HEIGHT as i32;
       index += 1;
     }
   }
 
-  fn update_layout(&mut self, _actor: &mut Actor, _stretch: &mut Option<Stretch>) {
+  fn update_layout(&mut self, _actor: &mut RALayer, _stretch: &mut Option<Stretch>) {
     println!("update_layout {}", self.name);
   }
 
@@ -185,17 +185,17 @@ impl PictureBrowser {
     }
   }
   pub fn initialize(&mut self) {
-    let mut splash_stage = Actor::new("splash_stage".to_string(), 1920, 1080, None);
+    let mut splash_stage = RALayer::new("splash_stage".to_string(), 1920, 1080, None);
     splash_stage.set_image("examples/splash.png".to_string());
     // splash_stage.set_visible(true);
     // splash_stage.set_needs_layout();
     self.splash_stage_name = self.play.add_stage(splash_stage);
 
-    let mut stage = Actor::new(
+    let mut stage = RALayer::new(
       "main_stage".to_string(),
       1920,
       1080,
-      Some(Box::new(ActorEvent::new())),
+      Some(Box::new(RALayerEvent::new())),
     );
     stage.set_visible(false);
     stage.set_layout(Some(Box::new(ActorLayout::new())));
@@ -220,16 +220,16 @@ impl PictureBrowser {
 
     if self.cur_file_index < self.file_list.len() {
       let name = format!("image_{}", self.cur_file_index);
-      let mut actor = Actor::new(
+      let mut layer = RALayer::new(
         name.to_string(),
         IMAGE_WIDTH,
         IMAGE_HEIGHT,
-        Some(Box::new(ActorEvent::new())),
+        Some(Box::new(RALayerEvent::new())),
       );
-      actor.set_image(self.file_list[self.cur_file_index].to_string());
+      layer.set_image(self.file_list[self.cur_file_index].to_string());
       self
         .play
-        .add_new_actor_to_stage(&self.main_stage_name, actor);
+        .add_new_layer_to_stage(&self.main_stage_name, layer);
       println!(
         "load a texture {}",
         &self.file_list[self.cur_file_index].to_string()
