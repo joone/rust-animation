@@ -24,11 +24,11 @@
 
 ## Features
 
-- **2D Transforms**: Apply translate, scale, and rotate transformations to actors
+- **2D Transforms**: Apply translate, scale, and rotate transformations to layers
 - **Rich Animation System**: Support for multiple easing functions (Linear, EaseIn, EaseOut, EaseInOut, and various polynomial variants)
 - **Flex Layout**: CSS Flexbox-like layout system using the [Stretch](https://github.com/vislyhq/stretch) library
 - **Hardware Acceleration**: OpenGL-based rendering for high performance
-- **Actor Hierarchy**: Support for nested actors with parent-child relationships
+- **RALayer Hierarchy**: Support for nested layers with parent-child relationships
 - **Event Handling**: Built-in event system for keyboard input and focus management
 - **Image Support**: Load and display images as textures
 - **Text Rendering**: Font rendering capabilities for displaying text
@@ -93,8 +93,8 @@ cargo build --release
 Here's a minimal example to get started:
 
 ```rust
-use rust_animation::{actor::Actor, animation::Animation, play::Play};
-use rust_animation::actor::LayoutMode;
+use rust_animation::{layer::RALayer, animation::Animation, play::Play};
+use rust_animation::layer::LayoutMode;
 use keyframe::EasingFunction;
 
 fn main() {
@@ -108,23 +108,23 @@ fn main() {
         LayoutMode::UserDefine,
     );
     
-    // Create a stage (the root actor)
-    let mut stage = Actor::new("stage".to_string(), 800, 600, None);
+    // Create a stage (the root layer)
+    let mut stage = RALayer::new("stage".to_string(), 800, 600, None);
     stage.set_visible(true);
     
-    // Create an actor (a visual element)
-    let mut actor = Actor::new("my_actor".to_string(), 100, 100, None);
-    actor.x = 50;
-    actor.y = 50;
-    actor.set_color(1.0, 0.0, 0.0); // Red
+    // Create an layer (a visual element)
+    let mut layer = RALayer::new("my_actor".to_string(), 100, 100, None);
+    layer.x = 50;
+    layer.y = 50;
+    layer.set_color(1.0, 0.0, 0.0); // Red
     
     // Create and apply an animation
     let mut animation = Animation::new();
     animation.apply_translation_x(50, 400, 2.0, EasingFunction::EaseInOut);
-    actor.set_animation(Some(animation));
+    layer.set_animation(Some(animation));
     
-    // Add actor to stage and stage to play
-    stage.add_sub_actor(actor);
+    // Add layer to stage and stage to play
+    stage.add_sub_actor(layer);
     play.add_stage(stage);
     
     // Render loop (see examples for full implementation)
@@ -154,12 +154,12 @@ Demonstrates all available easing functions with visual animations.
 cargo run --example easing_functions
 ```
 
-**What it does**: Creates 17 animated actors, each using a different easing function, moving horizontally across the screen while rotating.
+**What it does**: Creates 17 animated layers, each using a different easing function, moving horizontally across the screen while rotating.
 
 **Key concepts demonstrated:**
 - Multiple easing functions (Linear, EaseIn, EaseOut, EaseInOut, and polynomial variants)
 - Combining multiple animations (translation + rotation)
-- Actor positioning and coloring
+- RALayer positioning and coloring
 
 **Code snippet:**
 
@@ -170,7 +170,7 @@ cargo run --example easing_functions
     1080,
     LayoutMode::UserDefine,
   );
-  let mut stage = Actor::new("stage".to_string(), 1920, 1080, None);
+  let mut stage = RALayer::new("stage".to_string(), 1920, 1080, None);
   stage.set_visible(true);
 
   let easing_functions = vec![
@@ -198,17 +198,17 @@ cargo run --example easing_functions
   let height = width;
   for i in 0..17 {
     let actor_name = format!("actor_{}", i + 1);
-    let mut actor = Actor::new(actor_name.to_string(), width, height, None);
-    actor.x = 0;
-    actor.y = y;
+    let mut layer = RALayer::new(actor_name.to_string(), width, height, None);
+    layer.x = 0;
+    layer.y = y;
     y += height as i32;
-    actor.set_color(i as f32 / 18.0, i as f32 / 18.0, i as f32 / 18.0);
+    layer.set_color(i as f32 / 18.0, i as f32 / 18.0, i as f32 / 18.0);
 
     let mut animation = Animation::new();
     animation.apply_translation_x(0, (1920 - width) as i32, time, easing_functions[i]);
     animation.apply_rotation(0, 360, time, EasingFunction::Linear);
-    actor.set_animation(Some(animation));
-    stage.add_sub_actor(actor);
+    layer.set_animation(Some(animation));
+    stage.add_sub_actor(layer);
   }
   play.add_stage(stage);
 
@@ -243,7 +243,7 @@ cargo run --example flex_ui
 - Flex layout system
 - Custom layout implementation using the `Layout` trait
 - Justify content and align items properties
-- Nested actors with flex positioning
+- Nested layers with flex positioning
 
 **Code snippet:**
 
@@ -267,23 +267,23 @@ impl FlexLayout {
 impl Layout for FlexLayout {
   fn layout_sub_actors(
     &mut self,
-    actor: &mut Actor,
-    parent_actor: Option<&Actor>,
+    layer: &mut RALayer,
+    parent_actor: Option<&RALayer>,
     stretch: &mut Option<Stretch>,
   ) {
     println!("run layout_sub_layer for FlexLayout {}", self.name);
     if let Some(stretch_obj) = stretch {
-      if let Some(style_obj) = actor.style {
-        actor.node = Some(stretch_obj.new_node(style_obj, vec![]).unwrap());
+      if let Some(style_obj) = layer.style {
+        layer.node = Some(stretch_obj.new_node(style_obj, vec![]).unwrap());
       } else {
         //println!("default style: {}: {},{}", self.name, self.width, self.height);
-        actor.node = Some(
+        layer.node = Some(
           stretch_obj
             .new_node(
               Style {
                 size: Size {
-                  width: Dimension::Points(actor.width as f32),
-                  height: Dimension::Points(actor.height as f32),
+                  width: Dimension::Points(layer.width as f32),
+                  height: Dimension::Points(layer.height as f32),
                 },
                 margin: Rect {
                   start: Dimension::Points(2.0),
@@ -300,15 +300,15 @@ impl Layout for FlexLayout {
         );
       }
 
-      println!("actor name {}", actor.name);
+      println!("layer name {}", layer.name);
 
       if let Some(parent_actor) = parent_actor {
-        if !parent_actor.node.is_none() && !actor.node.is_none() {
-          match stretch_obj.add_child(parent_actor.node.unwrap(), actor.node.unwrap()) {
+        if !parent_actor.node.is_none() && !layer.node.is_none() {
+          match stretch_obj.add_child(parent_actor.node.unwrap(), layer.node.unwrap()) {
             Ok(()) => {
               println!(
                 " stretch node  is added {} {}",
-                parent_actor.name, actor.name
+                parent_actor.name, layer.name
               )
             }
             Err(..) => {}
@@ -317,18 +317,18 @@ impl Layout for FlexLayout {
       }
     }
 
-    //self.update_layout(actor, stretch);
+    //self.update_layout(layer, stretch);
   }
 
-  fn update_layout(&mut self, actor: &mut Actor, stretch: &mut Option<Stretch>) {
+  fn update_layout(&mut self, layer: &mut RALayer, stretch: &mut Option<Stretch>) {
     if let Some(stretch_obj) = stretch {
-      if !actor.node.is_none() {
-        let layout = stretch_obj.layout(actor.node.unwrap()).unwrap();
-        actor.x = layout.location.x as i32;
-        actor.y = layout.location.y as i32;
+      if !layer.node.is_none() {
+        let layout = stretch_obj.layout(layer.node.unwrap()).unwrap();
+        layer.x = layout.location.x as i32;
+        layer.y = layout.location.y as i32;
         println!(
           "run update_layout for FlexLayout {} = {},{}",
-          actor.name, actor.x, actor.y
+          layer.name, layer.x, layer.y
         );
       }
     }
@@ -359,7 +359,7 @@ fn main() {
   gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
   let mut play = Play::new("Flex UI test".to_string(), 1920, 1080, LayoutMode::Flex);
-  let mut stage = Actor::new("stage".to_string(), 1920, 1080, None);
+  let mut stage = RALayer::new("stage".to_string(), 1920, 1080, None);
   stage.set_style(Style {
     size: Size {
       width: Dimension::Points(1920.0),
@@ -391,9 +391,9 @@ fn main() {
   let height = 108;
   for i in 0..6 {
     let actor_name = format!("actor_{}", i + 1);
-    let mut actor = Actor::new(actor_name.to_string(), width, height, None);
-    actor.set_color(i as f32 / 6.0, i as f32 / 6.0, i as f32 / 6.0);
-    actor.set_style(Style {
+    let mut layer = RALayer::new(actor_name.to_string(), width, height, None);
+    layer.set_color(i as f32 / 6.0, i as f32 / 6.0, i as f32 / 6.0);
+    layer.set_style(Style {
       size: Size {
         width: Dimension::Points(width as f32),
         height: Dimension::Points(height as f32),
@@ -415,7 +415,7 @@ fn main() {
       ..Default::default()
     });
     for j in 0..10 {
-      let mut sub_actor = Actor::new(
+      let mut sub_actor = RALayer::new(
         format!("actor_{}_{}", i + 1, j + 1).to_string(),
         100,
         100,
@@ -423,10 +423,10 @@ fn main() {
       );
       sub_actor.set_color(1.0, j as f32 / 10.0, j as f32 / 10.0);
       sub_actor.set_layout(Some(Box::new(FlexLayout::new())));
-      actor.add_sub_actor(sub_actor);
+      layer.add_sub_actor(sub_actor);
     }
-    actor.set_layout(Some(Box::new(FlexLayout::new())));
-    stage.add_sub_actor(actor);
+    layer.set_layout(Some(Box::new(FlexLayout::new())));
+    stage.add_sub_actor(layer);
   }
 
   stage.set_layout(Some(Box::new(FlexLayout::new())));
@@ -458,12 +458,12 @@ Demonstrates basic animation features including transforms and image loading.
 cargo run --example ani
 ```
 
-**What it does**: Shows multiple animations running simultaneously - scaling, translating, and rotating actors, including image-based actors and colored shapes with nested sub-actors.
+**What it does**: Shows multiple animations running simultaneously - scaling, translating, and rotating layers, including image-based layers and colored shapes with nested sub-layers.
 
 **Key concepts demonstrated:**
 - Multiple simultaneous animations (scale, translate, rotate)
 - Loading and animating images
-- Nested actor hierarchies
+- Nested layer hierarchies
 - Different easing functions
 
 **Code snippet:**
@@ -475,10 +475,10 @@ cargo run --example ani
     1080,
     LayoutMode::UserDefine,
   );
-  let mut stage = Actor::new("stage".to_string(), 1920, 1080, None);
+  let mut stage = RALayer::new("stage".to_string(), 1920, 1080, None);
   stage.set_visible(true);
 
-  let mut actor_1 = Actor::new("actor_1".to_string(), 400, 225, None);
+  let mut actor_1 = RALayer::new("actor_1".to_string(), 400, 225, None);
   actor_1.x = 100;
   actor_1.y = 100;
   actor_1.set_image("examples/splash.png".to_string());
@@ -549,37 +549,37 @@ cargo run --example picture_viewer
 **Code snippet:**
 
 ```rust
-pub struct ActorEvent {
+pub struct RALayerEvent {
   name: String,
 }
 
-impl ActorEvent {
+impl RALayerEvent {
   pub fn new() -> Self {
-    ActorEvent {
+    RALayerEvent {
       name: "actor_event".to_string(),
     }
   }
 }
 
-impl EventHandler for ActorEvent {
-  fn key_focus_in(&mut self, actor: &mut Actor) {
+impl EventHandler for RALayerEvent {
+  fn key_focus_in(&mut self, layer: &mut RALayer) {
     let mut animation = Animation::new();
     animation.apply_scale(1.0, 1.1, 0.3, EasingFunction::EaseInOut);
-    actor.set_animation(Some(animation));
+    layer.set_animation(Some(animation));
   }
 
-  fn key_focus_out(&mut self, actor: &mut Actor) {
-    actor.scale_x = 1.0;
-    actor.scale_y = 1.0;
+  fn key_focus_out(&mut self, layer: &mut RALayer) {
+    layer.scale_x = 1.0;
+    layer.scale_y = 1.0;
   }
 
-  fn key_down(&mut self, key: rust_animation::actor::Key, actor: &mut Actor) {
-    if key == rust_animation::actor::Key::Right {
+  fn key_down(&mut self, key: rust_animation::layer::Key, layer: &mut RALayer) {
+    if key == rust_animation::layer::Key::Right {
       // right cursor
-      actor.select_next_sub_actor();
-    } else if key == rust_animation::actor::Key::Left {
+      layer.select_next_sub_actor();
+    } else if key == rust_animation::layer::Key::Left {
       // left cursor
-      actor.select_prev_sub_actor();
+      layer.select_prev_sub_actor();
     }
   }
 }
@@ -601,13 +601,13 @@ impl ActorLayout {
 impl Layout for ActorLayout {
   fn layout_sub_actors(
     &mut self,
-    actor: &mut Actor,
-    parent_actor: Option<&Actor>,
+    layer: &mut RALayer,
+    parent_actor: Option<&RALayer>,
     stretch: &mut Option<Stretch>,
   ) {
     println!("layout_sub_layer {}", self.name);
     let mut index: i32 = 0;
-    for sub_actor in actor.sub_actor_list.iter_mut() {
+    for sub_actor in layer.sub_actor_list.iter_mut() {
       self.cur_x += sub_actor.width as i32;
       sub_actor.x = index % 5 * IMAGE_WIDTH as i32;
       let col = index / 5;
@@ -616,7 +616,7 @@ impl Layout for ActorLayout {
     }
   }
 
-  fn update_layout(&mut self, actor: &mut Actor, stretch: &mut Option<Stretch>) {
+  fn update_layout(&mut self, layer: &mut RALayer, stretch: &mut Option<Stretch>) {
     println!("update_layout {}", self.name);
   }
 
@@ -635,7 +635,7 @@ impl Layout for ActorLayout {
 - Holds one or more stages
 - Handles projection matrices and OpenGL setup
 
-**Actor**: Visual elements in the scene graph
+**RALayer**: Visual elements in the scene graph
 - Can have position (x, y, z), size (width, height)
 - Supports transforms: translate, scale, rotate
 - Can have colors or textures
@@ -645,7 +645,7 @@ impl Layout for ActorLayout {
 **Animation**: Defines time-based property changes
 - Apply transformations over time with easing functions
 - Supports: translation (x, y), scaling, rotation
-- Multiple animations can run simultaneously on one actor
+- Multiple animations can run simultaneously on one layer
 
 **Easing Functions**: Control animation timing curves
 - Linear, Step
@@ -658,12 +658,12 @@ impl Layout for ActorLayout {
 // Create a Play (main container)
 let play = Play::new(name, width, height, layout_mode);
 
-// Create actors
-let mut actor = Actor::new(name, width, height, event_handler);
-actor.x = x;
-actor.y = y;
-actor.set_color(r, g, b);
-actor.set_image(path);
+// Create layers
+let mut layer = RALayer::new(name, width, height, event_handler);
+layer.x = x;
+layer.y = y;
+layer.set_color(r, g, b);
+layer.set_image(path);
 
 // Create animations
 let mut animation = Animation::new();
@@ -671,11 +671,11 @@ animation.apply_translation_x(from, to, duration, easing);
 animation.apply_translation_y(from, to, duration, easing);
 animation.apply_scale(from, to, duration, easing);
 animation.apply_rotation(from_deg, to_deg, duration, easing);
-actor.set_animation(Some(animation));
+layer.set_animation(Some(animation));
 
 // Build scene graph
 parent_actor.add_sub_actor(child_actor);
-stage.add_sub_actor(actor);
+stage.add_sub_actor(layer);
 play.add_stage(stage);
 
 // Render

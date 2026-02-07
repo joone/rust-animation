@@ -6,8 +6,8 @@ extern crate glfw;
 
 use glfw::{Action, Context, Key};
 
-use rust_animation::actor::Actor;
-use rust_animation::actor::LayoutMode;
+use rust_animation::layer::RALayer;
+use rust_animation::layer::LayoutMode;
 use rust_animation::animation::Animation;
 use rust_animation::animation::EasingFunction;
 use rust_animation::play::Play;
@@ -38,17 +38,17 @@ fn main() {
     1080,
     LayoutMode::UserDefine,
   );
-  let mut stage = Actor::new("stage".to_string(), 1920, 1080, None);
+  let mut stage = RALayer::new("stage".to_string(), 1920, 1080, None);
   stage.set_color(0.5,0.5,0.5);
   stage.set_visible(true);
 
-  let mut actor_1 = Actor::new("actor_1".to_string(), 134, 85, None);
-  actor_1.x = 100;
-  actor_1.y = 100;
+  let mut layer_1 = RALayer::new("layer_1".to_string(), 134, 85, None);
+  layer_1.x = 100;
+  layer_1.y = 100;
 
-  actor_1.set_text("hello");
+  layer_1.set_text("hello");
 
-  stage.add_sub_actor(actor_1);
+  stage.add_sub_layer(layer_1);
 
   play.add_stage(stage);
 

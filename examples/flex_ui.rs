@@ -7,9 +7,9 @@ extern crate glfw;
 use glfw::{Action, Context, Key};
 use stretch::{geometry::Rect, geometry::Size, node::Stretch, style::*};
 
-use rust_animation::actor::Actor;
-use rust_animation::actor::Layout;
-use rust_animation::actor::LayoutMode;
+use rust_animation::layer::RALayer;
+use rust_animation::layer::Layout;
+use rust_animation::layer::LayoutMode;
 use rust_animation::play::Play;
 use std::sync::mpsc::Receiver;
 
@@ -32,23 +32,23 @@ impl FlexLayout {
 impl Layout for FlexLayout {
   fn layout_sub_actors(
     &mut self,
-    actor: &mut Actor,
-    parent_actor: Option<&Actor>,
+    layer: &mut RALayer,
+    parent_layer: Option<&RALayer>,
     stretch: &mut Option<Stretch>,
   ) {
     println!("run layout_sub_layer for FlexLayout {}", self.name);
     if let Some(stretch_obj) = stretch {
-      if let Some(style_obj) = actor.style {
-        actor.node = Some(stretch_obj.new_node(style_obj, vec![]).unwrap());
+      if let Some(style_obj) = layer.style {
+        layer.node = Some(stretch_obj.new_node(style_obj, vec![]).unwrap());
       } else {
         //println!("default style: {}: {},{}", self.name, self.width, self.height);
-        actor.node = Some(
+        layer.node = Some(
           stretch_obj
             .new_node(
               Style {
                 size: Size {
-                  width: Dimension::Points(actor.width as f32),
-                  height: Dimension::Points(actor.height as f32),
+                  width: Dimension::Points(layer.width as f32),
+                  height: Dimension::Points(layer.height as f32),
                 },
                 margin: Rect {
                   start: Dimension::Points(2.0),
@@ -65,15 +65,15 @@ impl Layout for FlexLayout {
         );
       }
 
-      println!("actor name {}", actor.name);
+      println!("layer name {}", layer.name);
 
-      if let Some(parent_actor) = parent_actor {
-        if !parent_actor.node.is_none() && !actor.node.is_none() {
-          match stretch_obj.add_child(parent_actor.node.unwrap(), actor.node.unwrap()) {
+      if let Some(parent_layer) = parent_layer {
+        if !parent_layer.node.is_none() && !layer.node.is_none() {
+          match stretch_obj.add_child(parent_layer.node.unwrap(), layer.node.unwrap()) {
             Ok(()) => {
               println!(
                 " stretch node  is added {} {}",
-                parent_actor.name, actor.name
+                parent_layer.name, layer.name
               )
             }
             Err(..) => {}
@@ -82,18 +82,18 @@ impl Layout for FlexLayout {
       }
     }
 
-    //self.update_layout(actor, stretch);
+    //self.update_layout(layer, stretch);
   }
 
-  fn update_layout(&mut self, actor: &mut Actor, stretch: &mut Option<Stretch>) {
+  fn update_layout(&mut self, layer: &mut RALayer, stretch: &mut Option<Stretch>) {
     if let Some(stretch_obj) = stretch {
-      if !actor.node.is_none() {
-        let layout = stretch_obj.layout(actor.node.unwrap()).unwrap();
-        actor.x = layout.location.x as i32;
-        actor.y = layout.location.y as i32;
+      if !layer.node.is_none() {
+        let layout = stretch_obj.layout(layer.node.unwrap()).unwrap();
+        layer.x = layout.location.x as i32;
+        layer.y = layout.location.y as i32;
         println!(
           "run update_layout for FlexLayout {} = {},{}",
-          actor.name, actor.x, actor.y
+          layer.name, layer.x, layer.y
         );
       }
     }
@@ -124,7 +124,7 @@ fn main() {
   gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
   let mut play = Play::new("Flex UI test".to_string(), 1920, 1080, LayoutMode::Flex);
-  let mut stage = Actor::new("stage".to_string(), 1920, 1080, None);
+  let mut stage = RALayer::new("stage".to_string(), 1920, 1080, None);
   stage.set_style(Style {
     size: Size {
       width: Dimension::Points(1920.0),
@@ -155,10 +155,10 @@ fn main() {
   let width = 1500;
   let height = 108;
   for i in 0..6 {
-    let actor_name = format!("actor_{}", i + 1);
-    let mut actor = Actor::new(actor_name.to_string(), width, height, None);
-    actor.set_color(i as f32 / 6.0, i as f32 / 6.0, i as f32 / 6.0);
-    actor.set_style(Style {
+    let layer_name = format!("layer_{}", i + 1);
+    let mut layer = RALayer::new(layer_name.to_string(), width, height, None);
+    layer.set_color(i as f32 / 6.0, i as f32 / 6.0, i as f32 / 6.0);
+    layer.set_style(Style {
       size: Size {
         width: Dimension::Points(width as f32),
         height: Dimension::Points(height as f32),
@@ -180,18 +180,18 @@ fn main() {
       ..Default::default()
     });
     for j in 0..10 {
-      let mut sub_actor = Actor::new(
-        format!("actor_{}_{}", i + 1, j + 1).to_string(),
+      let mut sub_layer = RALayer::new(
+        format!("layer_{}_{}", i + 1, j + 1).to_string(),
         100,
         100,
         None,
       );
-      sub_actor.set_color(1.0, j as f32 / 10.0, j as f32 / 10.0);
-      sub_actor.set_layout(Some(Box::new(FlexLayout::new())));
-      actor.add_sub_actor(sub_actor);
+      sub_layer.set_color(1.0, j as f32 / 10.0, j as f32 / 10.0);
+      sub_layer.set_layout(Some(Box::new(FlexLayout::new())));
+      layer.add_sub_layer(sub_layer);
     }
-    actor.set_layout(Some(Box::new(FlexLayout::new())));
-    stage.add_sub_actor(actor);
+    layer.set_layout(Some(Box::new(FlexLayout::new())));
+    stage.add_sub_layer(layer);
   }
 
   stage.set_layout(Some(Box::new(FlexLayout::new())));

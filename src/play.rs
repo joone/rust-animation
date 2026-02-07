@@ -12,10 +12,10 @@ use std::ptr;
 use std::str;
 use stretch::{geometry::Size, node::Stretch};
 
-use crate::actor::Actor;
-use crate::actor::EventHandler;
-use crate::actor::Key;
-use crate::actor::LayoutMode;
+use crate::layer::RALayer;
+use crate::layer::EventHandler;
+use crate::layer::Key;
+use crate::layer::LayoutMode;
 
 const VERTEX_SHADER_SOURCE: &str = r#"
     #version 330 core
@@ -55,7 +55,7 @@ pub fn render(name: String) {
 pub struct Play {
   _name: String,
   // `Play` holds a list of `Stage`s, each of which will share the same lifetime `'a`
-  stage_list: Vec<Actor>,
+  stage_list: Vec<RALayer>,
   shader_program: GLuint,
   stage_map: HashMap<String, usize>,
   projection: Matrix4<f32>,
@@ -104,19 +104,19 @@ impl Play {
     play
   }
 
-  pub fn new_actor(
+  pub fn new_layer(
     name: String,
     w: u32,
     h: u32,
     event_handler: Option<Box<dyn EventHandler>>,
-  ) -> Actor {
-    Actor::new(name, w, h, event_handler)
+  ) -> RALayer {
+    RALayer::new(name, w, h, event_handler)
   }
 
-  pub fn add_new_actor_to_stage(&mut self, stage_name: &String, actor: Actor) {
+  pub fn add_new_layer_to_stage(&mut self, stage_name: &String, layer: RALayer) {
     match self.stage_map.get(stage_name) {
       Some(&index) => {
-        self.stage_list[index].add_sub_actor(actor);
+        self.stage_list[index].add_sub_layer(layer);
       }
       _ => println!("Can't find the stage with the given name: {}", stage_name),
     }
@@ -210,7 +210,7 @@ impl Play {
     }
   }
 
-  pub fn add_stage(&mut self, stage: Actor) -> String {
+  pub fn add_stage(&mut self, stage: RALayer) -> String {
     let stage_name = stage.name.to_string();
     self.stage_list.push(stage);
     self
@@ -234,7 +234,7 @@ impl Play {
 
       for stage in self.stage_list.iter_mut() {
         if stage.needs_update {
-          stage.layout_sub_actors(None, &mut self.stretch);
+          stage.layout_sub_layers(None, &mut self.stretch);
 
           if let Some(stretch_obj) = &mut self.stretch {
             stretch_obj

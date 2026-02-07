@@ -49,7 +49,7 @@ macro_rules! c_str {
   };
 }
 
-pub struct Actor {
+pub struct RALayer {
   pub name: String,
   pub x: i32,
   pub y: i32,
@@ -65,7 +65,7 @@ pub struct Actor {
   color: [f32; 3],
   pub opacity: f32, // CoreAnimation-style property
   pub image_path: String,
-  pub sub_actor_list: Vec<Actor>,
+  pub sub_layer_list: Vec<RALayer>,
   vertex_array_obj: gl::types::GLuint,
   texture: gl::types::GLuint,
   pub animated: bool,
@@ -73,7 +73,7 @@ pub struct Actor {
   animations: std::collections::HashMap<String, Animation>, // CoreAnimation-style animations by key
   event_handler: Option<Box<dyn EventHandler>>,
   layout: Option<Box<dyn Layout>>,
-  focused_sub_actor: usize,
+  focused_sub_layer: usize,
   focused: bool,
   pub needs_update: bool,
   pub node: Option<Node>,   // for stretch only
@@ -81,25 +81,25 @@ pub struct Actor {
 }
 
 pub trait EventHandler {
-  fn key_focus_in(&mut self, actor: &mut Actor);
-  fn key_focus_out(&mut self, actor: &mut Actor);
-  fn key_down(&mut self, key: Key, actor: &mut Actor);
+  fn key_focus_in(&mut self, layer: &mut RALayer);
+  fn key_focus_out(&mut self, layer: &mut RALayer);
+  fn key_down(&mut self, key: Key, layer: &mut RALayer);
 }
 
 pub trait Layout {
-  fn layout_sub_actors(
+  fn layout_sub_layers(
     &mut self,
-    actor: &mut Actor,
-    parent_actor: Option<&Actor>,
+    layer: &mut RALayer,
+    parent_layer: Option<&RALayer>,
     stretch: &mut Option<Stretch>,
   );
-  fn update_layout(&mut self, actor: &mut Actor, stretch: &mut Option<Stretch>);
+  fn update_layout(&mut self, layer: &mut RALayer, stretch: &mut Option<Stretch>);
   fn finalize(&mut self);
 }
 
-impl Actor {
+impl RALayer {
   pub fn new(name: String, w: u32, h: u32, event_handler: Option<Box<dyn EventHandler>>) -> Self {
-    let mut actor = Actor {
+    let mut layer = RALayer {
       name: name,
       x: 0,
       y: 0,
@@ -115,7 +115,7 @@ impl Actor {
       color: [1.0, 1.0, 1.0],
       opacity: 1.0,
       image_path: "".to_string(),
-      sub_actor_list: Vec::new(),
+      sub_layer_list: Vec::new(),
       vertex_array_obj: gl::types::GLuint::default(),
       texture: gl::types::GLuint::default(),
       animated: false,
@@ -123,15 +123,15 @@ impl Actor {
       animations: std::collections::HashMap::new(),
       event_handler: event_handler,
       layout: None,
-      focused_sub_actor: 0,
+      focused_sub_layer: 0,
       focused: false,
       needs_update: true,
       node: None,
       style: None,
     };
-    actor.init_gl();
+    layer.init_gl();
 
-    actor
+    layer
   }
 
   pub fn init_gl(&mut self) {
@@ -333,7 +333,7 @@ impl Actor {
 
   /*pub fn update(&mut self) {
     // Sort sub actors by z-axis
-    self.sub_actor_list.sort_by(|a, b| a.z.partial_cmp(&b.z).unwrap());
+    self.sub_layer_list.sort_by(|a, b| a.z.partial_cmp(&b.z).unwrap());
   }*/
 
   pub fn animate(&mut self) {
@@ -352,36 +352,36 @@ impl Actor {
     // Put it back
     self.animations = animations;
 
-    for sub_actor in self.sub_actor_list.iter_mut() {
-      sub_actor.animate();
+    for sub_layer in self.sub_layer_list.iter_mut() {
+      sub_layer.animate();
     }
   }
 
   pub fn select_next_sub_actor(&mut self) {
-    if self.sub_actor_list.is_empty() {
+    if self.sub_layer_list.is_empty() {
       return;
     }
-    // no more next actor.
-    if self.focused_sub_actor < self.sub_actor_list.len() - 1 {
-      let prev_focused_sub_actor = self.focused_sub_actor;
-      self.focused_sub_actor += 1;
-      self.sub_actor_list[self.focused_sub_actor].set_focus(true);
-      self.sub_actor_list[prev_focused_sub_actor].set_focus(false);
+    // no more next layer.
+    if self.focused_sub_layer < self.sub_layer_list.len() - 1 {
+      let prev_focused_sub_layer = self.focused_sub_layer;
+      self.focused_sub_layer += 1;
+      self.sub_layer_list[self.focused_sub_layer].set_focus(true);
+      self.sub_layer_list[prev_focused_sub_layer].set_focus(false);
     }
   }
 
   pub fn select_prev_sub_actor(&mut self) {
-    if self.sub_actor_list.is_empty() {
+    if self.sub_layer_list.is_empty() {
       return;
     }
-    // ne more previous actor.
-    if self.focused_sub_actor == 0 {
+    // ne more previous layer.
+    if self.focused_sub_layer == 0 {
       return;
     }
-    let prev_focused_sub_actor = self.focused_sub_actor;
-    self.focused_sub_actor -= 1;
-    self.sub_actor_list[self.focused_sub_actor].set_focus(true);
-    self.sub_actor_list[prev_focused_sub_actor].set_focus(false);
+    let prev_focused_sub_layer = self.focused_sub_layer;
+    self.focused_sub_layer -= 1;
+    self.sub_layer_list[self.focused_sub_layer].set_focus(true);
+    self.sub_layer_list[prev_focused_sub_layer].set_focus(false);
   }
 
   pub fn set_focus(&mut self, focused: bool) {
@@ -399,9 +399,9 @@ impl Actor {
   }
 
   pub fn handle_input(&mut self, key: Key) {
-    for sub_actor in self.sub_actor_list.iter_mut() {
-      if sub_actor.focused {
-        sub_actor.handle_input(key);
+    for sub_layer in self.sub_layer_list.iter_mut() {
+      if sub_layer.focused {
+        sub_layer.handle_input(key);
       }
     }
     if let Some(mut event_handler) = self.event_handler.take() {
@@ -410,23 +410,23 @@ impl Actor {
     }
   }
 
-  pub fn layout_sub_actors(&mut self, parent_actor: Option<&Actor>, stretch: &mut Option<Stretch>) {
+  pub fn layout_sub_layers(&mut self, parent_layer: Option<&RALayer>, stretch: &mut Option<Stretch>) {
     if let Some(mut layout) = self.layout.take() {
-      layout.layout_sub_actors(self, parent_actor, stretch);
+      layout.layout_sub_layers(self, parent_layer, stretch);
       self.layout = Some(layout); // Put back the layout
     }
 
-    // Replace the sub_actor_list with an empty vector and take the original vector out
-    let mut sub_actor_list = std::mem::replace(&mut self.sub_actor_list, Vec::new());
+    // Replace the sub_layer_list with an empty vector and take the original vector out
+    let mut sub_layer_list = std::mem::replace(&mut self.sub_layer_list, Vec::new());
 
     // Iterate over the vector outside of the self structure
-    for sub_actor in &mut sub_actor_list {
+    for sub_layer in &mut sub_layer_list {
       // As we are outside of the self structure, we can now borrow self as immutable
-      sub_actor.layout_sub_actors(Some(self), stretch);
+      sub_layer.layout_sub_layers(Some(self), stretch);
     }
 
-    // Put back the original sub_actor_list
-    self.sub_actor_list = sub_actor_list;
+    // Put back the original sub_layer_list
+    self.sub_layer_list = sub_layer_list;
   }
 
   pub fn update_layout(&mut self, stretch: &mut Option<Stretch>) {
@@ -435,8 +435,8 @@ impl Actor {
       self.layout = Some(layout); // Put back the layout
     }
 
-    for sub_actor in self.sub_actor_list.iter_mut() {
-      sub_actor.update_layout(stretch);
+    for sub_layer in self.sub_layer_list.iter_mut() {
+      sub_layer.update_layout(stretch);
     }
   }
 
@@ -514,15 +514,15 @@ impl Actor {
       gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
     }
 
-    for sub_actor in self.sub_actor_list.iter_mut() {
-      if sub_actor.focused == false {
-        sub_actor.render(shader_program, Some(&transform), projection);
+    for sub_layer in self.sub_layer_list.iter_mut() {
+      if sub_layer.focused == false {
+        sub_layer.render(shader_program, Some(&transform), projection);
       }
     }
 
-    // render the focused sub_actor at the end.
-    if !self.sub_actor_list.is_empty() {
-      self.sub_actor_list[self.focused_sub_actor].render(
+    // render the focused sub_layer at the end.
+    if !self.sub_layer_list.is_empty() {
+      self.sub_layer_list[self.focused_sub_layer].render(
         shader_program,
         Some(&transform),
         projection,
@@ -530,8 +530,8 @@ impl Actor {
     }
   }
 
-  pub fn add_sub_actor(&mut self, actor: Actor) {
-    self.sub_actor_list.push(actor);
+  pub fn add_sub_layer(&mut self, layer: RALayer) {
+    self.sub_layer_list.push(layer);
   }
 
   // CoreAnimation-style API methods
@@ -594,19 +594,19 @@ impl Actor {
     self.animations.remove(key);
   }
 
-  /// Add a sublayer (CoreAnimation-style API, alias for add_sub_actor)
-  pub fn add_sublayer(&mut self, layer: Actor) {
-    self.add_sub_actor(layer);
+  /// Add a sublayer (CoreAnimation-style API, alias for add_sub_layer)
+  pub fn add_sublayer(&mut self, layer: RALayer) {
+    self.add_sub_layer(layer);
   }
 
   /// Get sublayers (CoreAnimation-style API)
-  pub fn sublayers(&self) -> &Vec<Actor> {
-    &self.sub_actor_list
+  pub fn sublayers(&self) -> &Vec<RALayer> {
+    &self.sub_layer_list
   }
 
   /// Get mutable sublayers (CoreAnimation-style API)
-  pub fn sublayers_mut(&mut self) -> &mut Vec<Actor> {
-    &mut self.sub_actor_list
+  pub fn sublayers_mut(&mut self) -> &mut Vec<RALayer> {
+    &mut self.sub_layer_list
   }
 }
 
@@ -617,43 +617,43 @@ mod tests {
 
   #[test]
   fn test_position_api() {
-    let mut actor = Actor::new("test".to_string(), 100, 100, None);
-    actor.set_position(50, 75);
-    let (x, y) = actor.position();
+    let mut actor = RALayer::new("test".to_string(), 100, 100, None);
+    layer.set_position(50, 75);
+    let (x, y) = layer.position();
     assert_eq!(x, 50);
     assert_eq!(y, 75);
   }
 
   #[test]
   fn test_bounds_api() {
-    let mut actor = Actor::new("test".to_string(), 100, 100, None);
-    actor.set_bounds(200, 150);
-    let (w, h) = actor.bounds();
+    let mut actor = RALayer::new("test".to_string(), 100, 100, None);
+    layer.set_bounds(200, 150);
+    let (w, h) = layer.bounds();
     assert_eq!(w, 200);
     assert_eq!(h, 150);
   }
 
   #[test]
   fn test_opacity_api() {
-    let mut actor = Actor::new("test".to_string(), 100, 100, None);
-    assert_eq!(actor.opacity, 1.0);
+    let mut actor = RALayer::new("test".to_string(), 100, 100, None);
+    assert_eq!(layer.opacity, 1.0);
     
-    actor.set_opacity(0.5);
-    assert_eq!(actor.opacity, 0.5);
+    layer.set_opacity(0.5);
+    assert_eq!(layer.opacity, 0.5);
     
     // Test clamping
-    actor.set_opacity(1.5);
-    assert_eq!(actor.opacity, 1.0);
+    layer.set_opacity(1.5);
+    assert_eq!(layer.opacity, 1.0);
     
-    actor.set_opacity(-0.5);
-    assert_eq!(actor.opacity, 0.0);
+    layer.set_opacity(-0.5);
+    assert_eq!(layer.opacity, 0.0);
   }
 
   #[test]
   fn test_background_color_api() {
-    let mut actor = Actor::new("test".to_string(), 100, 100, None);
-    actor.set_background_color(0.5, 0.6, 0.7);
-    let (r, g, b) = actor.background_color();
+    let mut actor = RALayer::new("test".to_string(), 100, 100, None);
+    layer.set_background_color(0.5, 0.6, 0.7);
+    let (r, g, b) = layer.background_color();
     assert_eq!(r, 0.5);
     assert_eq!(g, 0.6);
     assert_eq!(b, 0.7);
@@ -661,56 +661,56 @@ mod tests {
 
   #[test]
   fn test_add_animation_with_key() {
-    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    let mut actor = RALayer::new("test".to_string(), 100, 100, None);
     let mut animation = Animation::with_key_path("position.x");
     animation.duration = 2.0;
     animation.timing_function = Some(EasingFunction::Linear);
     
-    actor.add_animation(animation, Some("moveX"));
-    assert_eq!(actor.animations.len(), 1);
-    assert!(actor.animations.contains_key("moveX"));
+    layer.add_animation(animation, Some("moveX"));
+    assert_eq!(layer.animations.len(), 1);
+    assert!(layer.animations.contains_key("moveX"));
   }
 
   #[test]
   fn test_remove_animation() {
-    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    let mut actor = RALayer::new("test".to_string(), 100, 100, None);
     let animation1 = Animation::with_key_path("position.x");
     let animation2 = Animation::with_key_path("opacity");
     
-    actor.add_animation(animation1, Some("anim1"));
-    actor.add_animation(animation2, Some("anim2"));
-    assert_eq!(actor.animations.len(), 2);
+    layer.add_animation(animation1, Some("anim1"));
+    layer.add_animation(animation2, Some("anim2"));
+    assert_eq!(layer.animations.len(), 2);
     
-    actor.remove_animation("anim1");
-    assert_eq!(actor.animations.len(), 1);
-    assert!(!actor.animations.contains_key("anim1"));
-    assert!(actor.animations.contains_key("anim2"));
+    layer.remove_animation("anim1");
+    assert_eq!(layer.animations.len(), 1);
+    assert!(!layer.animations.contains_key("anim1"));
+    assert!(layer.animations.contains_key("anim2"));
   }
 
   #[test]
   fn test_remove_all_animations() {
-    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    let mut actor = RALayer::new("test".to_string(), 100, 100, None);
     let animation1 = Animation::with_key_path("position.x");
     let animation2 = Animation::with_key_path("opacity");
     let animation3 = Animation::new();
     
-    actor.add_animation(animation1, Some("anim1"));
-    actor.add_animation(animation2, Some("anim2"));
-    actor.set_animation(Some(animation3));
+    layer.add_animation(animation1, Some("anim1"));
+    layer.add_animation(animation2, Some("anim2"));
+    layer.set_animation(Some(animation3));
     
-    assert_eq!(actor.animations.len(), 2);
-    assert!(actor.animation.is_some());
+    assert_eq!(layer.animations.len(), 2);
+    assert!(layer.animation.is_some());
     
-    actor.remove_all_animations();
-    assert_eq!(actor.animations.len(), 0);
-    assert!(actor.animation.is_none());
+    layer.remove_all_animations();
+    assert_eq!(layer.animations.len(), 0);
+    assert!(layer.animation.is_none());
   }
 
   #[test]
   fn test_sublayers_api() {
-    let mut parent = Actor::new("parent".to_string(), 200, 200, None);
-    let child1 = Actor::new("child1".to_string(), 50, 50, None);
-    let child2 = Actor::new("child2".to_string(), 50, 50, None);
+    let mut parent = RALayer::new("parent".to_string(), 200, 200, None);
+    let child1 = RALayer::new("child1".to_string(), 50, 50, None);
+    let child2 = RALayer::new("child2".to_string(), 50, 50, None);
     
     parent.add_sublayer(child1);
     parent.add_sublayer(child2);
@@ -723,19 +723,19 @@ mod tests {
 
   #[test]
   fn test_backward_compatibility() {
-    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    let mut actor = RALayer::new("test".to_string(), 100, 100, None);
     
     // Old way of setting position
-    actor.x = 50;
-    actor.y = 75;
-    assert_eq!(actor.x, 50);
-    assert_eq!(actor.y, 75);
+    layer.x = 50;
+    layer.y = 75;
+    assert_eq!(layer.x, 50);
+    assert_eq!(layer.y, 75);
     
     // Old way of creating animation
     let mut animation = Animation::new();
     animation.apply_translation_x(0, 100, 1.0, EasingFunction::Linear);
-    actor.set_animation(Some(animation));
+    layer.set_animation(Some(animation));
     
-    assert!(actor.animation.is_some());
+    assert!(layer.animation.is_some());
   }
 }

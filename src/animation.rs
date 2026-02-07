@@ -1,4 +1,4 @@
-use crate::actor::Actor;
+use crate::layer::RALayer;
 use keyframe::{ease, functions::*};
 use std::time::Instant;
 
@@ -284,7 +284,7 @@ impl Animation {
     self.rotation_time_duration = self.duration * 1000.0;
   }
 
-  pub fn run(&mut self, actor: &mut Actor) {
+  pub fn run(&mut self, layer: &mut RALayer) {
     if self.translation_x_running {
       if self.translation_x_starting_time == 0 {
         self.translation_x_starting_time = self.animation_time_instance.elapsed().as_millis();
@@ -293,7 +293,7 @@ impl Animation {
         - self.translation_x_starting_time) as f32
         / self.translation_x_time_duration;
       if cur_time <= 1.0 {
-        actor.x = Animation::easing_function(
+        layer.x = Animation::easing_function(
           self.translation_x_ease,
           self.translation_x_from_value as f32,
           self.translation_x_to_value as f32,
@@ -302,7 +302,7 @@ impl Animation {
       } else {
         self.translation_x_running = false;
         self.translation_x_starting_time = 0;
-        actor.x = self.translation_x_to_value;
+        layer.x = self.translation_x_to_value;
       }
     }
 
@@ -314,7 +314,7 @@ impl Animation {
         - self.translation_y_starting_time) as f32
         / self.translation_y_time_duration;
       if cur_time <= 1.0 {
-        actor.y = Animation::easing_function(
+        layer.y = Animation::easing_function(
           self.translation_y_ease,
           self.translation_y_from_value as f32,
           self.translation_y_to_value as f32,
@@ -323,7 +323,7 @@ impl Animation {
       } else {
         self.translation_y_running = false;
         self.translation_y_starting_time = 0;
-        actor.y = self.translation_y_to_value;
+        layer.y = self.translation_y_to_value;
       }
     }
 
@@ -336,7 +336,7 @@ impl Animation {
         - self.rotation_starting_time) as f32
         / self.rotation_time_duration as f32;
       if cur_time <= 1.0 {
-        actor.rotation = Animation::easing_function(
+        layer.rotation = Animation::easing_function(
           self.rotation_ease,
           self.rotation_from_value as f32,
           self.rotation_to_value as f32,
@@ -345,7 +345,7 @@ impl Animation {
       } else {
         self.rotation_running = false;
         self.rotation_starting_time = 0;
-        actor.rotation = self.rotation_to_value;
+        layer.rotation = self.rotation_to_value;
       }
     }
 
@@ -358,13 +358,13 @@ impl Animation {
         as f32
         / self.scale_time_duration as f32;
       if cur_time <= 1.0 {
-        actor.scale_x = Animation::easing_function(
+        layer.scale_x = Animation::easing_function(
           self.scale_ease,
           self.scale_from_value,
           self.scale_to_value,
           cur_time,
         ) as f32;
-        actor.scale_y = Animation::easing_function(
+        layer.scale_y = Animation::easing_function(
           self.scale_ease,
           self.scale_from_value,
           self.scale_to_value,
@@ -373,8 +373,8 @@ impl Animation {
       } else {
         self.scale_running = false;
         self.scale_starting_time = 0;
-        actor.scale_x = self.scale_to_value;
-        actor.scale_y = self.scale_to_value;
+        layer.scale_x = self.scale_to_value;
+        layer.scale_y = self.scale_to_value;
       }
     }
 
@@ -387,7 +387,7 @@ impl Animation {
         as f32
         / self.opacity_time_duration as f32;
       if cur_time <= 1.0 {
-        actor.opacity = Animation::easing_function(
+        layer.opacity = Animation::easing_function(
           self.opacity_ease,
           self.opacity_from_value,
           self.opacity_to_value,
@@ -396,7 +396,7 @@ impl Animation {
       } else {
         self.opacity_running = false;
         self.opacity_starting_time = 0;
-        actor.opacity = self.opacity_to_value;
+        layer.opacity = self.opacity_to_value;
       }
     }
 
@@ -406,9 +406,9 @@ impl Animation {
       || self.scale_running
       || self.opacity_running
     {
-      actor.animated = true;
+      layer.animated = true;
     } else {
-      actor.animated = false;
+      layer.animated = false;
     }
   }
 }
