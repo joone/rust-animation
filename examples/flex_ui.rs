@@ -112,7 +112,7 @@ fn main() {
   let window = Arc::new(
     WindowBuilder::new()
       .with_title("Flex UI demo")
-      .with_inner_size(winit::dpi::LogicalSize::new(1920, 1080))
+      .with_inner_size(winit::dpi::LogicalSize::new(1280, 720))
       .build(&event_loop)
       .unwrap(),
   );
@@ -154,7 +154,7 @@ fn main() {
     JustifyContent::SpaceAround,
     JustifyContent::SpaceEvenly,
   ];
-  let width = 1500;
+  let width = 1200;
   let height = 108;
   for i in 0..6 {
     let layer_name = format!("layer_{}", i + 1);
