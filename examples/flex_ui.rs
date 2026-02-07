@@ -2,16 +2,18 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-extern crate glfw;
-
-use glfw::{Action, Context, Key};
+use winit::{
+    event::{Event, WindowEvent, KeyEvent},
+    event_loop::{ControlFlow, EventLoop},
+    keyboard::{KeyCode, PhysicalKey},
+    window::WindowBuilder,
+};
 use stretch::{geometry::Rect, geometry::Size, node::Stretch, style::*};
 
 use rust_animation::layer::RALayer;
 use rust_animation::layer::Layout;
 use rust_animation::layer::LayoutMode;
 use rust_animation::play::Play;
-use std::sync::mpsc::Receiver;
 
 pub struct FlexLayout {
   name: String,
@@ -105,25 +107,18 @@ impl Layout for FlexLayout {
 }
 
 fn main() {
-  let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
-  glfw.window_hint(glfw::WindowHint::ContextVersion(3, 3));
-  glfw.window_hint(glfw::WindowHint::OpenGlProfile(
-    glfw::OpenGlProfileHint::Core,
-  ));
-  #[cfg(target_os = "macos")]
-  glfw.window_hint(glfw::WindowHint::OpenGlForwardCompat(true));
-
-  let (mut window, events) = glfw
-    .create_window(1920, 1080, "Flex UI demo", glfw::WindowMode::Windowed)
-    .expect("Failed to create GLFW window.");
-
-  window.set_key_polling(true);
-  window.make_current();
-  window.set_framebuffer_size_polling(true);
-
-  gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
+  let event_loop = EventLoop::new().unwrap();
+  let window = WindowBuilder::new()
+    .with_title("Flex UI demo")
+    .with_inner_size(winit::dpi::LogicalSize::new(1920, 1080))
+    .build(&event_loop)
+    .unwrap();
 
   let mut play = Play::new("Flex UI test".to_string(), 1920, 1080, LayoutMode::Flex);
+  
+  // Initialize wgpu context
+  play.init_wgpu();
+  
   let mut stage = RALayer::new("stage".to_string(), 1920, 1080, None);
   stage.set_style(Style {
     size: Size {
@@ -199,28 +194,29 @@ fn main() {
 
   //play.set_stage_needs_layout(&"stage".to_string());
 
-  while !window.should_close() {
-    // events
-    process_events(&mut window, &events);
-
-    play.render();
-
-    // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-    window.swap_buffers();
-    glfw.poll_events();
-  }
-}
-
-fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::WindowEvent)>) {
-  for (_, event) in glfw::flush_messages(events) {
+  event_loop.run(move |event, elwt| {
+    elwt.set_control_flow(ControlFlow::Poll);
+    
     match event {
-      glfw::WindowEvent::FramebufferSize(width, height) => {
-        // make sure the viewport matches the new window dimensions; note that width and
-        // height will be significantly larger than specified on retina displays.
-        unsafe { gl::Viewport(0, 0, width, height) }
+      Event::WindowEvent { event, .. } => match event {
+        WindowEvent::CloseRequested => elwt.exit(),
+        WindowEvent::KeyboardInput {
+          event: KeyEvent {
+            physical_key: PhysicalKey::Code(KeyCode::Escape),
+            ..
+          },
+          ..
+        } => elwt.exit(),
+        WindowEvent::RedrawRequested => {
+          play.render();
+          window.request_redraw();
+        }
+        _ => {}
+      },
+      Event::AboutToWait => {
+        window.request_redraw();
       }
-      glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => window.set_should_close(true),
       _ => {}
     }
-  }
+  }).unwrap();
 }
