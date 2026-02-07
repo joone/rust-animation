@@ -27,7 +27,7 @@ jobs:
     
     outputs:
       version: ${{ steps.get_version.outputs.version }}
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      tag_name: ${{ steps.get_version.outputs.TAG_NAME }}
     
     steps:
     - uses: actions/checkout@v3
@@ -95,37 +95,40 @@ jobs:
           
           if [ -z "$NOTES" ]; then
             echo "No specific changelog entry found for version $VERSION"
-            NOTES="Release version $VERSION
-
-See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details."
+            cat > release_notes.txt << ENDOFNOTES
+        Release version $VERSION
+        
+        See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+        ENDOFNOTES
+          else
+            echo "$NOTES" > release_notes.txt
           fi
         else
           # Generate basic release notes from recent commits
-          NOTES="Release version $VERSION
-
-## Changes in this release
-
-$(git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || git rev-list --max-parents=0 HEAD)..HEAD 2>/dev/null || git log --pretty=format:"- %s" -10)
-
----
-*See full changelog at [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)*"
+          echo "Release version $VERSION" > release_notes.txt
+          echo "" >> release_notes.txt
+          echo "## Changes in this release" >> release_notes.txt
+          echo "" >> release_notes.txt
+          git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || git rev-list --max-parents=0 HEAD)..HEAD 2>/dev/null >> release_notes.txt || git log --pretty=format:"- %s" -10 >> release_notes.txt
+          echo "" >> release_notes.txt
+          echo "---" >> release_notes.txt
+          echo "*See full changelog at [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)*" >> release_notes.txt
         fi
         
-        # Save to file for multiline output
-        echo "$NOTES" > release_notes.txt
         echo "Generated release notes"
     
     - name: Create GitHub Release
       id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ steps.get_version.outputs.TAG_NAME }}
-        release_name: Release ${{ steps.get_version.outputs.TAG_NAME }}
+        name: Release ${{ steps.get_version.outputs.TAG_NAME }}
         body_path: release_notes.txt
         draft: false
         prerelease: false
+        generate_release_notes: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Publish to crates.io
       env:
@@ -179,26 +182,13 @@ $(git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD^ 2>/dev/n
         Copy-Item target\release\examples\*.exe artifacts\ -ErrorAction SilentlyContinue
         Compress-Archive -Path artifacts\* -DestinationPath ${{ matrix.artifact_name }}.zip
     
-    - name: Upload Release Asset (Unix)
-      if: runner.os != 'Windows'
-      uses: actions/upload-release-asset@v1
+    - name: Upload Release Assets
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ needs.create-release.outputs.tag_name }}
+        files: |
+          *.tar.gz
+          *.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./${{ matrix.artifact_name }}.tar.gz
-        asset_name: ${{ matrix.artifact_name }}.tar.gz
-        asset_content_type: application/gzip
-      continue-on-error: true
-    
-    - name: Upload Release Asset (Windows)
-      if: runner.os == 'Windows'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./${{ matrix.artifact_name }}.zip
-        asset_name: ${{ matrix.artifact_name }}.zip
-        asset_content_type: application/zip
       continue-on-error: true
