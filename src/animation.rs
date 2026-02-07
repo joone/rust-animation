@@ -408,3 +408,95 @@ impl Animation {
     }
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_animation_with_key_path() {
+    let animation = Animation::with_key_path("position.x");
+    assert_eq!(animation.duration, 1.0);
+    assert!(animation.timing_function.is_some());
+  }
+
+  #[test]
+  fn test_animation_coreanimation_properties() {
+    let mut animation = Animation::with_key_path("position.x");
+    animation.duration = 3.5;
+    animation.timing_function = Some(EasingFunction::EaseInOut);
+    animation.repeat_count = 2.0;
+    animation.autoreverses = true;
+    
+    assert_eq!(animation.duration, 3.5);
+    assert_eq!(animation.repeat_count, 2.0);
+    assert_eq!(animation.autoreverses, true);
+  }
+
+  #[test]
+  fn test_position_animation_setters() {
+    let mut animation = Animation::with_key_path("position.x");
+    animation.duration = 2.0;
+    animation.timing_function = Some(EasingFunction::Linear);
+    
+    animation.set_from_value_position_x(100);
+    animation.set_to_value_position_x(400);
+    
+    assert_eq!(animation.translation_x_from_value, 100);
+    assert_eq!(animation.translation_x_to_value, 400);
+    assert!(animation.translation_x_running);
+  }
+
+  #[test]
+  fn test_opacity_animation_setters() {
+    let mut animation = Animation::with_key_path("opacity");
+    animation.duration = 1.5;
+    
+    animation.set_from_value_opacity(1.0);
+    animation.set_to_value_opacity(0.5);
+    
+    assert_eq!(animation.opacity_from_value, 1.0);
+    assert_eq!(animation.opacity_to_value, 0.5);
+    assert!(animation.opacity_running);
+  }
+
+  #[test]
+  fn test_scale_animation_setters() {
+    let mut animation = Animation::with_key_path("transform.scale");
+    animation.duration = 2.5;
+    
+    animation.set_from_value_scale(1.0);
+    animation.set_to_value_scale(2.0);
+    
+    assert_eq!(animation.scale_from_value, 1.0);
+    assert_eq!(animation.scale_to_value, 2.0);
+    assert!(animation.scale_running);
+  }
+
+  #[test]
+  fn test_rotation_animation_setters() {
+    let mut animation = Animation::with_key_path("transform.rotation");
+    animation.duration = 3.0;
+    
+    animation.set_from_value_rotation(0);
+    animation.set_to_value_rotation(360);
+    
+    assert_eq!(animation.rotation_from_value, 0);
+    assert_eq!(animation.rotation_to_value, 360);
+    assert!(animation.rotation_running);
+  }
+
+  #[test]
+  fn test_backward_compatibility_animation() {
+    let mut animation = Animation::new();
+    animation.apply_translation_x(0, 100, 1.0, EasingFunction::Linear);
+    animation.apply_translation_y(0, 200, 1.0, EasingFunction::EaseIn);
+    animation.apply_scale(1.0, 2.0, 1.0, EasingFunction::EaseOut);
+    animation.apply_rotation(0, 180, 1.0, EasingFunction::EaseInOut);
+    
+    assert!(animation.translation_x_running);
+    assert!(animation.translation_y_running);
+    assert!(animation.scale_running);
+    assert!(animation.rotation_running);
+  }
+}

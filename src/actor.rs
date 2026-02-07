@@ -602,3 +602,133 @@ impl Actor {
     &mut self.sub_actor_list
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use crate::animation::{Animation, EasingFunction};
+
+  #[test]
+  fn test_position_api() {
+    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    actor.set_position(50, 75);
+    let (x, y) = actor.position();
+    assert_eq!(x, 50);
+    assert_eq!(y, 75);
+  }
+
+  #[test]
+  fn test_bounds_api() {
+    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    actor.set_bounds(200, 150);
+    let (w, h) = actor.bounds();
+    assert_eq!(w, 200);
+    assert_eq!(h, 150);
+  }
+
+  #[test]
+  fn test_opacity_api() {
+    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    assert_eq!(actor.opacity, 1.0);
+    
+    actor.set_opacity(0.5);
+    assert_eq!(actor.opacity, 0.5);
+    
+    // Test clamping
+    actor.set_opacity(1.5);
+    assert_eq!(actor.opacity, 1.0);
+    
+    actor.set_opacity(-0.5);
+    assert_eq!(actor.opacity, 0.0);
+  }
+
+  #[test]
+  fn test_background_color_api() {
+    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    actor.set_background_color(0.5, 0.6, 0.7);
+    let (r, g, b) = actor.background_color();
+    assert_eq!(r, 0.5);
+    assert_eq!(g, 0.6);
+    assert_eq!(b, 0.7);
+  }
+
+  #[test]
+  fn test_add_animation_with_key() {
+    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    let mut animation = Animation::with_key_path("position.x");
+    animation.duration = 2.0;
+    animation.timing_function = Some(EasingFunction::Linear);
+    
+    actor.add_animation(animation, Some("moveX".to_string()));
+    assert_eq!(actor.animations.len(), 1);
+    assert!(actor.animations.contains_key("moveX"));
+  }
+
+  #[test]
+  fn test_remove_animation() {
+    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    let animation1 = Animation::with_key_path("position.x");
+    let animation2 = Animation::with_key_path("opacity");
+    
+    actor.add_animation(animation1, Some("anim1".to_string()));
+    actor.add_animation(animation2, Some("anim2".to_string()));
+    assert_eq!(actor.animations.len(), 2);
+    
+    actor.remove_animation("anim1");
+    assert_eq!(actor.animations.len(), 1);
+    assert!(!actor.animations.contains_key("anim1"));
+    assert!(actor.animations.contains_key("anim2"));
+  }
+
+  #[test]
+  fn test_remove_all_animations() {
+    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    let animation1 = Animation::with_key_path("position.x");
+    let animation2 = Animation::with_key_path("opacity");
+    let animation3 = Animation::new();
+    
+    actor.add_animation(animation1, Some("anim1".to_string()));
+    actor.add_animation(animation2, Some("anim2".to_string()));
+    actor.set_animation(Some(animation3));
+    
+    assert_eq!(actor.animations.len(), 2);
+    assert!(actor.animation.is_some());
+    
+    actor.remove_all_animations();
+    assert_eq!(actor.animations.len(), 0);
+    assert!(actor.animation.is_none());
+  }
+
+  #[test]
+  fn test_sublayers_api() {
+    let mut parent = Actor::new("parent".to_string(), 200, 200, None);
+    let child1 = Actor::new("child1".to_string(), 50, 50, None);
+    let child2 = Actor::new("child2".to_string(), 50, 50, None);
+    
+    parent.add_sublayer(child1);
+    parent.add_sublayer(child2);
+    
+    let sublayers = parent.sublayers();
+    assert_eq!(sublayers.len(), 2);
+    assert_eq!(sublayers[0].name, "child1");
+    assert_eq!(sublayers[1].name, "child2");
+  }
+
+  #[test]
+  fn test_backward_compatibility() {
+    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    
+    // Old way of setting position
+    actor.x = 50;
+    actor.y = 75;
+    assert_eq!(actor.x, 50);
+    assert_eq!(actor.y, 75);
+    
+    // Old way of creating animation
+    let mut animation = Animation::new();
+    animation.apply_translation_x(0, 100, 1.0, EasingFunction::Linear);
+    actor.set_animation(Some(animation));
+    
+    assert!(actor.animation.is_some());
+  }
+}
