@@ -8,7 +8,7 @@ extern crate keyframe;
 
 use self::gl::types::*;
 use cgmath::{Deg, Matrix, Matrix4, SquareMatrix, Vector3};
-use image::{DynamicImage, ImageBuffer, Rgba};
+use image::{DynamicImage};
 use std::ffi::CStr;
 use std::mem;
 use std::os::raw::c_void;
@@ -63,12 +63,14 @@ pub struct Actor {
   pub rotation: i32,
   pub visible: bool,
   color: [f32; 3],
+  pub opacity: f32, // CoreAnimation-style property
   pub image_path: String,
   pub sub_actor_list: Vec<Actor>,
   vertex_array_obj: gl::types::GLuint,
   texture: gl::types::GLuint,
   pub animated: bool,
   pub animation: Option<Animation>,
+  animations: std::collections::HashMap<String, Animation>, // CoreAnimation-style animations by key
   event_handler: Option<Box<dyn EventHandler>>,
   layout: Option<Box<dyn Layout>>,
   focused_sub_actor: usize,
@@ -111,12 +113,14 @@ impl Actor {
       rotation: 0,
       visible: true,
       color: [1.0, 1.0, 1.0],
+      opacity: 1.0,
       image_path: "".to_string(),
       sub_actor_list: Vec::new(),
       vertex_array_obj: gl::types::GLuint::default(),
       texture: gl::types::GLuint::default(),
       animated: false,
       animation: None,
+      animations: std::collections::HashMap::new(),
       event_handler: event_handler,
       layout: None,
       focused_sub_actor: 0,
@@ -326,10 +330,20 @@ impl Actor {
   }*/
 
   pub fn animate(&mut self) {
+    // Run legacy animation if present
     if let Some(mut animation) = self.animation.take() {
       animation.run(self);
       self.animation = Some(animation);
     }
+
+    // Run CoreAnimation-style animations
+    // Take the animations HashMap out temporarily
+    let mut animations = std::mem::take(&mut self.animations);
+    for (_key, animation) in animations.iter_mut() {
+      animation.run(self);
+    }
+    // Put it back
+    self.animations = animations;
 
     for sub_actor in self.sub_actor_list.iter_mut() {
       sub_actor.animate();
@@ -478,7 +492,7 @@ impl Actor {
       let loc_projection = gl::GetUniformLocation(shader_program, c_str!("projection").as_ptr());
       let loc_use_texture = gl::GetUniformLocation(shader_program, c_str!("useTexture").as_ptr());
 
-      gl::Uniform4f(loc_color, self.color[0], self.color[1], self.color[2], 1.0);
+      gl::Uniform4f(loc_color, self.color[0], self.color[1], self.color[2], self.opacity);
       gl::UniformMatrix4fv(loc_transform, 1, gl::FALSE, transform.as_ptr());
       gl::UniformMatrix4fv(loc_projection, 1, gl::FALSE, projection.as_ptr());
 
@@ -511,5 +525,80 @@ impl Actor {
 
   pub fn add_sub_actor(&mut self, actor: Actor) {
     self.sub_actor_list.push(actor);
+  }
+
+  // CoreAnimation-style API methods
+
+  /// Set position (CoreAnimation-style API)
+  pub fn set_position(&mut self, x: i32, y: i32) {
+    self.x = x;
+    self.y = y;
+  }
+
+  /// Get position as tuple (CoreAnimation-style API)
+  pub fn position(&self) -> (i32, i32) {
+    (self.x, self.y)
+  }
+
+  /// Set bounds (CoreAnimation-style API)
+  pub fn set_bounds(&mut self, width: u32, height: u32) {
+    self.width = width;
+    self.height = height;
+  }
+
+  /// Get bounds as tuple (CoreAnimation-style API)
+  pub fn bounds(&self) -> (u32, u32) {
+    (self.width, self.height)
+  }
+
+  /// Set opacity (CoreAnimation-style API)
+  pub fn set_opacity(&mut self, opacity: f32) {
+    self.opacity = opacity.max(0.0).min(1.0);
+  }
+
+  /// Set background color (CoreAnimation-style API)
+  pub fn set_background_color(&mut self, r: f32, g: f32, b: f32) {
+    self.set_color(r, g, b);
+  }
+
+  /// Get background color (CoreAnimation-style API)
+  pub fn background_color(&self) -> (f32, f32, f32) {
+    (self.color[0], self.color[1], self.color[2])
+  }
+
+  /// Add an animation for a specific key (CoreAnimation-style API)
+  pub fn add_animation(&mut self, animation: Animation, key: Option<String>) {
+    if let Some(key_str) = key {
+      self.animations.insert(key_str, animation);
+    } else {
+      // If no key provided, use the legacy animation field
+      self.animation = Some(animation);
+    }
+  }
+
+  /// Remove all animations (CoreAnimation-style API)
+  pub fn remove_all_animations(&mut self) {
+    self.animations.clear();
+    self.animation = None;
+  }
+
+  /// Remove animation for a specific key (CoreAnimation-style API)
+  pub fn remove_animation(&mut self, key: &str) {
+    self.animations.remove(key);
+  }
+
+  /// Add a sublayer (CoreAnimation-style API, alias for add_sub_actor)
+  pub fn add_sublayer(&mut self, layer: Actor) {
+    self.add_sub_actor(layer);
+  }
+
+  /// Get sublayers (CoreAnimation-style API)
+  pub fn sublayers(&self) -> &Vec<Actor> {
+    &self.sub_actor_list
+  }
+
+  /// Get mutable sublayers (CoreAnimation-style API)
+  pub fn sublayers_mut(&mut self) -> &mut Vec<Actor> {
+    &mut self.sub_actor_list
   }
 }
