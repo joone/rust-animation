@@ -13,7 +13,13 @@ pub struct WgpuContext {
 impl WgpuContext {
   /// Create a new wgpu context without a surface (for library use)
   pub async fn new_offscreen() -> Self {
-    let instance = wgpu::Instance::default();
+    // Explicitly specify backends for better compatibility across platforms
+    // On macOS, this ensures Metal backend is used
+    // On other platforms, PRIMARY includes Vulkan, DX12, or other native backends
+    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+      backends: wgpu::Backends::PRIMARY,
+      ..Default::default()
+    });
     let adapter = instance
       .request_adapter(&wgpu::RequestAdapterOptions {
         power_preference: wgpu::PowerPreference::default(),
