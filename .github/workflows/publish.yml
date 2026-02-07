@@ -1,0 +1,53 @@
+name: Publish to crates.io
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+\.[0-9]+\.[0-9]+'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+    
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y cmake libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libx11-dev libxext-dev
+    
+    - name: Extract version from tag
+      id: extract_version
+      run: |
+        TAG_NAME=${GITHUB_REF#refs/tags/v}
+        echo "VERSION=$TAG_NAME" >> $GITHUB_OUTPUT
+        echo "Extracted version: $TAG_NAME"
+    
+    - name: Verify Cargo.toml version matches tag
+      run: |
+        CARGO_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "rust-animation") | .version')
+        TAG_VERSION=${{ steps.extract_version.outputs.VERSION }}
+        echo "Cargo.toml version: $CARGO_VERSION"
+        echo "Git tag version: $TAG_VERSION"
+        if [ "$CARGO_VERSION" != "$TAG_VERSION" ]; then
+          echo "Error: Version mismatch! Cargo.toml has $CARGO_VERSION but tag is v$TAG_VERSION"
+          exit 1
+        fi
+    
+    - name: Run tests
+      run: cargo test --lib --verbose
+    
+    - name: Build
+      run: cargo build --release --verbose
+    
+    - name: Publish to crates.io
+      env:
+        CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+      run: cargo publish
