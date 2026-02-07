@@ -26,17 +26,21 @@ fn main() {
       .unwrap(),
   );
 
+  // Get the actual window size (may differ from requested due to DPI scaling)
+  let window_size = window.inner_size();
+  let (width, height) = (window_size.width, window_size.height);
+
   let mut play = Play::new(
     "Easing functions demo".to_string(),
-    1920,
-    1080,
+    width as i32,
+    height as i32,
     LayoutMode::UserDefine,
   );
 
-  // Initialize wgpu context with surface
-  play.init_wgpu_with_surface(window.clone(), 1920, 1080);
+  // Initialize wgpu context with surface using actual window size
+  play.init_wgpu_with_surface(window.clone(), width, height);
 
-  let mut stage = Layer::new("stage".to_string(), 1920, 1080, None);
+  let mut stage = Layer::new("stage".to_string(), width, height, None);
   stage.set_visible(true);
 
   let easing_functions = vec![
@@ -60,18 +64,18 @@ fn main() {
   ];
   let mut y = 0;
   let time = 5.0;
-  let width = 63;
-  let height = width;
+  let width_layer = 63;
+  let height_layer = width_layer;
   for i in 0..17 {
     let layer_name = format!("layer_{}", i + 1);
-    let mut layer = Layer::new(layer_name.to_string(), width, height, None);
+    let mut layer = Layer::new(layer_name.to_string(), width_layer, height_layer, None);
     layer.x = 0;
     layer.y = y;
-    y += height as i32;
+    y += height_layer as i32;
     layer.set_color(i as f32 / 18.0, i as f32 / 18.0, i as f32 / 18.0);
 
     let mut animation = Animation::new();
-    animation.apply_translation_x(0, (1920 - width) as i32, time, easing_functions[i]);
+    animation.apply_translation_x(0, (width - width_layer) as i32, time, easing_functions[i]);
     animation.apply_rotation(0, 360, time, EasingFunction::Linear);
     layer.set_animation(Some(animation));
     stage.add_sub_layer(layer);
@@ -93,6 +97,10 @@ fn main() {
               },
             ..
           } => elwt.exit(),
+          WindowEvent::Resized(new_size) => {
+            // Update wgpu surface and projection when window is resized
+            play.resize(new_size.width, new_size.height);
+          }
           WindowEvent::RedrawRequested => {
             play.render();
             window.request_redraw();

@@ -174,13 +174,13 @@ pub struct PictureBrowser {
 }
 
 impl PictureBrowser {
-  pub fn new(_w: u32, _h: u32) -> Self {
+  pub fn new(w: u32, h: u32) -> Self {
     PictureBrowser {
       image_loaded: false,
       play: Play::new(
         "Picture Browser".to_string(),
-        1920,
-        1080,
+        w as i32,
+        h as i32,
         LayoutMode::UserDefine,
       ),
       file_list: Vec::new(),
@@ -189,11 +189,11 @@ impl PictureBrowser {
       splash_stage_name: "".to_string(),
     }
   }
-  pub fn initialize(&mut self, window: Arc<Window>) {
+  pub fn initialize(&mut self, window: Arc<Window>, width: u32, height: u32) {
     // Initialize wgpu context with surface
-    self.play.init_wgpu_with_surface(window, 1920, 1080);
+    self.play.init_wgpu_with_surface(window, width, height);
 
-    let mut splash_stage = Layer::new("splash_stage".to_string(), 1920, 1080, None);
+    let mut splash_stage = Layer::new("splash_stage".to_string(), width, height, None);
     splash_stage.set_image("examples/splash.png".to_string());
     // splash_stage.set_visible(true);
     // splash_stage.set_needs_layout();
@@ -201,8 +201,8 @@ impl PictureBrowser {
 
     let mut stage = Layer::new(
       "main_stage".to_string(),
-      1920,
-      1080,
+      width,
+      height,
       Some(Box::new(LayerEvent::new())),
     );
     stage.set_visible(false);
@@ -277,6 +277,10 @@ fn main() {
       .unwrap(),
   );
 
+  // Get the actual window size (may differ from requested due to DPI scaling)
+  let window_size = window.inner_size();
+  let (width, height) = (window_size.width, window_size.height);
+
   let (tx, rx) = mpsc::channel();
   thread::spawn(move || match download_images() {
     Ok(()) => {
@@ -285,8 +289,8 @@ fn main() {
     Err(..) => {}
   });
 
-  let mut picture_browser = PictureBrowser::new(1920, 1080);
-  picture_browser.initialize(window.clone());
+  let mut picture_browser = PictureBrowser::new(width, height);
+  picture_browser.initialize(window.clone(), width, height);
 
   event_loop
     .run(move |event, elwt| {
@@ -313,6 +317,10 @@ fn main() {
             KeyCode::Space => picture_browser.handle_input(AnimKey::Space),
             _ => {}
           },
+          WindowEvent::Resized(new_size) => {
+            // Update wgpu surface and projection when window is resized
+            picture_browser.play.resize(new_size.width, new_size.height);
+          }
           WindowEvent::RedrawRequested => {
             picture_browser.render_splash_screen();
 

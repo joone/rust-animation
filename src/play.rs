@@ -313,11 +313,22 @@ impl Play {
     self.default_texture_view = Some(texture_view);
   }
 
-  /// Resize the rendering surface
+  /// Resize the rendering surface and update projection matrix
   pub fn resize(&mut self, width: u32, height: u32) {
     if let Some(ref mut context) = self.wgpu_context {
       context.resize(width, height);
     }
+    
+    // Update projection matrix for new viewport size
+    let orth_matrix = cgmath::ortho(
+      0.0,
+      width as f32,
+      height as f32,
+      0.0,
+      1.0,
+      -1.0,
+    );
+    self.projection = orth_matrix;
   }
 
   /// Recursively render a layer and its sublayers
