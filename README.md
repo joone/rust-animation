@@ -1,4 +1,4 @@
-# rust-animation &emsp;  [![Latest Version]][crates.io] 
+# rust-animation [![Latest Version]][crates.io] 
 [Latest Version]: https://img.shields.io/crates/v/rust-animation.svg
 [crates.io]: https://crates.io/crates/rust-animation
 
@@ -161,8 +161,8 @@ cargo run --example easing_functions
 - Combining multiple animations (translation + rotation)
 - Actor positioning and coloring
 
-<details>
-<summary>Code snippet</summary>
+**Code snippet:**
+
 ```rust
   let mut play = Play::new(
     "Easing functions demo".to_string(),
@@ -223,7 +223,6 @@ cargo run --example easing_functions
     glfw.poll_events();
   }
 ```
-</details>
 
 ## Flex UI
 
@@ -246,8 +245,8 @@ cargo run --example flex_ui
 - Justify content and align items properties
 - Nested actors with flex positioning
 
-<details>
-<summary>Code snippet</summary>
+**Code snippet:**
+
 ```rust
 pub struct FlexLayout {
   name: String,
@@ -447,7 +446,6 @@ fn main() {
   }
 }
 ```
-</details>
 
 ## Basic Animation
 
@@ -468,8 +466,7 @@ cargo run --example ani
 - Nested actor hierarchies
 - Different easing functions
 
-<details>
-<summary>Code snippet</summary>
+**Code snippet:**
 
 ```rust
   let mut play = Play::new(
@@ -526,7 +523,6 @@ cargo run --example ani
     glfw.poll_events();
   }
 ```
-</details>
 
 ## Picture Viewer
 
@@ -550,8 +546,7 @@ cargo run --example picture_viewer
 
 > **Note**: This example is a work in progress. Currently, only the thumbnail view is fully functional.
 
-<details>
-<summary>Code snippet</summary>
+**Code snippet:**
 
 ```rust
 pub struct ActorEvent {
@@ -630,7 +625,6 @@ impl Layout for ActorLayout {
   }
 }
 ```
-</details>
 
 ## API Overview
 
