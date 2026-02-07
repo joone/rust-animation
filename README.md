@@ -114,7 +114,8 @@ fn main() {
     
     // Create an actor (a visual element)
     let mut actor = Actor::new("my_actor".to_string(), 100, 100, None);
-    actor.set_position(50, 50);
+    actor.x = 50;
+    actor.y = 50;
     actor.set_color(1.0, 0.0, 0.0); // Red
     
     // Create and apply an animation
@@ -665,7 +666,8 @@ let play = Play::new(name, width, height, layout_mode);
 
 // Create actors
 let mut actor = Actor::new(name, width, height, event_handler);
-actor.set_position(x, y);
+actor.x = x;
+actor.y = y;
 actor.set_color(r, g, b);
 actor.set_image(path);
 
