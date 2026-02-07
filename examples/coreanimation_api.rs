@@ -15,7 +15,7 @@ use winit::{
 use rust_animation::animation::Animation;
 use rust_animation::animation::EasingFunction;
 use rust_animation::layer::LayoutMode;
-use rust_animation::layer::RALayer;
+use rust_animation::layer::Layer;
 use rust_animation::play::Play;
 
 fn main() {
@@ -38,11 +38,11 @@ fn main() {
   // Initialize wgpu context with surface
   play.init_wgpu_with_surface(window.clone(), 1920, 1080);
 
-  let mut stage = RALayer::new("stage".to_string(), 1920, 1080, None);
+  let mut stage = Layer::new("stage".to_string(), 1920, 1080, None);
   stage.set_visible(true);
 
   // Example 1: Using CoreAnimation-style API for position animation
-  let mut layer1 = RALayer::new("layer1".to_string(), 100, 100, None);
+  let mut layer1 = Layer::new("layer1".to_string(), 100, 100, None);
   layer1.set_position(100, 100);
   layer1.set_background_color(1.0, 0.0, 0.0); // Red
   layer1.set_opacity(1.0);
@@ -58,7 +58,7 @@ fn main() {
   layer1.add_animation(position_animation, Some("moveX"));
 
   // Example 2: Opacity animation
-  let mut layer2 = RALayer::new("layer2".to_string(), 120, 120, None);
+  let mut layer2 = Layer::new("layer2".to_string(), 120, 120, None);
   layer2.set_position(100, 250);
   layer2.set_background_color(0.0, 1.0, 0.0); // Green
 
@@ -71,7 +71,7 @@ fn main() {
   layer2.add_animation(opacity_animation, Some("fadeOut"));
 
   // Example 3: Scale animation
-  let mut layer3 = RALayer::new("layer3".to_string(), 80, 80, None);
+  let mut layer3 = Layer::new("layer3".to_string(), 80, 80, None);
   layer3.set_position(100, 400);
   layer3.set_background_color(0.0, 0.0, 1.0); // Blue
 
@@ -84,7 +84,7 @@ fn main() {
   layer3.add_animation(scale_animation, Some("scaleUp"));
 
   // Example 4: Rotation animation
-  let mut layer4 = RALayer::new("layer4".to_string(), 100, 100, None);
+  let mut layer4 = Layer::new("layer4".to_string(), 100, 100, None);
   layer4.set_position(100, 550);
   layer4.set_background_color(1.0, 1.0, 0.0); // Yellow
 
@@ -97,7 +97,7 @@ fn main() {
   layer4.add_animation(rotation_animation, Some("rotate"));
 
   // Example 5: Multiple animations on one layer
-  let mut layer5 = RALayer::new("layer5".to_string(), 150, 150, None);
+  let mut layer5 = Layer::new("layer5".to_string(), 150, 150, None);
   layer5.set_position(300, 100);
   layer5.set_background_color(1.0, 0.0, 1.0); // Magenta
 
@@ -118,11 +118,11 @@ fn main() {
   layer5.add_animation(scale_animation2, Some("scaleDown"));
 
   // Example 6: Using sublayers (CoreAnimation-style)
-  let mut parent_layer = RALayer::new("parentLayer".to_string(), 200, 200, None);
+  let mut parent_layer = Layer::new("parentLayer".to_string(), 200, 200, None);
   parent_layer.set_position(500, 100);
   parent_layer.set_background_color(0.5, 0.5, 0.5); // Gray
 
-  let mut child_layer = RALayer::new("childLayer".to_string(), 50, 50, None);
+  let mut child_layer = Layer::new("childLayer".to_string(), 50, 50, None);
   child_layer.set_position(75, 75);
   child_layer.set_background_color(1.0, 1.0, 1.0); // White
 

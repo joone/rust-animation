@@ -26,7 +26,7 @@ use rust_animation::layer::EventHandler;
 use rust_animation::layer::Key as AnimKey;
 use rust_animation::layer::Layout;
 use rust_animation::layer::LayoutMode;
-use rust_animation::layer::RALayer;
+use rust_animation::layer::Layer;
 use rust_animation::play::Play;
 
 type ResultUrl<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
@@ -84,33 +84,33 @@ fn download_images() -> Result<(), Error> {
 const IMAGE_WIDTH: u32 = 400;
 const IMAGE_HEIGHT: u32 = 225;
 
-pub struct RALayerEvent {
+pub struct LayerEvent {
   name: String,
 }
 
-impl RALayerEvent {
+impl LayerEvent {
   pub fn new() -> Self {
-    RALayerEvent {
+    LayerEvent {
       name: "layer_event".to_string(),
     }
   }
 }
 
-impl EventHandler for RALayerEvent {
-  fn key_focus_in(&mut self, layer: &mut RALayer) {
+impl EventHandler for LayerEvent {
+  fn key_focus_in(&mut self, layer: &mut Layer) {
     println!("key_focus_in: {} {}", self.name, layer.name);
     let mut animation = Animation::new();
     animation.apply_scale(1.0, 1.1, 0.3, EasingFunction::EaseInOut);
     layer.set_animation(Some(animation));
   }
 
-  fn key_focus_out(&mut self, layer: &mut RALayer) {
+  fn key_focus_out(&mut self, layer: &mut Layer) {
     println!("key_focus_out: {} {}", self.name, layer.name);
     layer.scale_x = 1.0;
     layer.scale_y = 1.0;
   }
 
-  fn key_down(&mut self, key: rust_animation::layer::Key, layer: &mut RALayer) {
+  fn key_down(&mut self, key: rust_animation::layer::Key, layer: &mut Layer) {
     println!("key_down: {}  {:?}  {}", self.name, key, layer.name);
 
     if key == rust_animation::layer::Key::Right {
@@ -140,8 +140,8 @@ impl ActorLayout {
 impl Layout for ActorLayout {
   fn layout_sub_layers(
     &mut self,
-    layer: &mut RALayer,
-    _parent_layer: Option<&RALayer>,
+    layer: &mut Layer,
+    _parent_layer: Option<&Layer>,
     _stretch: &mut Option<Stretch>,
   ) {
     println!("layout_sub_layer {}", self.name);
@@ -155,7 +155,7 @@ impl Layout for ActorLayout {
     }
   }
 
-  fn update_layout(&mut self, _actor: &mut RALayer, _stretch: &mut Option<Stretch>) {
+  fn update_layout(&mut self, _actor: &mut Layer, _stretch: &mut Option<Stretch>) {
     println!("update_layout {}", self.name);
   }
 
@@ -193,17 +193,17 @@ impl PictureBrowser {
     // Initialize wgpu context with surface
     self.play.init_wgpu_with_surface(window, 1920, 1080);
 
-    let mut splash_stage = RALayer::new("splash_stage".to_string(), 1920, 1080, None);
+    let mut splash_stage = Layer::new("splash_stage".to_string(), 1920, 1080, None);
     splash_stage.set_image("examples/splash.png".to_string());
     // splash_stage.set_visible(true);
     // splash_stage.set_needs_layout();
     self.splash_stage_name = self.play.add_stage(splash_stage);
 
-    let mut stage = RALayer::new(
+    let mut stage = Layer::new(
       "main_stage".to_string(),
       1920,
       1080,
-      Some(Box::new(RALayerEvent::new())),
+      Some(Box::new(LayerEvent::new())),
     );
     stage.set_visible(false);
     stage.set_layout(Some(Box::new(ActorLayout::new())));
@@ -228,11 +228,11 @@ impl PictureBrowser {
 
     if self.cur_file_index < self.file_list.len() {
       let name = format!("image_{}", self.cur_file_index);
-      let mut layer = RALayer::new(
+      let mut layer = Layer::new(
         name.to_string(),
         IMAGE_WIDTH,
         IMAGE_HEIGHT,
-        Some(Box::new(RALayerEvent::new())),
+        Some(Box::new(LayerEvent::new())),
       );
       layer.set_image(self.file_list[self.cur_file_index].to_string());
       self
