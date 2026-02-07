@@ -466,7 +466,7 @@ impl Layout for ActorLayout {
 **Play**: The main container and render manager
 - Manages the rendering loop
 - Holds one or more stages
-- Handles projection matrices and OpenGL setup
+- Handles projection matrices and wgpu context setup
 
 **Layer**: Visual elements in the scene graph
 - Can have position (x, y, z), size (width, height)
@@ -507,8 +507,8 @@ animation.apply_rotation(from_deg, to_deg, duration, easing);
 layer.set_animation(Some(animation));
 
 // Build scene graph
-parent_layer.add_sub_actor(child_actor);
-stage.add_sub_actor(layer);
+parent_layer.add_sub_layer(child_layer);
+stage.add_sub_layer(layer);
 play.add_stage(stage);
 
 // Render
@@ -558,12 +558,12 @@ This project was inspired by:
 
 rust-animation uses several excellent open-source libraries:
 - [cgmath](https://crates.io/crates/cgmath) - Linear algebra and mathematics for graphics
-- [gl](https://crates.io/crates/gl) - OpenGL bindings
+- [wgpu](https://crates.io/crates/wgpu) - Modern cross-platform graphics API
 - [image](https://crates.io/crates/image) - Image encoding and decoding
 - [keyframe](https://crates.io/crates/keyframe) - Keyframe animation library
 - [stretch](https://crates.io/crates/stretch) - Flexbox layout engine
 - [ab_glyph](https://crates.io/crates/ab_glyph) - Font rendering
-- [glfw](https://crates.io/crates/glfw) - Window and OpenGL context creation (examples only)
+- [winit](https://crates.io/crates/winit) - Window creation and event loop (examples only)
 
 ---
 
