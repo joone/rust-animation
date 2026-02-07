@@ -272,7 +272,7 @@ fn main() {
   let window = Arc::new(
     WindowBuilder::new()
       .with_title("Image Viewer")
-      .with_inner_size(winit::dpi::LogicalSize::new(1920, 1080))
+      .with_inner_size(winit::dpi::LogicalSize::new(1280, 720))
       .build(&event_loop)
       .unwrap(),
   );
