@@ -26,7 +26,7 @@ impl FontRenderer {
     let data = std::fs::read(&font_path).unwrap();
 
     match &mut self.font {
-      Some(font) => {
+      Some(_font) => {
         println!("font already loaded");
       }
       None => {

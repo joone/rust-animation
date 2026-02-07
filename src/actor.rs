@@ -8,7 +8,7 @@ extern crate keyframe;
 
 use self::gl::types::*;
 use cgmath::{Deg, Matrix, Matrix4, SquareMatrix, Vector3};
-use image::{DynamicImage, ImageBuffer, Rgba};
+use image::DynamicImage;
 use std::ffi::CStr;
 use std::mem;
 use std::os::raw::c_void;
@@ -63,12 +63,14 @@ pub struct Actor {
   pub rotation: i32,
   pub visible: bool,
   color: [f32; 3],
+  pub opacity: f32, // CoreAnimation-style property
   pub image_path: String,
   pub sub_actor_list: Vec<Actor>,
   vertex_array_obj: gl::types::GLuint,
   texture: gl::types::GLuint,
   pub animated: bool,
   pub animation: Option<Animation>,
+  animations: std::collections::HashMap<String, Animation>, // CoreAnimation-style animations by key
   event_handler: Option<Box<dyn EventHandler>>,
   layout: Option<Box<dyn Layout>>,
   focused_sub_actor: usize,
@@ -111,12 +113,14 @@ impl Actor {
       rotation: 0,
       visible: true,
       color: [1.0, 1.0, 1.0],
+      opacity: 1.0,
       image_path: "".to_string(),
       sub_actor_list: Vec::new(),
       vertex_array_obj: gl::types::GLuint::default(),
       texture: gl::types::GLuint::default(),
       animated: false,
       animation: None,
+      animations: std::collections::HashMap::new(),
       event_handler: event_handler,
       layout: None,
       focused_sub_actor: 0,
@@ -131,6 +135,13 @@ impl Actor {
   }
 
   pub fn init_gl(&mut self) {
+    // Skip OpenGL initialization during tests
+    #[cfg(test)]
+    {
+      return;
+    }
+    
+    #[cfg(not(test))]
     unsafe {
       let (mut vertex_array_buffer, mut elem_array_buffer) = (0, 0);
       let vertices: [f32; 20] = [
@@ -257,7 +268,7 @@ impl Actor {
   pub fn set_image(&mut self, path: String) {
     self.image_path = path;
 
-    if self.image_path.len() > 0 {
+    if !self.image_path.is_empty() {
       let stride = 5 * mem::size_of::<GLfloat>() as GLsizei;
       unsafe {
         // texture coord attribute
@@ -326,10 +337,20 @@ impl Actor {
   }*/
 
   pub fn animate(&mut self) {
+    // Run legacy animation if present
     if let Some(mut animation) = self.animation.take() {
       animation.run(self);
       self.animation = Some(animation);
     }
+
+    // Run CoreAnimation-style animations
+    // Take the animations HashMap out temporarily
+    let mut animations = std::mem::take(&mut self.animations);
+    for (_key, animation) in animations.iter_mut() {
+      animation.run(self);
+    }
+    // Put it back
+    self.animations = animations;
 
     for sub_actor in self.sub_actor_list.iter_mut() {
       sub_actor.animate();
@@ -337,7 +358,7 @@ impl Actor {
   }
 
   pub fn select_next_sub_actor(&mut self) {
-    if self.sub_actor_list.len() <= 0 {
+    if self.sub_actor_list.is_empty() {
       return;
     }
     // no more next actor.
@@ -350,7 +371,7 @@ impl Actor {
   }
 
   pub fn select_prev_sub_actor(&mut self) {
-    if self.sub_actor_list.len() <= 0 {
+    if self.sub_actor_list.is_empty() {
       return;
     }
     // ne more previous actor.
@@ -478,11 +499,11 @@ impl Actor {
       let loc_projection = gl::GetUniformLocation(shader_program, c_str!("projection").as_ptr());
       let loc_use_texture = gl::GetUniformLocation(shader_program, c_str!("useTexture").as_ptr());
 
-      gl::Uniform4f(loc_color, self.color[0], self.color[1], self.color[2], 1.0);
+      gl::Uniform4f(loc_color, self.color[0], self.color[1], self.color[2], self.opacity);
       gl::UniformMatrix4fv(loc_transform, 1, gl::FALSE, transform.as_ptr());
       gl::UniformMatrix4fv(loc_projection, 1, gl::FALSE, projection.as_ptr());
 
-      if self.image_path.len() > 0 {
+      if !self.image_path.is_empty() {
         gl::BindTexture(gl::TEXTURE_2D, self.texture);
         gl::Uniform1i(loc_use_texture, 1);
       } else {
@@ -500,7 +521,7 @@ impl Actor {
     }
 
     // render the focused sub_actor at the end.
-    if self.sub_actor_list.len() > 0 {
+    if !self.sub_actor_list.is_empty() {
       self.sub_actor_list[self.focused_sub_actor].render(
         shader_program,
         Some(&transform),
@@ -511,5 +532,210 @@ impl Actor {
 
   pub fn add_sub_actor(&mut self, actor: Actor) {
     self.sub_actor_list.push(actor);
+  }
+
+  // CoreAnimation-style API methods
+
+  /// Set position (CoreAnimation-style API)
+  pub fn set_position(&mut self, x: i32, y: i32) {
+    self.x = x;
+    self.y = y;
+  }
+
+  /// Get position as tuple (CoreAnimation-style API)
+  pub fn position(&self) -> (i32, i32) {
+    (self.x, self.y)
+  }
+
+  /// Set bounds (CoreAnimation-style API)
+  pub fn set_bounds(&mut self, width: u32, height: u32) {
+    self.width = width;
+    self.height = height;
+  }
+
+  /// Get bounds as tuple (CoreAnimation-style API)
+  pub fn bounds(&self) -> (u32, u32) {
+    (self.width, self.height)
+  }
+
+  /// Set opacity (CoreAnimation-style API)
+  pub fn set_opacity(&mut self, opacity: f32) {
+    self.opacity = opacity.max(0.0).min(1.0);
+  }
+
+  /// Set background color (CoreAnimation-style API)
+  pub fn set_background_color(&mut self, r: f32, g: f32, b: f32) {
+    self.set_color(r, g, b);
+  }
+
+  /// Get background color (CoreAnimation-style API)
+  pub fn background_color(&self) -> (f32, f32, f32) {
+    (self.color[0], self.color[1], self.color[2])
+  }
+
+  /// Add an animation for a specific key (CoreAnimation-style API)
+  pub fn add_animation(&mut self, animation: Animation, key: Option<&str>) {
+    if let Some(key_str) = key {
+      self.animations.insert(key_str.to_string(), animation);
+    } else {
+      // If no key provided, use the legacy animation field
+      self.animation = Some(animation);
+    }
+  }
+
+  /// Remove all animations (CoreAnimation-style API)
+  pub fn remove_all_animations(&mut self) {
+    self.animations.clear();
+    self.animation = None;
+  }
+
+  /// Remove animation for a specific key (CoreAnimation-style API)
+  pub fn remove_animation(&mut self, key: &str) {
+    self.animations.remove(key);
+  }
+
+  /// Add a sublayer (CoreAnimation-style API, alias for add_sub_actor)
+  pub fn add_sublayer(&mut self, layer: Actor) {
+    self.add_sub_actor(layer);
+  }
+
+  /// Get sublayers (CoreAnimation-style API)
+  pub fn sublayers(&self) -> &Vec<Actor> {
+    &self.sub_actor_list
+  }
+
+  /// Get mutable sublayers (CoreAnimation-style API)
+  pub fn sublayers_mut(&mut self) -> &mut Vec<Actor> {
+    &mut self.sub_actor_list
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use crate::animation::{Animation, EasingFunction};
+
+  #[test]
+  fn test_position_api() {
+    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    actor.set_position(50, 75);
+    let (x, y) = actor.position();
+    assert_eq!(x, 50);
+    assert_eq!(y, 75);
+  }
+
+  #[test]
+  fn test_bounds_api() {
+    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    actor.set_bounds(200, 150);
+    let (w, h) = actor.bounds();
+    assert_eq!(w, 200);
+    assert_eq!(h, 150);
+  }
+
+  #[test]
+  fn test_opacity_api() {
+    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    assert_eq!(actor.opacity, 1.0);
+    
+    actor.set_opacity(0.5);
+    assert_eq!(actor.opacity, 0.5);
+    
+    // Test clamping
+    actor.set_opacity(1.5);
+    assert_eq!(actor.opacity, 1.0);
+    
+    actor.set_opacity(-0.5);
+    assert_eq!(actor.opacity, 0.0);
+  }
+
+  #[test]
+  fn test_background_color_api() {
+    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    actor.set_background_color(0.5, 0.6, 0.7);
+    let (r, g, b) = actor.background_color();
+    assert_eq!(r, 0.5);
+    assert_eq!(g, 0.6);
+    assert_eq!(b, 0.7);
+  }
+
+  #[test]
+  fn test_add_animation_with_key() {
+    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    let mut animation = Animation::with_key_path("position.x");
+    animation.duration = 2.0;
+    animation.timing_function = Some(EasingFunction::Linear);
+    
+    actor.add_animation(animation, Some("moveX"));
+    assert_eq!(actor.animations.len(), 1);
+    assert!(actor.animations.contains_key("moveX"));
+  }
+
+  #[test]
+  fn test_remove_animation() {
+    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    let animation1 = Animation::with_key_path("position.x");
+    let animation2 = Animation::with_key_path("opacity");
+    
+    actor.add_animation(animation1, Some("anim1"));
+    actor.add_animation(animation2, Some("anim2"));
+    assert_eq!(actor.animations.len(), 2);
+    
+    actor.remove_animation("anim1");
+    assert_eq!(actor.animations.len(), 1);
+    assert!(!actor.animations.contains_key("anim1"));
+    assert!(actor.animations.contains_key("anim2"));
+  }
+
+  #[test]
+  fn test_remove_all_animations() {
+    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    let animation1 = Animation::with_key_path("position.x");
+    let animation2 = Animation::with_key_path("opacity");
+    let animation3 = Animation::new();
+    
+    actor.add_animation(animation1, Some("anim1"));
+    actor.add_animation(animation2, Some("anim2"));
+    actor.set_animation(Some(animation3));
+    
+    assert_eq!(actor.animations.len(), 2);
+    assert!(actor.animation.is_some());
+    
+    actor.remove_all_animations();
+    assert_eq!(actor.animations.len(), 0);
+    assert!(actor.animation.is_none());
+  }
+
+  #[test]
+  fn test_sublayers_api() {
+    let mut parent = Actor::new("parent".to_string(), 200, 200, None);
+    let child1 = Actor::new("child1".to_string(), 50, 50, None);
+    let child2 = Actor::new("child2".to_string(), 50, 50, None);
+    
+    parent.add_sublayer(child1);
+    parent.add_sublayer(child2);
+    
+    let sublayers = parent.sublayers();
+    assert_eq!(sublayers.len(), 2);
+    assert_eq!(sublayers[0].name, "child1");
+    assert_eq!(sublayers[1].name, "child2");
+  }
+
+  #[test]
+  fn test_backward_compatibility() {
+    let mut actor = Actor::new("test".to_string(), 100, 100, None);
+    
+    // Old way of setting position
+    actor.x = 50;
+    actor.y = 75;
+    assert_eq!(actor.x, 50);
+    assert_eq!(actor.y, 75);
+    
+    // Old way of creating animation
+    let mut animation = Animation::new();
+    animation.apply_translation_x(0, 100, 1.0, EasingFunction::Linear);
+    actor.set_animation(Some(animation));
+    
+    assert!(actor.animation.is_some());
   }
 }
