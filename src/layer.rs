@@ -82,17 +82,18 @@ pub struct RALayer {
   pub opacity: f32, // CoreAnimation-style property
   pub image_path: String,
   pub sub_layer_list: Vec<RALayer>,
-  vertex_buffer: Option<wgpu::Buffer>,
-  index_buffer: Option<wgpu::Buffer>,
-  texture: Option<wgpu::Texture>,
-  texture_view: Option<wgpu::TextureView>,
+  pub(crate) vertex_buffer: Option<wgpu::Buffer>,
+  pub(crate) index_buffer: Option<wgpu::Buffer>,
+  pub(crate) texture: Option<wgpu::Texture>,
+  pub(crate) texture_view: Option<wgpu::TextureView>,
+  pub(crate) bind_group: Option<wgpu::BindGroup>,
   pub animated: bool,
   pub animation: Option<Animation>,
   animations: std::collections::HashMap<String, Animation>, // CoreAnimation-style animations by key
   event_handler: Option<Box<dyn EventHandler>>,
   layout: Option<Box<dyn Layout>>,
-  focused_sub_layer: usize,
-  focused: bool,
+  pub(crate) focused_sub_layer: usize,
+  pub(crate) focused: bool,
   pub needs_update: bool,
   pub node: Option<Node>,   // for stretch only
   pub style: Option<Style>, // for stretch only
@@ -138,6 +139,7 @@ impl RALayer {
       index_buffer: None,
       texture: None,
       texture_view: None,
+      bind_group: None,
       animated: false,
       animation: None,
       animations: std::collections::HashMap::new(),
@@ -153,6 +155,7 @@ impl RALayer {
     layer
   }
 
+  #[allow(unused_variables)]
   pub fn init_buffers(&mut self, device: &wgpu::Device) {
     // Skip buffer initialization during tests
     #[cfg(test)]
@@ -585,6 +588,72 @@ impl RALayer {
   /// Get mutable sublayers (CoreAnimation-style API)
   pub fn sublayers_mut(&mut self) -> &mut Vec<RALayer> {
     &mut self.sub_layer_list
+  }
+
+  /// Create uniform buffer with transform matrix and color
+  pub fn create_uniform_buffer(
+    &self,
+    device: &wgpu::Device,
+    transform: &Matrix4<f32>,
+    projection: &Matrix4<f32>,
+  ) -> wgpu::Buffer {
+    use wgpu::util::DeviceExt;
+
+    #[repr(C)]
+    #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+    struct Uniforms {
+      transform: [[f32; 4]; 4],
+      projection: [[f32; 4]; 4],
+      color: [f32; 4],
+      use_texture: u32,
+      _padding: [u32; 3],
+    }
+
+    let use_texture = if self.texture.is_some() { 1 } else { 0 };
+    
+    let uniforms = Uniforms {
+      transform: (*transform).into(),
+      projection: (*projection).into(),
+      color: [self.color[0], self.color[1], self.color[2], self.opacity],
+      use_texture,
+      _padding: [0; 3],
+    };
+
+    device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+      label: Some("Uniform Buffer"),
+      contents: bytemuck::cast_slice(&[uniforms]),
+      usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+    })
+  }
+
+  /// Get or create texture bind group
+  pub fn get_or_create_bind_group(
+    &mut self,
+    device: &wgpu::Device,
+    layout: &wgpu::BindGroupLayout,
+    sampler: &wgpu::Sampler,
+    default_texture_view: &wgpu::TextureView,
+  ) -> &wgpu::BindGroup {
+    if self.bind_group.is_none() {
+      let texture_view = self.texture_view.as_ref().unwrap_or(default_texture_view);
+      
+      self.bind_group = Some(device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: Some("Texture Bind Group"),
+        layout,
+        entries: &[
+          wgpu::BindGroupEntry {
+            binding: 0,
+            resource: wgpu::BindingResource::TextureView(texture_view),
+          },
+          wgpu::BindGroupEntry {
+            binding: 1,
+            resource: wgpu::BindingResource::Sampler(sampler),
+          },
+        ],
+      }));
+    }
+    
+    self.bind_group.as_ref().unwrap()
   }
 }
 
