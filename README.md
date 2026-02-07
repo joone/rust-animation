@@ -193,7 +193,7 @@ let mut opacity_animation = Animation::with_key_path("opacity");
 opacity_animation.duration = 2.5;
 opacity_animation.set_from_value_opacity(1.0);
 opacity_animation.set_to_value_opacity(0.2);
-layer.add_animation(opacity_animation, Some("fadeOut".to_string()));
+layer.add_animation(opacity_animation, Some("fadeOut"));
 ```
 </details>
 
@@ -762,7 +762,7 @@ animation.set_from_value_position_x(50);
 animation.set_to_value_position_x(400);
 
 // Add animation with a key (like CALayer.add(_:forKey:))
-layer.add_animation(animation, Some("moveX".to_string()));
+layer.add_animation(animation, Some("moveX"));
 
 // Add sublayers (like CALayer.addSublayer())
 parent_layer.add_sublayer(child_layer);

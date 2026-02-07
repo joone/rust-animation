@@ -57,7 +57,7 @@ fn main() {
   position_animation.set_to_value_position_x(800);
   
   // Add animation with a key (CoreAnimation-style)
-  layer1.add_animation(position_animation, Some("moveX".to_string()));
+  layer1.add_animation(position_animation, Some("moveX"));
 
   // Example 2: Opacity animation
   let mut layer2 = Actor::new("layer2".to_string(), 120, 120, None);
@@ -70,7 +70,7 @@ fn main() {
   opacity_animation.set_from_value_opacity(1.0);
   opacity_animation.set_to_value_opacity(0.2);
   
-  layer2.add_animation(opacity_animation, Some("fadeOut".to_string()));
+  layer2.add_animation(opacity_animation, Some("fadeOut"));
 
   // Example 3: Scale animation
   let mut layer3 = Actor::new("layer3".to_string(), 80, 80, None);
@@ -83,7 +83,7 @@ fn main() {
   scale_animation.set_from_value_scale(1.0);
   scale_animation.set_to_value_scale(2.5);
   
-  layer3.add_animation(scale_animation, Some("scaleUp".to_string()));
+  layer3.add_animation(scale_animation, Some("scaleUp"));
 
   // Example 4: Rotation animation
   let mut layer4 = Actor::new("layer4".to_string(), 100, 100, None);
@@ -96,7 +96,7 @@ fn main() {
   rotation_animation.set_from_value_rotation(0);
   rotation_animation.set_to_value_rotation(360);
   
-  layer4.add_animation(rotation_animation, Some("rotate".to_string()));
+  layer4.add_animation(rotation_animation, Some("rotate"));
 
   // Example 5: Multiple animations on one layer
   let mut layer5 = Actor::new("layer5".to_string(), 150, 150, None);
@@ -109,7 +109,7 @@ fn main() {
   pos_y_animation.timing_function = Some(EasingFunction::EaseInOut);
   pos_y_animation.set_from_value_position_y(100);
   pos_y_animation.set_to_value_position_y(600);
-  layer5.add_animation(pos_y_animation, Some("moveY".to_string()));
+  layer5.add_animation(pos_y_animation, Some("moveY"));
   
   // Scale animation
   let mut scale_animation2 = Animation::with_key_path("transform.scale");
@@ -117,7 +117,7 @@ fn main() {
   scale_animation2.timing_function = Some(EasingFunction::EaseInOut);
   scale_animation2.set_from_value_scale(1.0);
   scale_animation2.set_to_value_scale(0.5);
-  layer5.add_animation(scale_animation2, Some("scaleDown".to_string()));
+  layer5.add_animation(scale_animation2, Some("scaleDown"));
 
   // Example 6: Using sublayers (CoreAnimation-style)
   let mut parent_layer = Actor::new("parentLayer".to_string(), 200, 200, None);

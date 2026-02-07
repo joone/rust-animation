@@ -197,6 +197,10 @@ impl Animation {
   }
 
   // CoreAnimation-style API: Create basic animation with keyPath
+  // Note: Currently key_path is for API compatibility only. In the future, this could
+  // automatically configure the animation type based on the key path (e.g., "position.x",
+  // "opacity", "transform.scale"). For now, callers should use the set_*_value methods
+  // to configure the specific animation.
   pub fn with_key_path(_key_path: &str) -> Animation {
     let mut animation = Animation::new();
     // Set default duration
@@ -281,7 +285,7 @@ impl Animation {
   }
 
   pub fn run(&mut self, actor: &mut Actor) {
-    if self.translation_x_running == true {
+    if self.translation_x_running {
       if self.translation_x_starting_time == 0 {
         self.translation_x_starting_time = self.animation_time_instance.elapsed().as_millis();
       }
@@ -302,7 +306,7 @@ impl Animation {
       }
     }
 
-    if self.translation_y_running == true {
+    if self.translation_y_running {
       if self.translation_y_starting_time == 0 {
         self.translation_y_starting_time = self.animation_time_instance.elapsed().as_millis();
       }
@@ -323,7 +327,7 @@ impl Animation {
       }
     }
 
-    if self.rotation_running == true {
+    if self.rotation_running {
       if self.rotation_starting_time == 0 {
         self.rotation_starting_time = self.animation_time_instance.elapsed().as_millis();
       }
@@ -345,7 +349,7 @@ impl Animation {
       }
     }
 
-    if self.scale_running == true {
+    if self.scale_running {
       if self.scale_starting_time == 0 {
         self.scale_starting_time = self.animation_time_instance.elapsed().as_millis();
       }
@@ -374,7 +378,7 @@ impl Animation {
       }
     }
 
-    if self.opacity_running == true {
+    if self.opacity_running {
       if self.opacity_starting_time == 0 {
         self.opacity_starting_time = self.animation_time_instance.elapsed().as_millis();
       }
@@ -396,11 +400,11 @@ impl Animation {
       }
     }
 
-    if self.translation_x_running == true
-      || self.translation_y_running == true
-      || self.rotation_running == true
-      || self.scale_running == true
-      || self.opacity_running == true
+    if self.translation_x_running
+      || self.translation_y_running
+      || self.rotation_running
+      || self.scale_running
+      || self.opacity_running
     {
       actor.animated = true;
     } else {

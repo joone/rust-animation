@@ -567,9 +567,9 @@ impl Actor {
   }
 
   /// Add an animation for a specific key (CoreAnimation-style API)
-  pub fn add_animation(&mut self, animation: Animation, key: Option<String>) {
+  pub fn add_animation(&mut self, animation: Animation, key: Option<&str>) {
     if let Some(key_str) = key {
-      self.animations.insert(key_str, animation);
+      self.animations.insert(key_str.to_string(), animation);
     } else {
       // If no key provided, use the legacy animation field
       self.animation = Some(animation);
@@ -659,7 +659,7 @@ mod tests {
     animation.duration = 2.0;
     animation.timing_function = Some(EasingFunction::Linear);
     
-    actor.add_animation(animation, Some("moveX".to_string()));
+    actor.add_animation(animation, Some("moveX"));
     assert_eq!(actor.animations.len(), 1);
     assert!(actor.animations.contains_key("moveX"));
   }
@@ -670,8 +670,8 @@ mod tests {
     let animation1 = Animation::with_key_path("position.x");
     let animation2 = Animation::with_key_path("opacity");
     
-    actor.add_animation(animation1, Some("anim1".to_string()));
-    actor.add_animation(animation2, Some("anim2".to_string()));
+    actor.add_animation(animation1, Some("anim1"));
+    actor.add_animation(animation2, Some("anim2"));
     assert_eq!(actor.animations.len(), 2);
     
     actor.remove_animation("anim1");
@@ -687,8 +687,8 @@ mod tests {
     let animation2 = Animation::with_key_path("opacity");
     let animation3 = Animation::new();
     
-    actor.add_animation(animation1, Some("anim1".to_string()));
-    actor.add_animation(animation2, Some("anim2".to_string()));
+    actor.add_animation(animation1, Some("anim1"));
+    actor.add_animation(animation2, Some("anim2"));
     actor.set_animation(Some(animation3));
     
     assert_eq!(actor.animations.len(), 2);
