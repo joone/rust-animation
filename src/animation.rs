@@ -188,7 +188,13 @@ impl Animation {
     self.scale_time_duration = time * 1000.0; // msec.
   }
 
-  pub fn apply_opacity(&mut self, from_value: f32, to_value: f32, time: f32, easing: EasingFunction) {
+  pub fn apply_opacity(
+    &mut self,
+    from_value: f32,
+    to_value: f32,
+    time: f32,
+    easing: EasingFunction,
+  ) {
     self.opacity_running = true;
     self.opacity_ease = easing;
     self.opacity_from_value = from_value;
@@ -383,8 +389,8 @@ impl Animation {
         self.opacity_starting_time = self.animation_time_instance.elapsed().as_millis();
       }
 
-      let cur_time = (self.animation_time_instance.elapsed().as_millis() - self.opacity_starting_time)
-        as f32
+      let cur_time = (self.animation_time_instance.elapsed().as_millis()
+        - self.opacity_starting_time) as f32
         / self.opacity_time_duration as f32;
       if cur_time <= 1.0 {
         layer.opacity = Animation::easing_function(
@@ -431,7 +437,7 @@ mod tests {
     animation.timing_function = Some(EasingFunction::EaseInOut);
     animation.repeat_count = 2.0;
     animation.autoreverses = true;
-    
+
     assert_eq!(animation.duration, 3.5);
     assert_eq!(animation.repeat_count, 2.0);
     assert!(animation.autoreverses);
@@ -442,10 +448,10 @@ mod tests {
     let mut animation = Animation::with_key_path("position.x");
     animation.duration = 2.0;
     animation.timing_function = Some(EasingFunction::Linear);
-    
+
     animation.set_from_value_position_x(100);
     animation.set_to_value_position_x(400);
-    
+
     assert_eq!(animation.translation_x_from_value, 100);
     assert_eq!(animation.translation_x_to_value, 400);
     assert!(animation.translation_x_running);
@@ -455,10 +461,10 @@ mod tests {
   fn test_opacity_animation_setters() {
     let mut animation = Animation::with_key_path("opacity");
     animation.duration = 1.5;
-    
+
     animation.set_from_value_opacity(1.0);
     animation.set_to_value_opacity(0.5);
-    
+
     assert_eq!(animation.opacity_from_value, 1.0);
     assert_eq!(animation.opacity_to_value, 0.5);
     assert!(animation.opacity_running);
@@ -468,10 +474,10 @@ mod tests {
   fn test_scale_animation_setters() {
     let mut animation = Animation::with_key_path("transform.scale");
     animation.duration = 2.5;
-    
+
     animation.set_from_value_scale(1.0);
     animation.set_to_value_scale(2.0);
-    
+
     assert_eq!(animation.scale_from_value, 1.0);
     assert_eq!(animation.scale_to_value, 2.0);
     assert!(animation.scale_running);
@@ -481,10 +487,10 @@ mod tests {
   fn test_rotation_animation_setters() {
     let mut animation = Animation::with_key_path("transform.rotation");
     animation.duration = 3.0;
-    
+
     animation.set_from_value_rotation(0);
     animation.set_to_value_rotation(360);
-    
+
     assert_eq!(animation.rotation_from_value, 0);
     assert_eq!(animation.rotation_to_value, 360);
     assert!(animation.rotation_running);
@@ -497,7 +503,7 @@ mod tests {
     animation.apply_translation_y(0, 200, 1.0, EasingFunction::EaseIn);
     animation.apply_scale(1.0, 2.0, 1.0, EasingFunction::EaseOut);
     animation.apply_rotation(0, 180, 1.0, EasingFunction::EaseInOut);
-    
+
     assert!(animation.translation_x_running);
     assert!(animation.translation_y_running);
     assert!(animation.scale_running);

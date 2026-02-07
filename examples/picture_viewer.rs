@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-use winit::{
-    event::{Event, WindowEvent, KeyEvent, ElementState},
-    event_loop::{ControlFlow, EventLoop},
-    keyboard::{KeyCode, PhysicalKey},
-    window::WindowBuilder,
-};
 use stretch::node::Stretch;
+use winit::{
+  event::{ElementState, Event, KeyEvent, WindowEvent},
+  event_loop::{ControlFlow, EventLoop},
+  keyboard::{KeyCode, PhysicalKey},
+  window::WindowBuilder,
+};
 
 use reqwest::Error;
 use serde_json::Value;
@@ -19,13 +19,13 @@ use std::path::Path;
 use std::sync::mpsc;
 use std::thread;
 
-use rust_animation::layer::RALayer;
-use rust_animation::layer::EventHandler;
-use rust_animation::layer::Layout;
-use rust_animation::layer::LayoutMode;
-use rust_animation::layer::Key as AnimKey;
 use rust_animation::animation::Animation;
 use rust_animation::animation::EasingFunction;
+use rust_animation::layer::EventHandler;
+use rust_animation::layer::Key as AnimKey;
+use rust_animation::layer::Layout;
+use rust_animation::layer::LayoutMode;
+use rust_animation::layer::RALayer;
 use rust_animation::play::Play;
 
 type ResultUrl<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
@@ -191,7 +191,7 @@ impl PictureBrowser {
   pub fn initialize(&mut self) {
     // Initialize wgpu context
     self.play.init_wgpu();
-    
+
     let mut splash_stage = RALayer::new("splash_stage".to_string(), 1920, 1080, None);
     splash_stage.set_image("examples/splash.png".to_string());
     // splash_stage.set_visible(true);
@@ -285,21 +285,22 @@ fn main() {
   let mut picture_browser = PictureBrowser::new(1920, 1080);
   picture_browser.initialize();
 
-  event_loop.run(move |event, elwt| {
-    elwt.set_control_flow(ControlFlow::Poll);
-    
-    match event {
-      Event::WindowEvent { event, .. } => match event {
-        WindowEvent::CloseRequested => elwt.exit(),
-        WindowEvent::KeyboardInput {
-          event: KeyEvent {
-            physical_key: PhysicalKey::Code(key_code),
-            state: ElementState::Pressed,
+  event_loop
+    .run(move |event, elwt| {
+      elwt.set_control_flow(ControlFlow::Poll);
+
+      match event {
+        Event::WindowEvent { event, .. } => match event {
+          WindowEvent::CloseRequested => elwt.exit(),
+          WindowEvent::KeyboardInput {
+            event:
+              KeyEvent {
+                physical_key: PhysicalKey::Code(key_code),
+                state: ElementState::Pressed,
+                ..
+              },
             ..
-          },
-          ..
-        } => {
-          match key_code {
+          } => match key_code {
             KeyCode::Escape => elwt.exit(),
             KeyCode::ArrowUp => picture_browser.handle_input(AnimKey::Up),
             KeyCode::ArrowDown => picture_browser.handle_input(AnimKey::Down),
@@ -308,28 +309,28 @@ fn main() {
             KeyCode::Enter => picture_browser.handle_input(AnimKey::Enter),
             KeyCode::Space => picture_browser.handle_input(AnimKey::Space),
             _ => {}
-          }
-        },
-        WindowEvent::RedrawRequested => {
-          picture_browser.render_splash_screen();
-          
-          match rx.try_recv() {
-            Ok(true) => {
-              picture_browser.load_image_list();
+          },
+          WindowEvent::RedrawRequested => {
+            picture_browser.render_splash_screen();
+
+            match rx.try_recv() {
+              Ok(true) => {
+                picture_browser.load_image_list();
+              }
+              Ok(false) => {}
+              Err(..) => {}
             }
-            Ok(false) => {}
-            Err(..) => {}
+
+            picture_browser.render();
+            window.request_redraw();
           }
-          
-          picture_browser.render();
+          _ => {}
+        },
+        Event::AboutToWait => {
           window.request_redraw();
         }
         _ => {}
-      },
-      Event::AboutToWait => {
-        window.request_redraw();
       }
-      _ => {}
-    }
-  }).unwrap();
+    })
+    .unwrap();
 }

@@ -3,16 +3,16 @@
 // found in the LICENSE file.
 
 use winit::{
-    event::{Event, WindowEvent, KeyEvent},
-    event_loop::{ControlFlow, EventLoop},
-    keyboard::{KeyCode, PhysicalKey},
-    window::WindowBuilder,
+  event::{Event, KeyEvent, WindowEvent},
+  event_loop::{ControlFlow, EventLoop},
+  keyboard::{KeyCode, PhysicalKey},
+  window::WindowBuilder,
 };
 
-use rust_animation::layer::RALayer;
-use rust_animation::layer::LayoutMode;
 use rust_animation::animation::Animation;
 use rust_animation::animation::EasingFunction;
+use rust_animation::layer::LayoutMode;
+use rust_animation::layer::RALayer;
 use rust_animation::play::Play;
 
 fn main() {
@@ -29,10 +29,10 @@ fn main() {
     1080,
     LayoutMode::UserDefine,
   );
-  
+
   // Initialize wgpu context
   play.init_wgpu();
-  
+
   let mut stage = RALayer::new("stage".to_string(), 1920, 1080, None);
   stage.set_visible(true);
 
@@ -74,29 +74,32 @@ fn main() {
 
   play.add_stage(stage);
 
-  event_loop.run(move |event, elwt| {
-    elwt.set_control_flow(ControlFlow::Poll);
-    
-    match event {
-      Event::WindowEvent { event, .. } => match event {
-        WindowEvent::CloseRequested => elwt.exit(),
-        WindowEvent::KeyboardInput {
-          event: KeyEvent {
-            physical_key: PhysicalKey::Code(KeyCode::Escape),
+  event_loop
+    .run(move |event, elwt| {
+      elwt.set_control_flow(ControlFlow::Poll);
+
+      match event {
+        Event::WindowEvent { event, .. } => match event {
+          WindowEvent::CloseRequested => elwt.exit(),
+          WindowEvent::KeyboardInput {
+            event:
+              KeyEvent {
+                physical_key: PhysicalKey::Code(KeyCode::Escape),
+                ..
+              },
             ..
-          },
-          ..
-        } => elwt.exit(),
-        WindowEvent::RedrawRequested => {
-          play.render();
+          } => elwt.exit(),
+          WindowEvent::RedrawRequested => {
+            play.render();
+            window.request_redraw();
+          }
+          _ => {}
+        },
+        Event::AboutToWait => {
           window.request_redraw();
         }
         _ => {}
-      },
-      Event::AboutToWait => {
-        window.request_redraw();
       }
-      _ => {}
-    }
-  }).unwrap();
+    })
+    .unwrap();
 }

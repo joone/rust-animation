@@ -40,29 +40,29 @@ pub enum LayoutMode {
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
-    pub position: [f32; 3],
-    pub tex_coords: [f32; 2],
+  pub position: [f32; 3],
+  pub tex_coords: [f32; 2],
 }
 
 impl Vertex {
-    pub fn desc() -> wgpu::VertexBufferLayout<'static> {
-        wgpu::VertexBufferLayout {
-            array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[
-                wgpu::VertexAttribute {
-                    offset: 0,
-                    shader_location: 0,
-                    format: wgpu::VertexFormat::Float32x3,
-                },
-                wgpu::VertexAttribute {
-                    offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
-                    shader_location: 1,
-                    format: wgpu::VertexFormat::Float32x2,
-                },
-            ],
-        }
+  pub fn desc() -> wgpu::VertexBufferLayout<'static> {
+    wgpu::VertexBufferLayout {
+      array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
+      step_mode: wgpu::VertexStepMode::Vertex,
+      attributes: &[
+        wgpu::VertexAttribute {
+          offset: 0,
+          shader_location: 0,
+          format: wgpu::VertexFormat::Float32x3,
+        },
+        wgpu::VertexAttribute {
+          offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+          shader_location: 1,
+          format: wgpu::VertexFormat::Float32x2,
+        },
+      ],
     }
+  }
 }
 
 pub struct RALayer {
@@ -159,7 +159,7 @@ impl RALayer {
     {
       return;
     }
-    
+
     #[cfg(not(test))]
     {
       let vertices = [
@@ -184,17 +184,21 @@ impl RALayer {
       let indices: [u16; 6] = [0, 1, 3, 1, 2, 3];
 
       use wgpu::util::DeviceExt;
-      self.vertex_buffer = Some(device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-        label: Some("Vertex Buffer"),
-        contents: bytemuck::cast_slice(&vertices),
-        usage: wgpu::BufferUsages::VERTEX,
-      }));
+      self.vertex_buffer = Some(
+        device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+          label: Some("Vertex Buffer"),
+          contents: bytemuck::cast_slice(&vertices),
+          usage: wgpu::BufferUsages::VERTEX,
+        }),
+      );
 
-      self.index_buffer = Some(device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-        label: Some("Index Buffer"),
-        contents: bytemuck::cast_slice(&indices),
-        usage: wgpu::BufferUsages::INDEX,
-      }));
+      self.index_buffer = Some(
+        device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+          label: Some("Index Buffer"),
+          contents: bytemuck::cast_slice(&indices),
+          usage: wgpu::BufferUsages::INDEX,
+        }),
+      );
     }
   }
 
@@ -408,7 +412,11 @@ impl RALayer {
     }
   }
 
-  pub fn layout_sub_layers(&mut self, parent_layer: Option<&RALayer>, stretch: &mut Option<Stretch>) {
+  pub fn layout_sub_layers(
+    &mut self,
+    parent_layer: Option<&RALayer>,
+    stretch: &mut Option<Stretch>,
+  ) {
     if let Some(mut layout) = self.layout.take() {
       layout.layout_sub_layers(self, parent_layer, stretch);
       self.layout = Some(layout); // Put back the layout
@@ -475,11 +483,7 @@ impl RALayer {
     transform
   }
 
-  pub fn render(
-    &mut self,
-    parent_model_matrix: Option<&Matrix4<f32>>,
-    projection: &Matrix4<f32>,
-  ) {
+  pub fn render(&mut self, parent_model_matrix: Option<&Matrix4<f32>>, projection: &Matrix4<f32>) {
     if !self.visible {
       return;
     }
@@ -500,10 +504,7 @@ impl RALayer {
 
     // render the focused sub_layer at the end.
     if !self.sub_layer_list.is_empty() {
-      self.sub_layer_list[self.focused_sub_layer].render(
-        Some(&transform),
-        projection,
-      );
+      self.sub_layer_list[self.focused_sub_layer].render(Some(&transform), projection);
     }
   }
 
@@ -614,14 +615,14 @@ mod tests {
   fn test_opacity_api() {
     let mut layer = RALayer::new("test".to_string(), 100, 100, None);
     assert_eq!(layer.opacity, 1.0);
-    
+
     layer.set_opacity(0.5);
     assert_eq!(layer.opacity, 0.5);
-    
+
     // Test clamping
     layer.set_opacity(1.5);
     assert_eq!(layer.opacity, 1.0);
-    
+
     layer.set_opacity(-0.5);
     assert_eq!(layer.opacity, 0.0);
   }
@@ -642,7 +643,7 @@ mod tests {
     let mut animation = Animation::with_key_path("position.x");
     animation.duration = 2.0;
     animation.timing_function = Some(EasingFunction::Linear);
-    
+
     layer.add_animation(animation, Some("moveX"));
     assert_eq!(layer.animations.len(), 1);
     assert!(layer.animations.contains_key("moveX"));
@@ -653,11 +654,11 @@ mod tests {
     let mut layer = RALayer::new("test".to_string(), 100, 100, None);
     let animation1 = Animation::with_key_path("position.x");
     let animation2 = Animation::with_key_path("opacity");
-    
+
     layer.add_animation(animation1, Some("anim1"));
     layer.add_animation(animation2, Some("anim2"));
     assert_eq!(layer.animations.len(), 2);
-    
+
     layer.remove_animation("anim1");
     assert_eq!(layer.animations.len(), 1);
     assert!(!layer.animations.contains_key("anim1"));
@@ -670,14 +671,14 @@ mod tests {
     let animation1 = Animation::with_key_path("position.x");
     let animation2 = Animation::with_key_path("opacity");
     let animation3 = Animation::new();
-    
+
     layer.add_animation(animation1, Some("anim1"));
     layer.add_animation(animation2, Some("anim2"));
     layer.set_animation(Some(animation3));
-    
+
     assert_eq!(layer.animations.len(), 2);
     assert!(layer.animation.is_some());
-    
+
     layer.remove_all_animations();
     assert_eq!(layer.animations.len(), 0);
     assert!(layer.animation.is_none());
@@ -688,10 +689,10 @@ mod tests {
     let mut parent = RALayer::new("parent".to_string(), 200, 200, None);
     let child1 = RALayer::new("child1".to_string(), 50, 50, None);
     let child2 = RALayer::new("child2".to_string(), 50, 50, None);
-    
+
     parent.add_sublayer(child1);
     parent.add_sublayer(child2);
-    
+
     let sublayers = parent.sublayers();
     assert_eq!(sublayers.len(), 2);
     assert_eq!(sublayers[0].name, "child1");
@@ -701,18 +702,18 @@ mod tests {
   #[test]
   fn test_backward_compatibility() {
     let mut layer = RALayer::new("test".to_string(), 100, 100, None);
-    
+
     // Old way of setting position
     layer.x = 50;
     layer.y = 75;
     assert_eq!(layer.x, 50);
     assert_eq!(layer.y, 75);
-    
+
     // Old way of creating animation
     let mut animation = Animation::new();
     animation.apply_translation_x(0, 100, 1.0, EasingFunction::Linear);
     layer.set_animation(Some(animation));
-    
+
     assert!(layer.animation.is_some());
   }
 }

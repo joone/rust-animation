@@ -6,10 +6,10 @@ use cgmath::{Matrix4, SquareMatrix};
 use std::collections::HashMap;
 use stretch::{geometry::Size, node::Stretch};
 
-use crate::layer::RALayer;
 use crate::layer::EventHandler;
 use crate::layer::Key;
 use crate::layer::LayoutMode;
+use crate::layer::RALayer;
 use crate::wgpu_context::WgpuContext;
 
 // WGSL shader source

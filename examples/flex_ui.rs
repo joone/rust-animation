@@ -2,17 +2,17 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-use winit::{
-    event::{Event, WindowEvent, KeyEvent},
-    event_loop::{ControlFlow, EventLoop},
-    keyboard::{KeyCode, PhysicalKey},
-    window::WindowBuilder,
-};
 use stretch::{geometry::Rect, geometry::Size, node::Stretch, style::*};
+use winit::{
+  event::{Event, KeyEvent, WindowEvent},
+  event_loop::{ControlFlow, EventLoop},
+  keyboard::{KeyCode, PhysicalKey},
+  window::WindowBuilder,
+};
 
-use rust_animation::layer::RALayer;
 use rust_animation::layer::Layout;
 use rust_animation::layer::LayoutMode;
+use rust_animation::layer::RALayer;
 use rust_animation::play::Play;
 
 pub struct FlexLayout {
@@ -115,10 +115,10 @@ fn main() {
     .unwrap();
 
   let mut play = Play::new("Flex UI test".to_string(), 1920, 1080, LayoutMode::Flex);
-  
+
   // Initialize wgpu context
   play.init_wgpu();
-  
+
   let mut stage = RALayer::new("stage".to_string(), 1920, 1080, None);
   stage.set_style(Style {
     size: Size {
@@ -194,29 +194,32 @@ fn main() {
 
   //play.set_stage_needs_layout(&"stage".to_string());
 
-  event_loop.run(move |event, elwt| {
-    elwt.set_control_flow(ControlFlow::Poll);
-    
-    match event {
-      Event::WindowEvent { event, .. } => match event {
-        WindowEvent::CloseRequested => elwt.exit(),
-        WindowEvent::KeyboardInput {
-          event: KeyEvent {
-            physical_key: PhysicalKey::Code(KeyCode::Escape),
+  event_loop
+    .run(move |event, elwt| {
+      elwt.set_control_flow(ControlFlow::Poll);
+
+      match event {
+        Event::WindowEvent { event, .. } => match event {
+          WindowEvent::CloseRequested => elwt.exit(),
+          WindowEvent::KeyboardInput {
+            event:
+              KeyEvent {
+                physical_key: PhysicalKey::Code(KeyCode::Escape),
+                ..
+              },
             ..
-          },
-          ..
-        } => elwt.exit(),
-        WindowEvent::RedrawRequested => {
-          play.render();
+          } => elwt.exit(),
+          WindowEvent::RedrawRequested => {
+            play.render();
+            window.request_redraw();
+          }
+          _ => {}
+        },
+        Event::AboutToWait => {
           window.request_redraw();
         }
         _ => {}
-      },
-      Event::AboutToWait => {
-        window.request_redraw();
       }
-      _ => {}
-    }
-  }).unwrap();
+    })
+    .unwrap();
 }
