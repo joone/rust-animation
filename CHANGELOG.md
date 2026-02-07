@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.10] - 2026-02-07
+
 ## [0.2.9] - 2026-02-07
 
 ### Added
@@ -33,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OpenGL/GLSL rendering backend
 - glfw dependency in favor of winit
 
-[Unreleased]: https://github.com/joone/rust-animation/compare/v0.2.9...HEAD
+[Unreleased]: https://github.com/joone/rust-animation/compare/v0.2.10...HEAD
+[0.2.10]: https://github.com/joone/rust-animation/releases/tag/v0.2.10
 [0.2.9]: https://github.com/joone/rust-animation/releases/tag/v0.2.9
 [0.2.8]: https://github.com/joone/rust-animation/releases/tag/v0.2.8
