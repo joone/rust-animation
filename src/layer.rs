@@ -819,4 +819,30 @@ mod tests {
 
     assert!(layer.animation.is_some());
   }
+
+  #[test]
+  fn test_border_api() {
+    let mut layer = Layer::new("test".to_string(), 100, 100, None);
+    
+    // Test default border
+    assert_eq!(layer.border_width(), 0.0);
+    let (r, g, b, a) = layer.border_color();
+    assert_eq!(r, 0.0);
+    assert_eq!(g, 0.0);
+    assert_eq!(b, 0.0);
+    assert_eq!(a, 1.0);
+    
+    // Test setting border
+    layer.set_border(5.0, 1.0, 0.0, 0.0, 0.5);
+    assert_eq!(layer.border_width(), 5.0);
+    let (r, g, b, a) = layer.border_color();
+    assert_eq!(r, 1.0);
+    assert_eq!(g, 0.0);
+    assert_eq!(b, 0.0);
+    assert_eq!(a, 0.5);
+    
+    // Test border width clamping (negative values should be clamped to 0)
+    layer.set_border(-5.0, 0.0, 1.0, 0.0, 1.0);
+    assert_eq!(layer.border_width(), 0.0);
+  }
 }

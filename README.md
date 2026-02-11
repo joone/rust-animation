@@ -26,6 +26,7 @@
 
 - **2D Transforms**: Apply translate, scale, and rotate transformations to layers
 - **Rich Animation System**: Support for multiple easing functions (Linear, EaseIn, EaseOut, EaseInOut, and various polynomial variants)
+- **Border Rendering**: CoreAnimation-style border support with customizable width and RGBA color
 - **Flex Layout**: CSS Flexbox-like layout system using the [Stretch](https://github.com/vislyhq/stretch) library
 - **Hardware Acceleration**: wgpu-based rendering for high performance across multiple backends (Vulkan, Metal, D3D12, OpenGL)
 - **Layer Hierarchy**: Support for nested layers with parent-child relationships
@@ -472,6 +473,7 @@ impl Layout for ActorLayout {
 - Can have position (x, y, z), size (width, height)
 - Supports transforms: translate, scale, rotate
 - Can have colors or textures
+- Supports border rendering with customizable width and color (CoreAnimation-style)
 - Supports nested hierarchies (parent-child relationships)
 - Can have animations, event handlers, and custom layouts
 
@@ -497,6 +499,15 @@ layer.x = x;
 layer.y = y;
 layer.set_color(r, g, b);
 layer.set_image(path);
+
+// Set border (CoreAnimation-style)
+layer.set_border(width, r, g, b, a); // width in pixels, RGBA color
+
+// CoreAnimation-style property setters
+layer.set_position(x, y);
+layer.set_background_color(r, g, b);
+layer.set_opacity(opacity);
+layer.set_bounds(width, height);
 
 // Create animations
 let mut animation = Animation::new();
