@@ -601,6 +601,13 @@ impl Layer {
   }
 
   /// Set border width and color (CoreAnimation-style API)
+  /// 
+  /// # Arguments
+  /// * `width` - Border width in pixels (negative values are clamped to 0.0)
+  /// * `r` - Red component (0.0 to 1.0)
+  /// * `g` - Green component (0.0 to 1.0)
+  /// * `b` - Blue component (0.0 to 1.0)
+  /// * `a` - Alpha component (0.0 to 1.0)
   pub fn set_border(&mut self, width: f32, r: f32, g: f32, b: f32, a: f32) {
     self.border_width = width.max(0.0);
     self.border_color = [r, g, b, a];
@@ -632,11 +639,11 @@ impl Layer {
       projection: [[f32; 4]; 4],
       color: [f32; 4],
       use_texture: u32,
-      _padding: [u32; 3],
+      _use_texture_padding: [u32; 3],
       border_width: f32,
       border_color: [f32; 4],
       layer_size: [f32; 2],
-      _padding2: [f32; 2],
+      _layer_size_padding: [f32; 2],
     }
 
     let use_texture = if self.texture.is_some() { 1 } else { 0 };
@@ -646,11 +653,11 @@ impl Layer {
       projection: (*projection).into(),
       color: [self.color[0], self.color[1], self.color[2], self.opacity],
       use_texture,
-      _padding: [0; 3],
+      _use_texture_padding: [0; 3],
       border_width: self.border_width,
       border_color: self.border_color,
       layer_size: [self.width as f32, self.height as f32],
-      _padding2: [0.0; 2],
+      _layer_size_padding: [0.0; 2],
     };
 
     device.create_buffer_init(&wgpu::util::BufferInitDescriptor {

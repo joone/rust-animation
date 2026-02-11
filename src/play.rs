@@ -30,11 +30,11 @@ struct Uniforms {
     projection: mat4x4<f32>,
     color: vec4<f32>,
     use_texture: u32,
-    padding: vec3<u32>,
+    use_texture_padding: vec3<u32>,
     border_width: f32,
     border_color: vec4<f32>,
     layer_size: vec2<f32>,
-    padding2: vec2<f32>,
+    layer_size_padding: vec2<f32>,
 }
 
 @group(0) @binding(0)
