@@ -80,6 +80,8 @@ pub struct Layer {
   pub visible: bool,
   color: [f32; 3],
   pub opacity: f32, // CoreAnimation-style property
+  border_width: f32, // CoreAnimation-style property
+  border_color: [f32; 4], // CoreAnimation-style property (RGBA)
   pub image_path: String,
   pub sub_layer_list: Vec<Layer>,
   pub(crate) vertex_buffer: Option<wgpu::Buffer>,
@@ -133,6 +135,8 @@ impl Layer {
       visible: true,
       color: [1.0, 1.0, 1.0],
       opacity: 1.0,
+      border_width: 0.0,
+      border_color: [0.0, 0.0, 0.0, 1.0],
       image_path: "".to_string(),
       sub_layer_list: Vec::new(),
       vertex_buffer: None,
@@ -596,6 +600,22 @@ impl Layer {
     &mut self.sub_layer_list
   }
 
+  /// Set border width and color (CoreAnimation-style API)
+  pub fn set_border(&mut self, width: f32, r: f32, g: f32, b: f32, a: f32) {
+    self.border_width = width.max(0.0);
+    self.border_color = [r, g, b, a];
+  }
+
+  /// Get border width (CoreAnimation-style API)
+  pub fn border_width(&self) -> f32 {
+    self.border_width
+  }
+
+  /// Get border color (CoreAnimation-style API)
+  pub fn border_color(&self) -> (f32, f32, f32, f32) {
+    (self.border_color[0], self.border_color[1], self.border_color[2], self.border_color[3])
+  }
+
   /// Create uniform buffer with transform matrix and color
   pub fn create_uniform_buffer(
     &self,
@@ -613,6 +633,10 @@ impl Layer {
       color: [f32; 4],
       use_texture: u32,
       _padding: [u32; 3],
+      border_width: f32,
+      border_color: [f32; 4],
+      layer_size: [f32; 2],
+      _padding2: [f32; 2],
     }
 
     let use_texture = if self.texture.is_some() { 1 } else { 0 };
@@ -623,6 +647,10 @@ impl Layer {
       color: [self.color[0], self.color[1], self.color[2], self.opacity],
       use_texture,
       _padding: [0; 3],
+      border_width: self.border_width,
+      border_color: self.border_color,
+      layer_size: [self.width as f32, self.height as f32],
+      _padding2: [0.0; 2],
     };
 
     device.create_buffer_init(&wgpu::util::BufferInitDescriptor {

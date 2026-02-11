@@ -22,6 +22,7 @@ struct VertexInput {
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
     @location(0) tex_coords: vec2<f32>,
+    @location(1) pixel_pos: vec2<f32>,
 }
 
 struct Uniforms {
@@ -29,6 +30,11 @@ struct Uniforms {
     projection: mat4x4<f32>,
     color: vec4<f32>,
     use_texture: u32,
+    padding: vec3<u32>,
+    border_width: f32,
+    border_color: vec4<f32>,
+    layer_size: vec2<f32>,
+    padding2: vec2<f32>,
 }
 
 @group(0) @binding(0)
@@ -44,16 +50,39 @@ fn vs_main(vertex: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     out.clip_position = uniforms.projection * uniforms.transform * vec4<f32>(vertex.position, 1.0);
     out.tex_coords = vertex.tex_coords;
+    out.pixel_pos = vertex.position.xy;
     return out;
 }
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+    var base_color: vec4<f32>;
+    
     if (uniforms.use_texture > 0u) {
-        return textureSample(t_texture, t_sampler, in.tex_coords);
+        base_color = textureSample(t_texture, t_sampler, in.tex_coords);
     } else {
-        return uniforms.color;
+        base_color = uniforms.color;
     }
+    
+    // Render border if border_width > 0
+    if (uniforms.border_width > 0.0) {
+        let x = in.pixel_pos.x;
+        let y = in.pixel_pos.y;
+        let width = uniforms.layer_size.x;
+        let height = uniforms.layer_size.y;
+        
+        // Check if we're in the border region
+        let is_border = x < uniforms.border_width || 
+                       x > (width - uniforms.border_width) ||
+                       y < uniforms.border_width || 
+                       y > (height - uniforms.border_width);
+        
+        if (is_border) {
+            return uniforms.border_color;
+        }
+    }
+    
+    return base_color;
 }
 "#;
 
