@@ -50,6 +50,7 @@ fn vs_main(vertex: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     out.clip_position = uniforms.projection * uniforms.transform * vec4<f32>(vertex.position, 1.0);
     out.tex_coords = vertex.tex_coords;
+    // Pass through untransformed position for border calculation (in pixel space: 0..width, 0..height)
     out.pixel_pos = vertex.position.xy;
     return out;
 }
@@ -65,13 +66,14 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     }
     
     // Render border if border_width > 0
+    // pixel_pos is in layer's local coordinate space (0..width, 0..height)
     if (uniforms.border_width > 0.0) {
         let x = in.pixel_pos.x;
         let y = in.pixel_pos.y;
         let width = uniforms.layer_size.x;
         let height = uniforms.layer_size.y;
         
-        // Check if we're in the border region
+        // Check if we're in the border region (edges of the layer)
         let is_border = x < uniforms.border_width || 
                        x > (width - uniforms.border_width) ||
                        y < uniforms.border_width || 

@@ -91,9 +91,11 @@ fn main() {
     stage.add_sublayer(layer);
   }
 
-  // Example 7: Layer with border and image (if you have an image)
+  // Example 7: Layer with border and optional image
+  // If splash.png exists, it will be displayed with a border, otherwise just the border is shown
   let mut image_layer = Layer::new("image_layer".to_string(), 200, 200, None);
   image_layer.set_position(100, 520);
+  image_layer.set_background_color(0.9, 0.9, 0.9); // Light gray fallback
   image_layer.set_image("examples/splash.png".to_string());
   image_layer.set_border(5.0, 1.0, 0.0, 1.0, 1.0); // 5px magenta border
 
